@@ -2806,8 +2806,10 @@ const TRACK_STEP_META=[
 let trackingUnsub=null;
 
 function genToken(len=24){
-  const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from({length:len},()=>c[Math.floor(Math.random()*c.length)]).join('');
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const buf=new Uint8Array(len);
+  crypto.getRandomValues(buf);
+  return Array.from(buf,b=>chars[b%chars.length]).join('');
 }
 
 let cart=[];
@@ -3614,7 +3616,7 @@ async function confirmOrder(payMethod,total){
       });
       orderId = `LU-${orderNum}`;
 
-      // ── Save order doc with custom document ID ──
+      // ── Save full order doc (admin access only) ──
       const orderRef = window._fbDoc(window._db, 'orders', orderId);
       await window._fbSetDoc(orderRef, {
         orderId,
@@ -3633,6 +3635,23 @@ async function confirmOrder(payMethod,total){
         createdAt:     now,
         estimatedDeliveryTime: null,
         deliveryTime:  null
+      });
+
+      // ── Save tracking doc (public — no sensitive customer data) ──
+      const trackRef = window._fbDoc(window._db, 'orderTracking', trackingToken);
+      await window._fbSetDoc(trackRef, {
+        orderId,
+        orderType:     'food',
+        status:        'placed',
+        statusHistory: [{status:'placed', time: now}],
+        itemsSummary:  cart.map(c=>c.name).join(', '),
+        amount:        total,
+        riderName:     null,
+        riderPhone:    null,
+        etaMinutes:    null,
+        estimatedDeliveryTime: null,
+        deliveryTime:  null,
+        createdAt:     now
       });
     }catch(e){ console.warn('Firestore save error:',e); }
   }
@@ -3688,18 +3707,11 @@ function openTracking(orderId,eta,token){
   if(trackingUnsub){trackingUnsub();trackingUnsub=null;}
 
   if(window._fbReady && window._db && token){
-    // LIST query: where('orderId','==',X) AND where('trackingToken','==',token)
-    // Server only returns the doc if BOTH fields match — no token = no data
-    const q=window._fbQuery(
-      window._fbCol(window._db,'orders'),
-      window._fbWhere('orderId','==',orderId),
-      window._fbWhere('trackingToken','==',token)
-    );
-    trackingUnsub=window._fbSnap(q,snap=>{
-      if(!snap.empty){
-        const d=snap.docs[0];
-        renderTrackingFromOrder({_id:d.id,...d.data()});
-      }
+    // Direct GET on orderTracking/{token} — path itself is the secret
+    // No query, no list — only the customer who has this token can read it
+    const ref=window._fbDoc(window._db,'orderTracking',token);
+    trackingUnsub=window._fbSnap(ref,snap=>{
+      if(snap.exists()) renderTrackingFromOrder({_id:snap.id,...snap.data()});
     });
   } else {
     // fallback: no token or offline — show static placed state

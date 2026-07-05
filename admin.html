@@ -576,9 +576,24 @@ async function updSt(id,status,extra={}){
   if(!window._db){toast('Not connected.','#ef4444');return;}
   try{
     const now=new Date();
-    const data={status,...extra,statusHistory:window._fbArrUnion({status,time:now})};
+    const histEntry={status,time:now};
+    const data={status,...extra,statusHistory:window._fbArrUnion(histEntry)};
     if(status==='delivered') data.deliveryTime=now;
+
+    // Update full order doc (admin)
     await window._fbUpdate(window._fbDoc(window._db,'orders',id),data);
+
+    // Mirror tracking-relevant fields to orderTracking/{token} (no sensitive data)
+    const order=allOrders.find(o=>o._id===id);
+    if(order?.trackingToken){
+      const td={status,statusHistory:window._fbArrUnion(histEntry)};
+      ['riderName','riderPhone','etaMinutes','estimatedDeliveryTime'].forEach(f=>{
+        if(f in extra) td[f]=extra[f];
+      });
+      if(status==='delivered') td.deliveryTime=now;
+      await window._fbUpdate(window._fbDoc(window._db,'orderTracking',order.trackingToken),td);
+    }
+
     toast(`✅ Order marked ${status.replace(/_/g,' ')}`,'#22c55e');
   }catch(e){toast('❌ '+e.message,'#ef4444');}
 }
