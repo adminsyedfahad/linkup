@@ -28,7 +28,7 @@
   import {
     getFirestore, collection, addDoc, getDocs,
     updateDoc, doc, onSnapshot, query, orderBy, where,
-    setDoc, runTransaction
+    setDoc, runTransaction, arrayUnion
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
   import {
     getAuth, signInWithEmailAndPassword, signOut,
@@ -64,6 +64,7 @@
   window._fbWhere     = where;
   window._fbSetDoc    = setDoc;
   window._fbTxn       = runTransaction;
+  window._fbArrUnion  = arrayUnion;
   // Expose Auth
   window._auth        = auth;
   window._fbSignIn    = signInWithEmailAndPassword;
@@ -2219,7 +2220,7 @@ img[alt="LinkUp"]{
   <div class="track-card">
     <div class="track-order-id" id="trackOrderId">Order #LU123456</div>
     <div class="track-eta" id="trackEta">24 min</div>
-    <div class="track-eta-label">Estimated Delivery Time</div>
+    <div class="track-eta-label" id="trackEtaLabel">Estimated Delivery Time</div>
   </div>
   <div class="track-map" onclick="openMapModal()" style="padding:0;overflow:hidden;">
     <div id="trackMapEl" style="width:100%;height:100%;min-height:220px;"></div>
@@ -2229,11 +2230,14 @@ img[alt="LinkUp"]{
     <h3>📋 Delivery Steps</h3>
     <div class="track-steps" id="trackSteps"></div>
   </div>
-  <div class="checkout-section">
+  <div class="checkout-section" id="trackRiderCard" style="display:none;">
     <h3>🧑‍🍳 Your Delivery Partner</h3>
     <div style="display:flex;align-items:center;gap:14px;margin-top:4px;">
       <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#ff3c3c);display:flex;align-items:center;justify-content:center;font-size:22px;">🧑</div>
-      <div><div style="font-weight:700;font-size:14px;">Rajan Kumar</div><div style="font-size:12px;color:var(--muted);">⭐ 4.9 · 1,200+ deliveries</div></div>
+      <div>
+        <div style="font-weight:700;font-size:14px;" id="trackRiderName">Rider</div>
+        <div style="font-size:12px;color:var(--muted);" id="trackRiderPhone"></div>
+      </div>
       <div style="margin-left:auto;display:flex;gap:8px;">
         <button style="padding:8px 14px;border-radius:8px;background:var(--orange);border:none;color:#000;font-weight:700;cursor:pointer;font-size:13px;">📞 Call</button>
         <button style="padding:8px 14px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text);font-weight:700;cursor:pointer;font-size:13px;">💬 Chat</button>
@@ -2790,12 +2794,16 @@ const RESTAURANTS=[
   {id:6,name:"Spice Garden",cuisine:"Indian & Chinese",rating:"4.7",time:"25-35 min",img:"https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400",tag:"Popular",cats:["chicken","biryani"]},
 ];
 
-const TRACK_STEPS=[
-  {icon:'✅',title:'Order Confirmed',time:'Just now',done:true,active:false},
-  {icon:'👨‍🍳',title:'Preparing your food',time:'Ongoing',done:false,active:true},
-  {icon:'🛵',title:'Out for Delivery',time:'~15 min',done:false,active:false},
-  {icon:'📍',title:'Delivered',time:'Estimated soon',done:false,active:false},
+const TRACK_STATUS_ORDER=['placed','accepted','preparing','picked_up','on_the_way','delivered'];
+const TRACK_STEP_META=[
+  {status:'placed',    icon:'🧾', title:'Order Placed'},
+  {status:'accepted',  icon:'✅', title:'Order Accepted'},
+  {status:'preparing', icon:'🍳', title:'Preparing Your Food'},
+  {status:'picked_up', icon:'📦', title:'Picked Up by Rider'},
+  {status:'on_the_way',icon:'🛵', title:'Out for Delivery'},
+  {status:'delivered', icon:'📍', title:'Delivered'},
 ];
+let trackingUnsub=null;
 
 let cart=[];
 let modalItem=null;
@@ -3612,11 +3620,11 @@ async function confirmOrder(payMethod,total){
         itemDetails:   cart.map(c => ({name:c.name, qty:c.qty, price:c.price})),
         amount:        total,
         paymentMethod: payMethod,
-        riderName:     'Rajan Kumar',
-        riderPhone:    '+91 98765 43210',
-        status:        'confirmed',
+        orderType:     'food',
+        status:        'placed',
+        statusHistory: [{status:'placed', time: now}],
         createdAt:     now,
-        dispatchTime:  null,
+        estimatedDeliveryTime: null,
         deliveryTime:  null
       });
     }catch(e){ console.warn('Firestore save error:',e); }
@@ -3627,8 +3635,8 @@ async function confirmOrder(payMethod,total){
     id:          orderId,
     items:       cart.map(c=>`${c.name} ×${c.qty}`),
     total, payMethod,
-    status:      'confirmed',
-    statusLabel: payMethod.includes('COD') ? 'Confirmed — Pay on Delivery ✅' : 'Paid Online ✅',
+    status:      'placed',
+    statusLabel: payMethod.includes('COD') ? 'Order Placed — Pay on Delivery 🧾' : 'Paid Online ✅',
     time:        now.toLocaleTimeString(),
     date:        now.toLocaleDateString(),
     eta,
@@ -3667,29 +3675,97 @@ function renderOrders(){
 function openTracking(orderId,eta){
   document.getElementById('trackOrderId').textContent=`Order ${orderId}`;
   document.getElementById('trackEta').textContent=`${eta} min`;
-  renderTrackSteps();showPage('tracking');
+  showPage('tracking');
   if(etaInterval)clearInterval(etaInterval);
-  let e=eta;
-  etaInterval=setInterval(()=>{
-    if(e>1){e--;document.getElementById('trackEta').textContent=`${e} min`;}
-    else{clearInterval(etaInterval);document.getElementById('trackEta').textContent='Arriving!';}
-  },60000);
-  // Init real map after page transition
+  if(trackingUnsub){trackingUnsub();trackingUnsub=null;}
+
+  if(window._fbReady && window._db){
+    const ref=window._fbDoc(window._db,'orders',orderId);
+    trackingUnsub=window._fbSnap(ref,snap=>{
+      if(snap.exists()){
+        renderTrackingFromOrder({_id:snap.id,...snap.data()});
+      }
+    });
+  } else {
+    // offline fallback
+    renderTrackingFromOrder({_id:orderId,status:'placed',orderType:'food'});
+    let e=eta;
+    etaInterval=setInterval(()=>{
+      if(e>1){e--;document.getElementById('trackEta').textContent=`${e} min`;}
+      else{clearInterval(etaInterval);document.getElementById('trackEta').textContent='Arriving!';}
+    },60000);
+  }
   setTimeout(()=>initTrackMap(eta),350);
 }
-function renderTrackSteps(){
-  document.getElementById('trackSteps').innerHTML=TRACK_STEPS.map((s,i)=>`
-    <div class="track-step">
+
+function renderTrackingFromOrder(o){
+  const st=o.status||'placed';
+  const curIdx=TRACK_STATUS_ORDER.indexOf(st);
+
+  // ETA display
+  if(etaInterval){clearInterval(etaInterval);etaInterval=null;}
+  const etaEl=document.getElementById('trackEta');
+  const etaLbl=document.getElementById('trackEtaLabel');
+  if(st==='delivered'){
+    etaEl.textContent='Delivered!';
+    if(etaLbl) etaLbl.textContent='Order delivered';
+  } else if(o.estimatedDeliveryTime){
+    const now=Date.now();
+    const eta=o.estimatedDeliveryTime;
+    const etaMs=(eta.toDate?eta.toDate():eta instanceof Date?eta:new Date(eta.seconds*1000)).getTime();
+    const diffMin=Math.max(0,Math.round((etaMs-now)/60000));
+    etaEl.textContent=diffMin>0?`${diffMin} min`:'Arriving!';
+    if(etaLbl) etaLbl.textContent='Estimated delivery time';
+    if(diffMin>0){
+      etaInterval=setInterval(()=>{
+        const m=Math.max(0,Math.round((etaMs-Date.now())/60000));
+        etaEl.textContent=m>0?`${m} min`:'Arriving!';
+        if(m===0){clearInterval(etaInterval);etaInterval=null;}
+      },30000);
+    }
+  }
+
+  // Timeline steps
+  document.getElementById('trackSteps').innerHTML=TRACK_STEP_META.map((s,i)=>{
+    const stepIdx=TRACK_STATUS_ORDER.indexOf(s.status);
+    const done=st==='delivered'?true:(curIdx>stepIdx);
+    const active=curIdx===stepIdx && st!=='delivered';
+    let timeLabel='';
+    if(done && o.statusHistory){
+      const hist=(o.statusHistory||[]).find(h=>h.status===s.status);
+      if(hist){
+        const d=hist.time?.toDate?hist.time.toDate():hist.time instanceof Date?hist.time:hist.time?.seconds?new Date(hist.time.seconds*1000):null;
+        if(d) timeLabel=d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+      }
+    }
+    if(active) timeLabel='Right now';
+    return `<div class="track-step">
       <div class="step-line">
-        <div class="step-dot ${s.done?'done':s.active?'active':''}">${s.done?'✓':s.icon}</div>
-        ${i<TRACK_STEPS.length-1?`<div class="step-connector ${s.done?'done':''}"></div>`:''}
+        <div class="step-dot ${done?'done':active?'active':''}">${done?'✓':s.icon}</div>
+        ${i<TRACK_STEP_META.length-1?`<div class="step-connector ${done?'done':''}"></div>`:''}
       </div>
       <div class="step-info">
-        <div class="step-title" style="color:${s.done||s.active?'var(--orange)':'var(--muted)'}">${s.title}</div>
-        <div class="step-time">${s.time}</div>
+        <div class="step-title" style="color:${done||active?'var(--orange)':'var(--muted)'}">${s.title}</div>
+        ${timeLabel?`<div class="step-time">${timeLabel}</div>`:''}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+
+  // Rider info card
+  const rCard=document.getElementById('trackRiderCard');
+  if(rCard){
+    if(o.riderName && ['on_the_way','picked_up','delivered'].includes(st)){
+      rCard.style.display='block';
+      document.getElementById('trackRiderName').textContent=o.riderName;
+      document.getElementById('trackRiderPhone').textContent=o.riderPhone||'';
+    } else {
+      rCard.style.display='none';
+    }
+  }
 }
+
+// legacy alias so old "Track Order" buttons still work
+function renderTrackSteps(){ renderTrackingFromOrder({status:'placed',orderType:'food'}); }
 
 // ── NOTIFICATIONS ─────────────────────────────────
 function pushNotification(title,body,icon){
@@ -3734,6 +3810,7 @@ function showPage(name){
     showToast('🔒 Admin access only.');
     return;
   }
+  if(name!=='tracking' && trackingUnsub){trackingUnsub();trackingUnsub=null;}
   document.querySelectorAll('.page,.checkout-page,.tracking-page,.restaurants-page,.admin-page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');

@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 const cfg = {
   apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
@@ -23,7 +23,7 @@ window._fbSignIn=signInWithEmailAndPassword;
 window._fbSignOut=signOut; window._fbOnAuth=onAuthStateChanged;
 window._fbSnap=onSnapshot; window._fbQuery=query;
 window._fbOrderBy=orderBy; window._fbCol=collection;
-window._fbDoc=doc; window._fbUpdate=updateDoc;
+window._fbDoc=doc; window._fbUpdate=updateDoc; window._fbArrUnion=arrayUnion;
 window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
 </script>
 <style>
@@ -123,11 +123,16 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
 
 /* BADGES */
 .bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
-.bdg.pending{background:rgba(245,158,11,.14);color:#f59e0b;}
-.bdg.confirmed{background:rgba(34,197,94,.14);color:#22c55e;}
-.bdg.dispatched{background:rgba(59,130,246,.14);color:#3b82f6;}
+.bdg.placed{background:rgba(255,140,0,.14);color:#ff8c00;}
+.bdg.accepted{background:rgba(34,197,94,.14);color:#22c55e;}
+.bdg.preparing{background:rgba(234,179,8,.14);color:#eab308;}
+.bdg.picked_up{background:rgba(168,85,247,.14);color:#a855f7;}
+.bdg.on_the_way{background:rgba(59,130,246,.14);color:#3b82f6;}
 .bdg.delivered{background:rgba(107,114,128,.14);color:#9ca3af;}
 .bdg.cancelled{background:rgba(239,68,68,.12);color:#ef4444;}
+.bdg.pending{background:rgba(255,140,0,.14);color:#ff8c00;}
+.bdg.confirmed{background:rgba(34,197,94,.14);color:#22c55e;}
+.bdg.dispatched{background:rgba(59,130,246,.14);color:#3b82f6;}
 
 /* ACTION BUTTONS */
 .ac{display:flex;gap:4px;flex-wrap:wrap;}
@@ -136,6 +141,8 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
 .bc{background:rgba(34,197,94,.14);color:#22c55e;}
 .bd{background:rgba(59,130,246,.14);color:#3b82f6;}
 .bv{background:rgba(255,140,0,.14);color:var(--orange);}
+.by{background:rgba(234,179,8,.14);color:#eab308;}
+.bp{background:rgba(168,85,247,.14);color:#a855f7;}
 .bx{background:rgba(239,68,68,.1);color:#ef4444;}
 
 /* SEARCH */
@@ -181,6 +188,8 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
 .mf label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
 .mf input{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;}
 .mf input:focus{border-color:var(--orange);}
+.mf select{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;cursor:pointer;}
+.mf select:focus{border-color:var(--orange);}
 .mbtns{display:flex;gap:10px;margin-top:18px;}
 .mok{flex:1;padding:11px;background:var(--orange);color:#000;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:800;cursor:pointer;}
 .mcl{padding:11px 16px;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:8px;font-family:'Poppins',sans-serif;font-size:13px;cursor:pointer;}
@@ -279,9 +288,11 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
       <div class="fr">
         <select class="fsel" id="fst" onchange="afr()">
           <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="dispatched">Dispatched</option>
+          <option value="placed">Placed</option>
+          <option value="accepted">Accepted</option>
+          <option value="preparing">Preparing</option>
+          <option value="picked_up">Picked Up</option>
+          <option value="on_the_way">On the Way</option>
           <option value="delivered">Delivered</option>
           <option value="cancelled">Cancelled</option>
         </select>
@@ -326,15 +337,26 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
   </div>
 </div>
 
-<!-- RIDER MODAL -->
-<div class="mo" id="rmo">
+<!-- DISPATCH MODAL -->
+<div class="mo" id="dmo">
   <div class="mb">
-    <h3>🛵 Assign Rider & Dispatch</h3>
-    <div class="mf"><label>Rider Name</label><input type="text" id="rnm" value="Rajan Kumar"></div>
-    <div class="mf"><label>Rider Phone</label><input type="tel" id="rph" value="+91 98765 43210"></div>
+    <h3>🛵 Assign Rider & Mark On the Way</h3>
+    <div class="mf"><label>Rider Name</label><input type="text" id="rnm" placeholder="Rider name"></div>
+    <div class="mf"><label>Rider Phone</label><input type="tel" id="rph" placeholder="+91 XXXXX XXXXX"></div>
+    <div class="mf">
+      <label>Estimated Delivery Time</label>
+      <select id="retamin">
+        <option value="10">10 min</option>
+        <option value="15" selected>15 min</option>
+        <option value="20">20 min</option>
+        <option value="30">30 min</option>
+        <option value="45">45 min</option>
+        <option value="60">60 min</option>
+      </select>
+    </div>
     <div class="mbtns">
-      <button class="mcl" onclick="closeRider()">Cancel</button>
-      <button class="mok" onclick="confirmDispatch()">Confirm Dispatch →</button>
+      <button class="mcl" onclick="closeDispatch()">Cancel</button>
+      <button class="mok" onclick="confirmOnTheWay()">Mark On the Way →</button>
     </div>
   </div>
 </div>
@@ -343,7 +365,7 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
 
 <script>
 // ── STATE ──────────────────────────────────────
-let allOrders=[], isInit=true, unsub=null, riderOrderId=null, newCnt=0;
+let allOrders=[], isInit=true, unsub=null, dispatchOrderId=null, newCnt=0;
 const ADMIN='adminlinkup@gmail.com';
 
 // ── HELPERS ────────────────────────────────────
@@ -481,12 +503,12 @@ function renderStats(){
   const wk=allOrders.filter(o=>isWeek(o.createdAt));
   const tRev=tod.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.amount||0),0);
   const wRev=wk.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.amount||0),0);
-  const act=allOrders.filter(o=>['pending','confirmed','dispatched'].includes(o.status)).length;
+  const act=allOrders.filter(o=>['placed','accepted','preparing','picked_up','on_the_way','pending','confirmed','dispatched'].includes(o.status)).length;
   const phones=new Set(allOrders.map(o=>o.phone).filter(Boolean));
   document.getElementById('sg').innerHTML=`
     <div class="sc hl"><div class="sc-lbl">Today's Orders</div><div class="sc-val">${tod.length}</div><div class="sc-sub">₹${tRev.toLocaleString('en-IN')} revenue</div></div>
     <div class="sc hl"><div class="sc-lbl">Today's Revenue</div><div class="sc-val">₹${tRev.toLocaleString('en-IN')}</div><div class="sc-sub">${tod.filter(o=>o.status!=='cancelled').length} completed</div></div>
-    <div class="sc"><div class="sc-lbl">Active Orders</div><div class="sc-val" style="color:var(--yellow);">${act}</div><div class="sc-sub">pending/confirmed/dispatched</div></div>
+    <div class="sc"><div class="sc-lbl">Active Orders</div><div class="sc-val" style="color:var(--yellow);">${act}</div><div class="sc-sub">in progress</div></div>
     <div class="sc"><div class="sc-lbl">Total Customers</div><div class="sc-val">${phones.size}</div><div class="sc-sub">unique phone numbers</div></div>
     <div class="sc"><div class="sc-lbl">Week Orders</div><div class="sc-val">${wk.length}</div><div class="sc-sub">last 7 days</div></div>
     <div class="sc"><div class="sc-lbl">Week Revenue</div><div class="sc-val">₹${wRev.toLocaleString('en-IN')}</div><div class="sc-sub">excl. cancelled</div></div>`;
@@ -540,9 +562,11 @@ function renderTable(orders){
 
 function actBtns(id,st){
   const b=[];
-  if(st==='pending')    b.push(`<button class="bs bc" onclick="updSt('${id}','confirmed')">✅ Confirm</button>`);
-  if(st==='confirmed')  b.push(`<button class="bs bd" onclick="showRider('${id}')">🛵 Dispatch</button>`);
-  if(st==='dispatched') b.push(`<button class="bs bv" onclick="updSt('${id}','delivered')">📦 Delivered</button>`);
+  if(st==='placed')     b.push(`<button class="bs bc" onclick="updSt('${id}','accepted')">✅ Accept</button>`);
+  if(st==='accepted')   b.push(`<button class="bs by" onclick="updSt('${id}','preparing')">🍳 Preparing</button>`);
+  if(st==='preparing')  b.push(`<button class="bs bp" onclick="updSt('${id}','picked_up')">📦 Picked Up</button>`);
+  if(st==='picked_up')  b.push(`<button class="bs bd" onclick="showDispatch('${id}')">🛵 On the Way</button>`);
+  if(st==='on_the_way') b.push(`<button class="bs bv" onclick="updSt('${id}','delivered')">📍 Delivered</button>`);
   if(!['delivered','cancelled'].includes(st)) b.push(`<button class="bs bx" onclick="updSt('${id}','cancelled')">✕</button>`);
   return b.join('')||'—';
 }
@@ -551,26 +575,29 @@ function actBtns(id,st){
 async function updSt(id,status,extra={}){
   if(!window._db){toast('Not connected.','#ef4444');return;}
   try{
-    const data={status,...extra};
-    if(status==='delivered') data.deliveryTime=new Date();
+    const now=new Date();
+    const data={status,...extra,statusHistory:window._fbArrUnion({status,time:now})};
+    if(status==='delivered') data.deliveryTime=now;
     await window._fbUpdate(window._fbDoc(window._db,'orders',id),data);
-    toast(`✅ Order marked ${status}`,'#22c55e');
+    toast(`✅ Order marked ${status.replace(/_/g,' ')}`,'#22c55e');
   }catch(e){toast('❌ '+e.message,'#ef4444');}
 }
 
-// ── RIDER MODAL ────────────────────────────────
-function showRider(id){
-  riderOrderId=id;
-  document.getElementById('rmo').classList.add('on');
+// ── DISPATCH MODAL ────────────────────────────────
+function showDispatch(id){
+  dispatchOrderId=id;
+  document.getElementById('dmo').classList.add('on');
   setTimeout(()=>document.getElementById('rnm').focus(),80);
 }
-function closeRider(){riderOrderId=null;document.getElementById('rmo').classList.remove('on');}
-async function confirmDispatch(){
+function closeDispatch(){dispatchOrderId=null;document.getElementById('dmo').classList.remove('on');}
+async function confirmOnTheWay(){
   const nm=document.getElementById('rnm').value.trim();
   const ph=document.getElementById('rph').value.trim();
+  const eta=parseInt(document.getElementById('retamin').value)||15;
   if(!nm){toast('⚠️ Enter rider name.','#f59e0b');return;}
-  const id=riderOrderId; closeRider();
-  await updSt(id,'dispatched',{riderName:nm,riderPhone:ph,dispatchTime:new Date()});
+  const id=dispatchOrderId; closeDispatch();
+  const etaTime=new Date(Date.now()+eta*60000);
+  await updSt(id,'on_the_way',{riderName:nm,riderPhone:ph,etaMinutes:eta,estimatedDeliveryTime:etaTime});
 }
 
 // ── SEARCH ─────────────────────────────────────
@@ -612,8 +639,8 @@ function doSearch(){
         <div class="dr"><span class="dl">Address</span><span class="dv">${o.address||'—'}</span></div>
         <div class="dr"><span class="dl">Rider</span><span class="dv">${o.riderName||'Not assigned'}${o.riderPhone?' · '+o.riderPhone:''}</span></div>
         <div class="dr"><span class="dl">Ordered</span><span class="dv">${fd(o.createdAt)}</span></div>
-        <div class="dr"><span class="dl">Dispatched</span><span class="dv">${o.dispatchTime?fd(o.dispatchTime):'—'}</span></div>
-        <div class="dr"><span class="dl">Delivered</span><span class="dv">${o.deliveryTime?fd(o.deliveryTime):'—'}</span></div>
+        <div class="dr"><span class="dl">ETA</span><span class="dv">${o.estimatedDeliveryTime?fd(o.estimatedDeliveryTime):'—'}</span></div>
+        <div class="dr"><span class="dl">Delivered</span><span class="dv">${o.deliveryTime?fd(o.deliveryTime)+(o.estimatedDeliveryTime&&td(o.deliveryTime)>td(o.estimatedDeliveryTime)?` <span style="color:#ef4444;font-size:10px;">⚠️ ${Math.round((td(o.deliveryTime)-td(o.estimatedDeliveryTime))/60000)}m late</span>`:''):'—'}</span></div>
         <div class="ilist" style="margin-top:12px;">${itsH}</div>
         <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;">${actBtns(o._id,o.status||'pending')}</div>
       </div>
