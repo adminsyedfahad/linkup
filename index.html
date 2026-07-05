@@ -27,7 +27,8 @@
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
   import {
     getFirestore, collection, addDoc, getDocs,
-    updateDoc, doc, onSnapshot, query, orderBy, where
+    updateDoc, doc, onSnapshot, query, orderBy, where,
+    setDoc, runTransaction
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
   import {
     getAuth, signInWithEmailAndPassword, signOut,
@@ -61,6 +62,8 @@
   window._fbQuery     = query;
   window._fbOrderBy   = orderBy;
   window._fbWhere     = where;
+  window._fbSetDoc    = setDoc;
+  window._fbTxn       = runTransaction;
   // Expose Auth
   window._auth        = auth;
   window._fbSignIn    = signInWithEmailAndPassword;
@@ -2149,6 +2152,26 @@ img[alt="LinkUp"]{
 <div id="page-checkout" class="checkout-page">
   <button class="back-page-btn" onclick="closeCart();showPage('home')">← Back to Menu</button>
   <div class="section-title">💳 Checkout</div>
+
+  <!-- CUSTOMER DETAILS -->
+  <div class="checkout-section">
+    <h3>👤 Your Details</h3>
+    <div class="form-group">
+      <label>FULL NAME <span style="color:var(--red);">*</span></label>
+      <input type="text" id="cdName" placeholder="Enter your full name" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label>PHONE NUMBER <span style="color:var(--red);">*</span></label>
+      <input type="tel" id="cdPhone" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" autocomplete="tel">
+    </div>
+    <div class="form-group">
+      <label>EMAIL</label>
+      <input type="email" id="cdEmail" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <p id="cdError" style="display:none;color:var(--red);font-size:12px;margin-top:6px;"></p>
+  </div>
+
+  <!-- DELIVERY ADDRESS -->
   <div class="checkout-section">
     <h3>📍 Delivery Address</h3>
     <div class="form-group"><label>FULL ADDRESS</label><input type="text" id="delivAddr" placeholder="House No, Street, Area..."></div>
@@ -2255,7 +2278,7 @@ img[alt="LinkUp"]{
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
-          <thead><tr><th>Order ID</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
           <tbody id="adminOrdersBody"></tbody>
         </table>
       </div>
@@ -2886,6 +2909,8 @@ function doSignup(){
   if(!name||!email){showToast('⚠️ Please fill all fields');return;}
   currentUser={name,email,role:'user'};
   localStorage.setItem('lu_session', JSON.stringify(currentUser));
+  const phone=document.getElementById('signupPhone')?.value.trim();
+  if(phone) localStorage.setItem('lu_phone', phone);
   enterApp();
 }
 
@@ -3485,6 +3510,27 @@ function goToCheckout(){
   document.getElementById('cardFields').classList.remove('show');
   document.querySelectorAll('.pay-method').forEach(m=>m.classList.remove('selected'));
   document.getElementById('pm-cod').classList.add('selected');
+
+  // Auto-fill customer details
+  const savedPhone = localStorage.getItem('lu_phone') || '';
+  const uName  = (currentUser?.name && currentUser.name !== 'Guest User') ? currentUser.name : '';
+  const uEmail = (currentUser?.email && currentUser.email !== 'guest@linkup.app') ? currentUser.email : '';
+  const nameEl = document.getElementById('cdName');
+  const phoneEl = document.getElementById('cdPhone');
+  const emailEl = document.getElementById('cdEmail');
+  if(nameEl && !nameEl.value) nameEl.value = uName;
+  if(phoneEl && !phoneEl.value) phoneEl.value = savedPhone;
+  if(emailEl && !emailEl.value) emailEl.value = uEmail;
+
+  // Auto-fill delivery address from saved addresses
+  if(savedAddresses.length){
+    const def = savedAddresses.find(a=>a.isDefault) || savedAddresses[0];
+    const parts = def.full.split(',');
+    document.getElementById('delivAddr').value = parts.slice(0,-1).join(',').trim() || def.full;
+    document.getElementById('delivCity').value = parts.slice(-1)[0]?.trim() || '';
+  }
+
+  document.getElementById('cdError').style.display='none';
   showPage('checkout');
 }
 function selectPay(type,el){
@@ -3500,7 +3546,22 @@ function selectPay(type,el){
 
 // ── ORDER ─────────────────────────────────────────
 function placeOrder(){
-  if(!cart.length)return;
+  if(!cart.length) return;
+  const name  = document.getElementById('cdName').value.trim();
+  const phone = document.getElementById('cdPhone').value.trim();
+  const errEl = document.getElementById('cdError');
+  errEl.style.display = 'none';
+  if(!name){
+    errEl.textContent = '⚠️ Please enter your full name.';
+    errEl.style.display = 'block';
+    document.getElementById('cdName').focus(); return;
+  }
+  if(!phone || !/^\d{10}$/.test(phone)){
+    errEl.textContent = '⚠️ Enter a valid 10-digit phone number.';
+    errEl.style.display = 'block';
+    document.getElementById('cdPhone').focus(); return;
+  }
+  localStorage.setItem('lu_phone', phone);
   const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
   if(selectedPayment==='razorpay'){simulateRazorpay(total);return;}
   confirmOrder('COD',total);
@@ -3513,49 +3574,76 @@ function simulateRazorpay(total){
   },2000);
 }
 async function confirmOrder(payMethod,total){
-  const now = new Date();
-  const order={
-    id:'LU'+Date.now(),
-    items:cart.map(c=>`${c.name} ×${c.qty}`),
-    total,payMethod,status:'confirmed',
-    statusLabel:payMethod.includes('COD')?'Confirmed — Pay on Delivery ✅':'Paid Online ✅',
-    time:now.toLocaleTimeString(),
-    date:now.toLocaleDateString(),
-    eta:22+Math.floor(Math.random()*10)
-  };
+  const now   = new Date();
+  const name  = document.getElementById('cdName').value.trim();
+  const phone = document.getElementById('cdPhone').value.trim();
+  const email = document.getElementById('cdEmail').value.trim() || currentUser?.email || '';
+  const addrA = document.getElementById('delivAddr').value.trim();
+  const addrB = document.getElementById('delivCity').value.trim();
+  const address = [addrA, addrB].filter(Boolean).join(', ') || savedAddresses[0]?.full || '';
 
-  // ── Save to Firestore (real-time backend) ──
+  const btn = document.getElementById('confirmOrderBtn');
+  btn.textContent = 'Placing Order...'; btn.disabled = true;
+
+  let orderId = 'LU-' + Date.now(); // fallback if Firestore unavailable
+
   if(window._fbReady && window._db){
     try{
-      const fsDoc = {
-        orderID:        order.id,
-        customerName:   currentUser?.name || 'Guest',
-        phone:          '',
-        items:          cart.map(c=>c.name),
-        itemDetails:    cart.map(c=>({name:c.name,qty:c.qty,price:c.price})),
-        qty:            cart.map(c=>c.qty),
-        amount:         total,
-        paymentMethod:  payMethod,
-        riderName:      'Rajan Kumar',
-        riderPhone:     '+91 98765 43210',
-        status:         'confirmed',
-        orderTime:      now.toISOString(),
-        dispatchTime:   null,
-        deliveryTime:   null,
-        address:        savedAddresses[0]?.full || '',
-        createdAt:      now
-      };
-      const ref = await window._fbAdd(window._fbCol(window._db,'orders'), fsDoc);
-      order.firestoreId = ref.id; // store reference for status updates
+      // ── Atomic sequential counter ──
+      const counterRef = window._fbDoc(window._db, 'counters', 'orders');
+      const orderNum   = await window._fbTxn(window._db, async (txn) => {
+        const snap    = await txn.get(counterRef);
+        const current = snap.exists() ? (snap.data().lastOrderNumber || 1000) : 1000;
+        const next    = current + 1;
+        txn.set(counterRef, { lastOrderNumber: next });
+        return next;
+      });
+      orderId = `LU-${orderNum}`;
+
+      // ── Save order doc with custom document ID ──
+      const orderRef = window._fbDoc(window._db, 'orders', orderId);
+      await window._fbSetDoc(orderRef, {
+        orderId,
+        customerName:  name,
+        phone,
+        email,
+        address,
+        items:         cart.map(c => c.name),
+        itemDetails:   cart.map(c => ({name:c.name, qty:c.qty, price:c.price})),
+        amount:        total,
+        paymentMethod: payMethod,
+        riderName:     'Rajan Kumar',
+        riderPhone:    '+91 98765 43210',
+        status:        'confirmed',
+        createdAt:     now,
+        dispatchTime:  null,
+        deliveryTime:  null
+      });
     }catch(e){ console.warn('Firestore save error:',e); }
   }
 
+  const eta = 22 + Math.floor(Math.random()*10);
+  const order = {
+    id:          orderId,
+    items:       cart.map(c=>`${c.name} ×${c.qty}`),
+    total, payMethod,
+    status:      'confirmed',
+    statusLabel: payMethod.includes('COD') ? 'Confirmed — Pay on Delivery ✅' : 'Paid Online ✅',
+    time:        now.toLocaleTimeString(),
+    date:        now.toLocaleDateString(),
+    eta,
+    customerName: name, phone, email, address
+  };
+
   orderHistory.unshift(order);
-  localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
-  cart=[];updateCartUI();
-  showPage('orders');renderOrders();
-  showToast('🎉 Order placed successfully!');
-  pushNotification('🎉 Order Confirmed!',`Your order #${order.id.slice(-6)} is being prepared. ETA: ${order.eta} min`,'✅');
+  localStorage.setItem('lu_orders', JSON.stringify(orderHistory));
+  cart=[]; updateCartUI();
+
+  btn.textContent = '🎉 Confirm & Place Order'; btn.disabled = false;
+
+  showPage('orders'); renderOrders();
+  showToast('🎉 Order placed!');
+  pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'✅');
   setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider Rajan Kumar is on the way!','🛵'),8000);
 }
 function renderOrders(){
@@ -3564,7 +3652,7 @@ function renderOrders(){
   el.innerHTML=orderHistory.map(o=>`
     <div class="order-card">
       <div class="order-header">
-        <div class="order-id">Order #${o.id.slice(-8)}</div>
+        <div class="order-id">Order ${o.id}</div>
         <div class="order-status ${o.status}">${o.statusLabel||o.status}</div>
       </div>
       ${o.items.map(i=>`<div class="order-item-text">• ${i}</div>`).join('')}
@@ -3577,7 +3665,7 @@ function renderOrders(){
 
 // ── TRACKING ──────────────────────────────────────
 function openTracking(orderId,eta){
-  document.getElementById('trackOrderId').textContent=`Order #${orderId.slice(-8)}`;
+  document.getElementById('trackOrderId').textContent=`Order ${orderId}`;
   document.getElementById('trackEta').textContent=`${eta} min`;
   renderTrackSteps();showPage('tracking');
   if(etaInterval)clearInterval(etaInterval);
@@ -3731,15 +3819,21 @@ function _renderAdminOrdersTable(orders, isFirestore){
     const items = isFirestore ? (o.itemDetails||[]).map(i=>`${i.name}×${i.qty}`) : (o.items||[]);
     return items.slice(0,2).join(', ') + (items.length>2?` +${items.length-2} more`:'');
   };
-  const getId = o => isFirestore ? (o.orderID||o.firestoreId||'').slice(-8) : (o.id||'').slice(-8);
-  const getAmt = o => isFirestore ? (o.amount||o.total||0) : (o.total||0);
-  const getPay = o => isFirestore ? (o.paymentMethod||o.payMethod||'COD') : (o.payMethod||'COD');
-  const getTime = o => isFirestore ? (o.orderTime ? new Date(o.orderTime).toLocaleTimeString() : '') : (o.time||'');
-  const getKey = o => isFirestore ? o.firestoreId : o.id;
+  const getId   = o => isFirestore ? (o.orderId||o.orderID||o.firestoreId||'') : (o.id||'');
+  const getAmt  = o => isFirestore ? (o.amount||o.total||0) : (o.total||0);
+  const getPay  = o => isFirestore ? (o.paymentMethod||o.payMethod||'COD') : (o.payMethod||'COD');
+  const getTime = o => isFirestore ? (o.createdAt?.toDate ? o.createdAt.toDate().toLocaleTimeString() : (o.orderTime ? new Date(o.orderTime).toLocaleTimeString() : '')) : (o.time||'');
+  const getKey  = o => isFirestore ? (o.firestoreId||o.orderId) : o.id;
+  const getCust = o => {
+    const nm = isFirestore ? (o.customerName||'') : (o.customerName||'');
+    const ph = isFirestore ? (o.phone||'') : (o.phone||'');
+    return `<div style="font-size:12px;font-weight:600;">${nm||'—'}</div><div style="font-size:11px;color:var(--muted);">${ph||''}</div>`;
+  };
 
   document.getElementById('adminOrdersBody').innerHTML = orders.length ? orders.map(o=>`
     <tr>
-      <td style="font-size:11px;color:var(--muted);">#${getId(o)}</td>
+      <td style="font-size:11px;color:var(--orange);font-weight:700;">${getId(o)}</td>
+      <td>${getCust(o)}</td>
       <td style="max-width:160px;font-size:12px;">${getItemsStr(o)}</td>
       <td style="font-weight:700;color:var(--orange);">₹${getAmt(o)}</td>
       <td><span style="font-size:11px;">${getPay(o)}</span></td>
