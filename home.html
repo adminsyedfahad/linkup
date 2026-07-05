@@ -21,7 +21,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-<!-- ── FIREBASE (Real-time Firestore) ── -->
+<!-- ── FIREBASE (Auth + Firestore) ── -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-analytics.js";
@@ -29,6 +29,11 @@
     getFirestore, collection, addDoc, getDocs,
     updateDoc, doc, onSnapshot, query, orderBy, where
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+  import {
+    getAuth, signInWithEmailAndPassword, signOut,
+    onAuthStateChanged, sendPasswordResetEmail,
+    updatePassword, EmailAuthProvider, reauthenticateWithCredential
+  } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
@@ -43,8 +48,9 @@
   const app  = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const db   = getFirestore(app);
+  const auth = getAuth(app);
 
-  // Expose to main (non-module) script
+  // Expose Firestore
   window._db          = db;
   window._fbCol       = collection;
   window._fbAdd       = addDoc;
@@ -55,6 +61,16 @@
   window._fbQuery     = query;
   window._fbOrderBy   = orderBy;
   window._fbWhere     = where;
+  // Expose Auth
+  window._auth        = auth;
+  window._fbSignIn    = signInWithEmailAndPassword;
+  window._fbSignOut   = signOut;
+  window._fbOnAuth    = onAuthStateChanged;
+  window._fbResetPw   = sendPasswordResetEmail;
+  window._fbUpdatePw  = updatePassword;
+  window._fbReauth    = reauthenticateWithCredential;
+  window._fbEmailCred = EmailAuthProvider.credential;
+
   window._fbReady     = true;
   window.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -2628,23 +2644,10 @@ function _setStatusBar(color){
   if(el) el.style.background = color;
 }
 function showLanding(){
-  _setStatusBar('#0b0b0f'); // deep dark for landing/splash
-  // Auto-login if session saved
-  const saved = localStorage.getItem('lu_session');
-  if (saved) {
-    try {
-      currentUser = JSON.parse(saved);
-      applyLang();
-      _initAuth();
-      enterApp();
-      return;
-    } catch(e) {
-      localStorage.removeItem('lu_session');
-    }
-  }
+  _setStatusBar('#0b0b0f');
+  // onAuthStateChanged handles session restore — just show landing
   document.getElementById('landingPage').classList.add('active');
   applyLang();
-  _initAuth();
 }
 function goToApp(){
   document.getElementById('landingPage').classList.remove('active');
@@ -2804,30 +2807,8 @@ const _EJS = {
 };
 const _EJS_ENABLED = false; // ← set to true after configuring above
 
-// ── SECURE CREDENTIAL STORE ─────────────────────────────────────────────
-// Credentials stored as base64 — never plaintext in source.
-// Secure runtime hash comparison via Web Crypto SHA-256.
-const _LU_CRED = {
-  e: 'QWRtaW5AbGlua3VwLmNvbQ==',  // Admin@linkup.com
-  p: 'QWRtaW4uTFU='                // Admin.LU
-};
-let _adminPassHash = null;
-
-async function _sha256(str) {
-  const buf = new TextEncoder().encode(str);
-  const hb = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hb)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-async function _initAuth() {
-  // Check if admin changed their password (stored in localStorage as hash)
-  const stored = localStorage.getItem('_lu_aph');
-  if (stored) {
-    _adminPassHash = stored;
-  } else {
-    _adminPassHash = await _sha256(atob(_LU_CRED.p));
-  }
-}
+// ── ADMIN EMAIL (role check only — no password stored here) ──────────────
+const _ADMIN_EMAIL = 'adminlinkup@gmail.com';
 
 // ── AUTH TAB ────────────────────────────────────────────────────────────
 function switchAuthTab(tab){
@@ -2859,29 +2840,39 @@ async function doLogin(){
     return;
   }
 
+  if (!window._auth) {
+    showLoginError('⚠️ App is still loading. Please wait a moment.');
+    return;
+  }
+
   btn.textContent = 'Signing in...';
   btn.classList.add('auth-btn-loading');
 
   try {
-    if (!_adminPassHash) await _initAuth();
-
-    const [inputEmailHash, expectedEmailHash, inputPassHash] = await Promise.all([
-      _sha256(email.toLowerCase()),
-      _sha256(atob(_LU_CRED.e).toLowerCase()),
-      _sha256(pass)
-    ]);
-
-    if (inputEmailHash === expectedEmailHash && inputPassHash === _adminPassHash) {
-      currentUser = {name: 'Admin', email: 'Admin@linkup.com', role: 'admin'};
-      localStorage.setItem('lu_session', JSON.stringify(currentUser));
-      enterApp();
-    } else {
-      showLoginError('❌ Incorrect email or password. Please try again.');
-      passEl.value = '';
-      passEl.focus();
-    }
+    const userCred = await window._fbSignIn(window._auth, email, pass);
+    const fbUser   = userCred.user;
+    const isAdmin  = fbUser.email.toLowerCase() === _ADMIN_EMAIL;
+    currentUser = {
+      name:  isAdmin ? 'Admin' : (fbUser.displayName || email.split('@')[0]),
+      email: fbUser.email,
+      role:  isAdmin ? 'admin' : 'user',
+      uid:   fbUser.uid
+    };
+    localStorage.setItem('lu_session', JSON.stringify(currentUser));
+    enterApp();
   } catch(e) {
-    showLoginError('⚠️ Something went wrong. Please try again.');
+    const c = e.code || '';
+    if(c === 'auth/invalid-credential' || c === 'auth/user-not-found' || c === 'auth/wrong-password') {
+      showLoginError('❌ Incorrect email or password. Please try again.');
+    } else if(c === 'auth/too-many-requests') {
+      showLoginError('⚠️ Too many attempts. Please try again later.');
+    } else if(c === 'auth/network-request-failed') {
+      showLoginError('⚠️ No internet connection. Please check your network.');
+    } else {
+      showLoginError('⚠️ Something went wrong. Please try again.');
+    }
+    passEl.value = '';
+    passEl.focus();
   } finally {
     btn.textContent = 'Sign In →';
     btn.classList.remove('auth-btn-loading');
@@ -2938,35 +2929,22 @@ async function fpInSendCode() {
     errEl.textContent = '⚠️ Please enter a valid email address.';
     errEl.classList.add('show'); return;
   }
-  _fpInEmail = email;
-  _fpInOtp = _generateOtp();
   const btn = document.getElementById('fpSendBtn2');
   btn.textContent = 'Sending...'; btn.classList.add('auth-btn-loading');
-  if (_EJS_ENABLED) {
-    try {
-      emailjs.init(_EJS.publicKey);
-      await emailjs.send(_EJS.serviceId, _EJS.templateId, {
-        to_email: email, otp_code: _fpInOtp, app_name: 'LinkUp'
-      });
-    } catch(e) {
-      btn.textContent = 'Send Reset Code →'; btn.classList.remove('auth-btn-loading');
-      errEl.textContent = '⚠️ Failed to send email. Try again.'; errEl.classList.add('show'); return;
+  try {
+    await window._fbResetPw(window._auth, email);
+    btn.textContent = 'Send Reset Code →'; btn.classList.remove('auth-btn-loading');
+    document.getElementById('fpInEmailDisplay').textContent = _maskEmail(email);
+    showFpState('fp-otp');
+  } catch(e) {
+    btn.textContent = 'Send Reset Code →'; btn.classList.remove('auth-btn-loading');
+    if(e.code === 'auth/user-not-found') {
+      errEl.textContent = '❌ No account found with this email.';
+    } else {
+      errEl.textContent = '⚠️ Failed to send email. Try again.';
     }
-  } else {
-    // EmailJS not configured — show code visibly on screen so user can still use the feature
-    const devBox = document.getElementById('fpDevCodeBox');
-    const devCodeEl = document.getElementById('fpDevCode');
-    if(devBox) devBox.style.display = 'block';
-    if(devCodeEl) devCodeEl.textContent = _fpInOtp;
+    errEl.classList.add('show');
   }
-  btn.textContent = 'Send Reset Code →'; btn.classList.remove('auth-btn-loading');
-  document.getElementById('fpInEmailDisplay').textContent = _maskEmail(email);
-  for(let i=0;i<6;i++){const inp=document.getElementById('fpIn_otp'+i);if(inp){inp.value='';inp.classList.remove('filled');}}
-  document.getElementById('fpInResendBtn').style.display = 'none';
-  document.getElementById('fpErr2').classList.remove('show');
-  showFpState('fp-otp');
-  _fpInStartTimer();
-  setTimeout(()=>document.getElementById('fpIn_otp0')?.focus(),300);
 }
 
 function _fpInStartTimer() {
@@ -3067,29 +3045,11 @@ function fpInCheckMatch() {
   else{lbl.textContent='❌ Passwords do not match';lbl.style.color='var(--red)';}
 }
 
-async function fpInConfirm() {
-  const newPw = document.getElementById('fpInNewPw')?.value||'';
-  const confirmPw = document.getElementById('fpInConfirmPw')?.value||'';
-  const errEl = document.getElementById('fpErr3');
-  errEl.classList.remove('show');
-  if(!newPw||newPw.length<6){errEl.textContent='Password must be at least 6 characters.';errEl.classList.add('show');return;}
-  if(newPw!==confirmPw){errEl.textContent='❌ Passwords do not match.';errEl.classList.add('show');return;}
-  const btn = document.getElementById('fpConfirmBtn');
-  btn.textContent='Setting up...'; btn.classList.add('auth-btn-loading');
-  try {
-    const newHash = await _sha256(newPw);
-    _adminPassHash = newHash;
-    localStorage.setItem('_lu_aph', newHash);
-    currentUser = {name:'Admin', email:'Admin@linkup.com', role:'admin'};
-    localStorage.setItem('lu_session', JSON.stringify(currentUser));
-    btn.textContent='🔑 Confirm & Sign In →'; btn.classList.remove('auth-btn-loading');
-    showFpState('login');
-    enterApp();
-    showToast('🎉 Password reset! Welcome back, Admin!');
-  } catch(e) {
-    errEl.textContent='⚠️ Something went wrong. Please try again.';errEl.classList.add('show');
-    btn.textContent='🔑 Confirm & Sign In →'; btn.classList.remove('auth-btn-loading');
-  }
+function fpInConfirm() {
+  // Firebase password reset is handled via the reset link sent to email.
+  // This step just returns user to login.
+  showFpState('login');
+  showToast('📧 Check your email to complete password reset.');
 }
 
 // ── FORGOT PASSWORD (OLD MODAL — kept for compatibility) ──────────────────
@@ -3160,61 +3120,32 @@ async function fpSendCode() {
   const errEl = document.getElementById('fpErr1');
   errEl.classList.remove('show');
 
-  if (!emailVal) { errEl.textContent = 'Please enter your email address.'; errEl.classList.add('show'); return; }
-
-  // Verify email matches admin account
-  const inputHash = await _sha256(emailVal);
-  const expectedHash = await _sha256(atob(_LU_CRED.e).toLowerCase());
-  if (inputHash !== expectedHash) {
-    errEl.textContent = '❌ No account found with this email address.';
-    errEl.classList.add('show');
-    return;
+  if (!emailVal || !emailVal.includes('@')) {
+    errEl.textContent = 'Please enter a valid email address.';
+    errEl.classList.add('show'); return;
   }
 
   const btn = document.getElementById('fpSendBtn');
   btn.textContent = 'Sending...';
   btn.classList.add('auth-btn-loading');
 
-  _fpOtp = _generateOtp();
-  _fpTargetEmail = atob(_LU_CRED.e);
-
-  // Send via EmailJS if configured, otherwise show in notification (dev mode)
-  if (_EJS_ENABLED) {
-    try {
-      emailjs.init(_EJS.publicKey);
-      await emailjs.send(_EJS.serviceId, _EJS.templateId, {
-        to_email: _fpTargetEmail,
-        otp_code: _fpOtp,
-        app_name: 'LinkUp'
-      });
-    } catch(e) {
-      _fpOtp = null;
-      btn.textContent = 'Send Reset Code →';
-      btn.classList.remove('auth-btn-loading');
+  try {
+    await window._fbResetPw(window._auth, emailVal);
+    btn.textContent = 'Send Reset Code →';
+    btn.classList.remove('auth-btn-loading');
+    // Show success step — Firebase sent the reset link
+    _fpSetStep(2);
+    document.getElementById('fpMaskedEmail').textContent = _maskEmail(emailVal);
+  } catch(e) {
+    btn.textContent = 'Send Reset Code →';
+    btn.classList.remove('auth-btn-loading');
+    if (e.code === 'auth/user-not-found') {
+      errEl.textContent = '❌ No account found with this email address.';
+    } else {
       errEl.textContent = '⚠️ Failed to send email. Please try again.';
-      errEl.classList.add('show');
-      return;
     }
-  } else {
-    // Dev mode: show OTP in notification panel
-    pushNotification('🔐 Dev Mode — OTP Code', 'Your reset code is: ' + _fpOtp + ' (EmailJS not configured)', '🔑');
-    showToast('📨 OTP shown in notifications (dev mode)');
+    errEl.classList.add('show');
   }
-
-  btn.textContent = 'Send Reset Code →';
-  btn.classList.remove('auth-btn-loading');
-
-  // Clear OTP inputs
-  for (let i = 0; i < 6; i++) {
-    const el = document.getElementById('otp'+i);
-    if (el) { el.value = ''; el.classList.remove('filled'); }
-  }
-  document.getElementById('fpMaskedEmail').textContent = _maskEmail(_fpTargetEmail);
-  document.getElementById('fpErr2').classList.remove('show');
-  document.getElementById('fpResendMsg').classList.remove('show');
-  _fpSetStep(2);
-  _startFpTimer();
-  setTimeout(() => document.getElementById('otp0').focus(), 300);
 }
 
 // OTP input auto-advance
@@ -3353,19 +3284,10 @@ async function fpResetPassword() {
   btn.textContent = 'Updating...';
   btn.classList.add('auth-btn-loading');
 
-  try {
-    const newHash = await _sha256(newPass);
-    _adminPassHash = newHash;
-    localStorage.setItem('_lu_aph', newHash);
-    btn.textContent = 'Update Password →';
-    btn.classList.remove('auth-btn-loading');
-    _fpSetStep(4);
-  } catch(e) {
-    errEl.textContent = '⚠️ Something went wrong. Please try again.';
-    errEl.classList.add('show');
-    btn.textContent = 'Update Password →';
-    btn.classList.remove('auth-btn-loading');
-  }
+  // Firebase handles password reset via email link — just show success step
+  btn.textContent = 'Update Password →';
+  btn.classList.remove('auth-btn-loading');
+  _fpSetStep(4);
 }
 function enterApp(){
   document.getElementById('authPage').classList.remove('active');
@@ -3384,13 +3306,57 @@ function enterApp(){
   pushNotification('👋 Welcome back!',`Hey ${currentUser.name}, ready to order something delicious?`,'🍔');
   if(localStorage.getItem('lu_theme')==='light'){document.body.classList.add('light-theme');document.getElementById('themeToggle').checked=true;}
 }
-function doLogout(){
-  currentUser=null;cart=[];notifications=[];
+async function doLogout(){
+  try { if(window._auth) await window._fbSignOut(window._auth); } catch(e){}
+  currentUser = null; cart = []; notifications = [];
   localStorage.removeItem('lu_session');
-  document.getElementById('mainApp').style.display='none';
+  if(_adminOrdersUnsub){ _adminOrdersUnsub(); _adminOrdersUnsub = null; }
+  document.getElementById('mainApp').style.display = 'none';
   document.getElementById('authPage').classList.add('active');
   showToast('👋 Signed out!');
 }
+
+// ── FIREBASE AUTH STATE OBSERVER ──────────────────
+// Fires on page load and whenever sign-in / sign-out happens.
+// This is the single source of truth for session restore.
+function _setupAuthObserver() {
+  if (!window._fbOnAuth || !window._auth) return;
+  window._fbOnAuth(window._auth, (fbUser) => {
+    if (fbUser) {
+      // Signed in — build currentUser from Firebase token
+      const isAdmin = fbUser.email.toLowerCase() === _ADMIN_EMAIL;
+      const restored = {
+        name:  isAdmin ? 'Admin' : (fbUser.displayName || fbUser.email.split('@')[0]),
+        email: fbUser.email,
+        role:  isAdmin ? 'admin' : 'user',
+        uid:   fbUser.uid
+      };
+      if (!currentUser) {
+        // Page reload with active Firebase session
+        currentUser = restored;
+        localStorage.setItem('lu_session', JSON.stringify(currentUser));
+        // Hide landing/auth, show app
+        document.getElementById('landingPage')?.classList.remove('active');
+        document.getElementById('authPage')?.classList.remove('active');
+        applyLang();
+        enterApp();
+      }
+    } else {
+      // Signed out — clear everything if app was showing
+      if (currentUser) {
+        currentUser = null;
+        localStorage.removeItem('lu_session');
+        if (_adminOrdersUnsub) { _adminOrdersUnsub(); _adminOrdersUnsub = null; }
+        document.getElementById('mainApp').style.display = 'none';
+        document.getElementById('authPage')?.classList.add('active');
+      }
+    }
+  });
+}
+// Wire up as soon as Firebase is ready (module fires this event)
+window.addEventListener('firebaseReady', _setupAuthObserver);
+// Fallback if event already fired before this listener registered
+if (window._fbReady) _setupAuthObserver();
 
 // ── THEME ─────────────────────────────────────────
 function toggleTheme(){
@@ -4307,17 +4273,12 @@ async function saveChangePassword() {
   btn.textContent = 'Saving...'; btn.classList.add('auth-btn-loading');
 
   try {
-    if (!_adminPassHash) await _initAuth();
-    const currentHash = await _sha256(current);
-    if (currentHash !== _adminPassHash) {
-      errEl.textContent = '❌ Current password is incorrect.'; errEl.classList.add('show');
-      btn.textContent = 'Save Password'; btn.classList.remove('auth-btn-loading'); return;
-    }
-    const newHash = await _sha256(newPw);
-    _adminPassHash = newHash;
-    localStorage.setItem('_lu_aph', newHash);
-    // Update saved session too
-    if (currentUser) localStorage.setItem('lu_session', JSON.stringify(currentUser));
+    const fbUser = window._auth?.currentUser;
+    if (!fbUser) { errEl.textContent = '⚠️ Not signed in. Please log in again.'; errEl.classList.add('show'); btn.textContent='Save Password'; btn.classList.remove('auth-btn-loading'); return; }
+    // Re-authenticate with current password before updating
+    const cred = window._fbEmailCred(fbUser.email, current);
+    await window._fbReauth(fbUser, cred);
+    await window._fbUpdatePw(fbUser, newPw);
     btn.textContent = 'Save Password'; btn.classList.remove('auth-btn-loading');
     sucEl.textContent = '✅ Password updated successfully!'; sucEl.classList.add('show');
     document.getElementById('cpCurrent').value = '';
@@ -4328,8 +4289,13 @@ async function saveChangePassword() {
     document.getElementById('cpMatchLabel').textContent = '';
     setTimeout(() => { sucEl.classList.remove('show'); closePsheet('changepw'); showToast('🔑 Password changed!'); }, 1800);
   } catch(e) {
-    errEl.textContent = '⚠️ Something went wrong. Please try again.'; errEl.classList.add('show');
     btn.textContent = 'Save Password'; btn.classList.remove('auth-btn-loading');
+    if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+      errEl.textContent = '❌ Current password is incorrect.';
+    } else {
+      errEl.textContent = '⚠️ Something went wrong. Please try again.';
+    }
+    errEl.classList.add('show');
   }
 }
 
