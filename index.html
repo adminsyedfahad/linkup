@@ -71,13 +71,16 @@ body.light-theme{
   --bg:#f4f4f8;--surface:#fff;--card:#fff;--border:#e0e0e8;
   --text:#1a1a2e;--muted:#666;--input-bg:#f0f0f5;--orange-glow:rgba(255,140,0,0.15);
 }
+html{
+  height:-webkit-fill-available;
+}
 body{
   font-family:'Poppins','Segoe UI',sans-serif;
   background:var(--bg);
   color:var(--text);
   min-height:100vh;
-  /* Push body content below the status bar so bg fills notch area */
-  padding-top:env(safe-area-inset-top, 0px);
+  min-height:-webkit-fill-available;
+  min-height:100dvh;
   padding-bottom:calc(70px + env(safe-area-inset-bottom, 0px));
   transition:background 0.3s,color 0.3s;
 }
@@ -542,7 +545,7 @@ body{
 .modal-add-btn{flex:2;padding:12px;background:var(--orange);color:#000;font-weight:800;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-family:'Poppins',sans-serif;}
 
 /* AUTH */
-.auth-page{display:none;min-height:100vh;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px));background:var(--bg);}
+.auth-page{display:none;min-height:100vh;min-height:100dvh;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px));background:var(--bg);}
 .auth-page.active{display:flex;}
 .auth-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 30px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
 .auth-logo{font-family:'Righteous',cursive;font-size:36px;color:var(--orange);text-align:center;margin-bottom:4px;letter-spacing:2px;text-shadow:0 0 20px var(--orange-glow);}
