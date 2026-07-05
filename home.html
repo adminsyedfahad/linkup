@@ -2805,6 +2805,11 @@ const TRACK_STEP_META=[
 ];
 let trackingUnsub=null;
 
+function genToken(len=24){
+  const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({length:len},()=>c[Math.floor(Math.random()*c.length)]).join('');
+}
+
 let cart=[];
 let modalItem=null;
 let currentUser=null;
@@ -3594,6 +3599,7 @@ async function confirmOrder(payMethod,total){
   btn.textContent = 'Placing Order...'; btn.disabled = true;
 
   let orderId = 'LU-' + Date.now(); // fallback if Firestore unavailable
+  const trackingToken = genToken(24);
 
   if(window._fbReady && window._db){
     try{
@@ -3612,6 +3618,7 @@ async function confirmOrder(payMethod,total){
       const orderRef = window._fbDoc(window._db, 'orders', orderId);
       await window._fbSetDoc(orderRef, {
         orderId,
+        trackingToken,
         customerName:  name,
         phone,
         email,
@@ -3632,13 +3639,14 @@ async function confirmOrder(payMethod,total){
 
   const eta = 22 + Math.floor(Math.random()*10);
   const order = {
-    id:          orderId,
-    items:       cart.map(c=>`${c.name} ×${c.qty}`),
+    id:           orderId,
+    trackingToken,
+    items:        cart.map(c=>`${c.name} ×${c.qty}`),
     total, payMethod,
-    status:      'placed',
-    statusLabel: payMethod.includes('COD') ? 'Order Placed — Pay on Delivery 🧾' : 'Paid Online ✅',
-    time:        now.toLocaleTimeString(),
-    date:        now.toLocaleDateString(),
+    status:       'placed',
+    statusLabel:  payMethod.includes('COD') ? 'Order Placed — Pay on Delivery 🧾' : 'Paid Online ✅',
+    time:         now.toLocaleTimeString(),
+    date:         now.toLocaleDateString(),
     eta,
     customerName: name, phone, email, address
   };
@@ -3667,27 +3675,34 @@ function renderOrders(){
       <div class="order-total">Total: ₹${o.total}</div>
       <span class="order-pay-badge ${o.payMethod&&o.payMethod.includes('COD')?'cod':'online'}">${o.payMethod||'COD'}</span>
       <div style="font-size:11px;color:var(--muted);margin-top:4px;">${o.date||''} ${o.time}</div>
-      <button class="track-order-btn" onclick="openTracking('${o.id}',${o.eta||24})">🗺️ Track Order</button>
+      <button class="track-order-btn" onclick="openTracking('${o.id}',${o.eta||24},'${o.trackingToken||''}')">🗺️ Track Order</button>
     </div>`).join('');
 }
 
 // ── TRACKING ──────────────────────────────────────
-function openTracking(orderId,eta){
+function openTracking(orderId,eta,token){
   document.getElementById('trackOrderId').textContent=`Order ${orderId}`;
   document.getElementById('trackEta').textContent=`${eta} min`;
   showPage('tracking');
   if(etaInterval)clearInterval(etaInterval);
   if(trackingUnsub){trackingUnsub();trackingUnsub=null;}
 
-  if(window._fbReady && window._db){
-    const ref=window._fbDoc(window._db,'orders',orderId);
-    trackingUnsub=window._fbSnap(ref,snap=>{
-      if(snap.exists()){
-        renderTrackingFromOrder({_id:snap.id,...snap.data()});
+  if(window._fbReady && window._db && token){
+    // LIST query: where('orderId','==',X) AND where('trackingToken','==',token)
+    // Server only returns the doc if BOTH fields match — no token = no data
+    const q=window._fbQuery(
+      window._fbCol(window._db,'orders'),
+      window._fbWhere('orderId','==',orderId),
+      window._fbWhere('trackingToken','==',token)
+    );
+    trackingUnsub=window._fbSnap(q,snap=>{
+      if(!snap.empty){
+        const d=snap.docs[0];
+        renderTrackingFromOrder({_id:d.id,...d.data()});
       }
     });
   } else {
-    // offline fallback
+    // fallback: no token or offline — show static placed state
     renderTrackingFromOrder({_id:orderId,status:'placed',orderType:'food'});
     let e=eta;
     etaInterval=setInterval(()=>{
