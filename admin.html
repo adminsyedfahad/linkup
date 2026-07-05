@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkUp Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+const cfg = {
+  apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
+  authDomain:"food-app-linkup.firebaseapp.com",
+  projectId:"food-app-linkup",
+  storageBucket:"food-app-linkup.firebasestorage.app",
+  messagingSenderId:"957073867036",
+  appId:"1:957073867036:web:9ae4e4f2fd728d71777ad9"
+};
+const app=initializeApp(cfg), db=getFirestore(app), auth=getAuth(app);
+window._db=db; window._auth=auth;
+window._fbSignIn=signInWithEmailAndPassword;
+window._fbSignOut=signOut; window._fbOnAuth=onAuthStateChanged;
+window._fbSnap=onSnapshot; window._fbQuery=query;
+window._fbOrderBy=orderBy; window._fbCol=collection;
+window._fbDoc=doc; window._fbUpdate=updateDoc;
+window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size:14px;}
+:root{
+  --orange:#ff8c00;--odim:rgba(255,140,0,0.12);
+  --bg:#0b0b0f;--surface:#13131a;--card:#1a1a26;--border:#222235;
+  --text:#e8e8f0;--muted:#888899;
+  --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--yellow:#f59e0b;
+  --sw:230px;
+}
+
+/* LOGIN */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,0.07) 0%,transparent 60%),#0b0b0f;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px 36px;width:380px;max-width:calc(100vw - 32px);}
+.login-logo{font-family:'Righteous',cursive;font-size:32px;color:var(--orange);letter-spacing:3px;text-align:center;margin-bottom:4px;}
+.login-sub{text-align:center;font-size:11px;color:var(--muted);margin-bottom:32px;letter-spacing:2px;text-transform:uppercase;}
+.ff{margin-bottom:16px;}
+.ff label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.ff input{width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.ff input:focus{border-color:var(--orange);}
+.login-btn{width:100%;padding:13px;background:var(--orange);color:#000;font-family:'Poppins',sans-serif;font-size:15px;font-weight:800;border:none;border-radius:10px;cursor:pointer;margin-top:8px;transition:opacity .2s;}
+.login-btn:hover{opacity:.88;}
+.login-btn:disabled{opacity:.5;cursor:not-allowed;}
+.login-err{display:none;margin-top:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 12px;font-size:13px;color:#ef4444;text-align:center;}
+.login-err.show{display:block;}
+
+/* LAYOUT */
+#app{display:none;height:100vh;overflow:hidden;grid-template-columns:var(--sw) 1fr;}
+#app.on{display:grid;}
+
+/* SIDEBAR */
+.sb{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+.sb-logo-txt{font-family:'Righteous',cursive;font-size:22px;color:var(--orange);letter-spacing:2px;}
+.sb-logo-sub{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.sb-nav{padding:14px 10px;flex:1;}
+.ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;transition:all .15s;margin-bottom:3px;position:relative;}
+.ni:hover{background:rgba(255,140,0,.07);color:var(--text);}
+.ni.active{background:var(--odim);color:var(--orange);}
+.ni .ico{font-size:15px;flex-shrink:0;width:20px;text-align:center;}
+.ni-badge{margin-left:auto;background:var(--orange);color:#000;font-size:10px;font-weight:800;padding:1px 7px;border-radius:10px;display:none;}
+.ni-badge.on{display:block;}
+.sb-bot{padding:10px;border-top:1px solid var(--border);}
+.sb-info{padding:8px 12px 2px;font-size:11px;color:var(--muted);}
+.logout-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;width:100%;background:none;border:none;font-family:'Poppins',sans-serif;transition:all .15s;}
+.logout-btn:hover{background:rgba(239,68,68,.1);color:var(--red);}
+
+/* MAIN */
+.main{overflow-y:auto;background:var(--bg);height:100vh;display:flex;flex-direction:column;}
+.mh{padding:18px 26px;display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;z-index:10;}
+.mh h1{font-size:19px;font-weight:800;}
+.mh-right{display:flex;align-items:center;gap:12px;}
+.live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+.live-lbl{font-size:11px;color:var(--muted);}
+.exp-btn{padding:7px 14px;background:var(--odim);color:var(--orange);border:1px solid rgba(255,140,0,.25);border-radius:8px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;transition:all .15s;}
+.exp-btn:hover{background:rgba(255,140,0,.2);}
+
+/* SECTIONS */
+.sec{display:none;padding:22px 26px;flex:1;}
+.sec.on{display:block;}
+
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:13px;margin-bottom:22px;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:17px 15px;}
+.sc.hl{border-color:rgba(255,140,0,.28);background:linear-gradient(135deg,rgba(255,140,0,.07),var(--card));}
+.sc-lbl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;}
+.sc-val{font-size:24px;font-weight:800;line-height:1;}
+.sc.hl .sc-val{color:var(--orange);}
+.sc-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* FILTERS */
+.fr{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.fsel{padding:7px 11px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:12px;cursor:pointer;outline:none;min-width:110px;}
+.fsel:focus{border-color:var(--orange);}
+.fcnt{font-size:12px;color:var(--muted);margin-left:auto;}
+
+/* TABLE */
+.tw{overflow-x:auto;border-radius:12px;border:1px solid var(--border);}
+.ot{width:100%;border-collapse:collapse;font-size:12px;}
+.ot thead{background:var(--card);}
+.ot th{padding:11px 13px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border);}
+.ot td{padding:11px 13px;border-bottom:1px solid rgba(34,34,53,.5);vertical-align:middle;}
+.ot tr:last-child td{border-bottom:none;}
+.ot tr:hover td{background:rgba(255,255,255,.015);}
+.ot tr.new-flash{animation:nf 1.6s ease;}
+@keyframes nf{0%{background:rgba(255,140,0,.12);}100%{background:transparent;}}
+.oid{font-weight:700;color:var(--orange);font-size:12px;}
+.cname{font-weight:600;font-size:12px;}
+.cphone{font-size:11px;color:var(--muted);}
+.iline{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.amt{font-weight:700;color:var(--orange);}
+
+/* BADGES */
+.bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.bdg.pending{background:rgba(245,158,11,.14);color:#f59e0b;}
+.bdg.confirmed{background:rgba(34,197,94,.14);color:#22c55e;}
+.bdg.dispatched{background:rgba(59,130,246,.14);color:#3b82f6;}
+.bdg.delivered{background:rgba(107,114,128,.14);color:#9ca3af;}
+.bdg.cancelled{background:rgba(239,68,68,.12);color:#ef4444;}
+
+/* ACTION BUTTONS */
+.ac{display:flex;gap:4px;flex-wrap:wrap;}
+.bs{padding:4px 9px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;font-family:'Poppins',sans-serif;transition:opacity .15s;white-space:nowrap;}
+.bs:hover{opacity:.75;}
+.bc{background:rgba(34,197,94,.14);color:#22c55e;}
+.bd{background:rgba(59,130,246,.14);color:#3b82f6;}
+.bv{background:rgba(255,140,0,.14);color:var(--orange);}
+.bx{background:rgba(239,68,68,.1);color:#ef4444;}
+
+/* SEARCH */
+.sir{display:flex;gap:10px;margin-bottom:22px;}
+.si{flex:1;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:14px;outline:none;}
+.si:focus{border-color:var(--orange);}
+.si::placeholder{color:var(--muted);}
+.sbtn{padding:12px 20px;background:var(--orange);color:#000;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:800;cursor:pointer;}
+.sbtn:hover{opacity:.88;}
+.sra{display:none;}
+.sra.on{display:block;}
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.odc,.cpc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.odc h3,.cpc h3{font-size:12px;font-weight:700;color:var(--orange);margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px;}
+.dr{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;align-items:flex-start;}
+.dl{font-size:11px;color:var(--muted);font-weight:600;flex-shrink:0;}
+.dv{font-size:12px;color:var(--text);text-align:right;word-break:break-word;}
+.dv.org{color:var(--orange);font-weight:700;}
+.ilist .il{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(34,34,53,.5);font-size:12px;}
+.ilist .il:last-child{border-bottom:none;}
+.cav{width:44px;height:44px;background:var(--odim);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--orange);margin-bottom:12px;}
+.csr{display:flex;gap:10px;margin:12px 0;}
+.css2{flex:1;text-align:center;background:var(--bg);border-radius:8px;padding:9px 5px;}
+.csv2{font-size:17px;font-weight:800;}
+.csl{font-size:10px;color:var(--muted);margin-top:2px;}
+.oml{margin-top:10px;max-height:190px;overflow-y:auto;}
+.omi{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(34,34,53,.5);font-size:11px;}
+.omi:last-child{border-bottom:none;}
+.omid{color:var(--orange);font-weight:700;flex-shrink:0;}
+.omdt{color:var(--muted);flex:1;}
+.omamt{font-weight:700;}
+
+/* EMPTY */
+.es{text-align:center;padding:56px 20px;color:var(--muted);}
+.es .ei{font-size:44px;margin-bottom:12px;}
+
+/* RIDER MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);align-items:center;justify-content:center;z-index:1000;}
+.mo.on{display:flex;}
+.mb{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:380px;max-width:calc(100vw - 32px);}
+.mb h3{font-size:16px;font-weight:800;margin-bottom:18px;}
+.mf{margin-bottom:14px;}
+.mf label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.mf input{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;}
+.mf input:focus{border-color:var(--orange);}
+.mbtns{display:flex;gap:10px;margin-top:18px;}
+.mok{flex:1;padding:11px;background:var(--orange);color:#000;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:800;cursor:pointer;}
+.mcl{padding:11px 16px;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:8px;font-family:'Poppins',sans-serif;font-size:13px;cursor:pointer;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;font-weight:600;z-index:2000;opacity:0;transform:translateY(6px);transition:all .28s;pointer-events:none;max-width:300px;}
+.toast.on{opacity:1;transform:translateY(0);}
+
+/* MOBILE */
+@media(max-width:768px){
+  :root{--sw:0px;}
+  #app.on{grid-template-columns:1fr;}
+  .sb{display:none;}
+  .mtb{display:flex!important;}
+  .mh{padding:10px 14px;}
+  .sec{padding:12px 14px;}
+  .sg{grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px;}
+  .sc-val{font-size:20px;}
+  .fr{gap:6px;}
+  .rg{grid-template-columns:1fr;}
+}
+.mtb{display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;align-items:center;gap:8px;}
+.mtb-logo{font-family:'Righteous',cursive;font-size:19px;color:var(--orange);flex:1;}
+.mnb{padding:6px 11px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;}
+.mnb.active{background:var(--odim);color:var(--orange);}
+.snf{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">LINKUP</div>
+    <div class="login-sub">Admin Dashboard</div>
+    <div class="ff">
+      <label>Email</label>
+      <input type="email" id="le" placeholder="admin email" autocomplete="email">
+    </div>
+    <div class="ff">
+      <label>Password</label>
+      <input type="password" id="lp" placeholder="password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" id="lbtn" onclick="doLogin()">Sign In →</button>
+    <div class="login-err" id="lerr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- Mobile top bar -->
+  <div class="mtb">
+    <div class="mtb-logo">LINKUP</div>
+    <button class="mnb active" id="mnd" onclick="showSec('dashboard')">📊 Dashboard</button>
+    <button class="mnb" id="mns" onclick="showSec('search')">🔍 Search</button>
+    <button class="mnb" onclick="doLogout()">⏻ Out</button>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sb">
+    <div class="sb-logo">
+      <div class="sb-logo-txt">LINKUP</div>
+      <div class="sb-logo-sub">Admin Dashboard</div>
+    </div>
+    <div class="sb-nav">
+      <div class="ni active" id="nd" onclick="showSec('dashboard')">
+        <span class="ico">📊</span> Dashboard
+        <span class="ni-badge" id="nob">0</span>
+      </div>
+      <div class="ni" id="ns" onclick="showSec('search')">
+        <span class="ico">🔍</span> Order Search
+      </div>
+    </div>
+    <div class="sb-info" id="ainf">Signed in as admin</div>
+    <div class="sb-bot">
+      <button class="logout-btn" onclick="doLogout()"><span class="ico">⏻</span> Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="mh">
+      <h1 id="mtitle">Dashboard</h1>
+      <div class="mh-right">
+        <div class="live-dot" id="ldot" style="display:none;"></div>
+        <span class="live-lbl" id="llbl" style="display:none;">Live</span>
+        <button class="exp-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="sec on" id="sec-dashboard">
+      <div class="sg" id="sg"></div>
+      <div class="fr">
+        <select class="fsel" id="fst" onchange="afr()">
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="dispatched">Dispatched</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select class="fsel" id="fdt" onchange="afr()">
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="week">Last 7 Days</option>
+          <option value="month">This Month</option>
+          <option value="all">All Time</option>
+        </select>
+        <select class="fsel" id="fpy" onchange="afr()">
+          <option value="all">All Payment</option>
+          <option value="cod">COD</option>
+          <option value="online">Online</option>
+        </select>
+        <span class="fcnt" id="fcnt"></span>
+      </div>
+      <div class="tw">
+        <table class="ot">
+          <thead>
+            <tr>
+              <th>Order ID</th><th>Customer</th><th>Phone</th>
+              <th>Items</th><th>Total</th><th>Payment</th>
+              <th>Status</th><th>Time</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="otb"></tbody>
+        </table>
+      </div>
+      <div class="es" id="te" style="display:none;"><div class="ei">📦</div><p>No orders match the selected filters.</p></div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="sec" id="sec-search">
+      <div class="sir">
+        <input class="si" id="sq" placeholder="Order ID (LU-1001), customer name, or phone number…"
+               onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="sbtn" onclick="doSearch()">Search</button>
+      </div>
+      <div class="sra" id="sra"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RIDER MODAL -->
+<div class="mo" id="rmo">
+  <div class="mb">
+    <h3>🛵 Assign Rider & Dispatch</h3>
+    <div class="mf"><label>Rider Name</label><input type="text" id="rnm" value="Rajan Kumar"></div>
+    <div class="mf"><label>Rider Phone</label><input type="tel" id="rph" value="+91 98765 43210"></div>
+    <div class="mbtns">
+      <button class="mcl" onclick="closeRider()">Cancel</button>
+      <button class="mok" onclick="confirmDispatch()">Confirm Dispatch →</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────
+let allOrders=[], isInit=true, unsub=null, riderOrderId=null, newCnt=0;
+const ADMIN='adminlinkup@gmail.com';
+
+// ── HELPERS ────────────────────────────────────
+function td(ts){
+  if(!ts) return null;
+  if(ts.toDate) return ts.toDate();
+  if(ts instanceof Date) return ts;
+  if(ts.seconds) return new Date(ts.seconds*1000);
+  return new Date(ts);
+}
+function fd(ts){
+  const d=td(ts); if(!d) return '—';
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+
+         d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function fds(ts){
+  const d=td(ts); if(!d) return '—';
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'2-digit'});
+}
+function sod(d){const s=new Date(d);s.setHours(0,0,0,0);return s;}
+function isToday(ts){const d=td(ts);return d&&d>=sod(new Date());}
+function isYest(ts){const d=td(ts);if(!d)return false;const y=new Date();y.setDate(y.getDate()-1);return d>=sod(y)&&d<sod(new Date());}
+function isWeek(ts){const d=td(ts);if(!d)return false;const w=new Date();w.setDate(w.getDate()-6);w.setHours(0,0,0,0);return d>=w;}
+function isMon(ts){const d=td(ts);if(!d)return false;const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}
+
+function toast(msg,col){
+  const e=document.getElementById('tst');
+  e.textContent=msg; e.style.borderLeft='3px solid '+(col||'var(--orange)');
+  e.classList.add('on'); clearTimeout(window._tt);
+  window._tt=setTimeout(()=>e.classList.remove('on'),3200);
+}
+
+function beep(){
+  try{
+    const c=new(window.AudioContext||window.webkitAudioContext)();
+    [523,659,784].forEach((f,i)=>{
+      const o=c.createOscillator(),g=c.createGain();
+      o.connect(g);g.connect(c.destination);
+      o.frequency.value=f;o.type='sine';
+      const t=c.currentTime+i*.13;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(.14,t+.03);
+      g.gain.linearRampToValueAtTime(0,t+.17);
+      o.start(t);o.stop(t+.17);
+    });
+  }catch(e){}
+}
+
+// ── AUTH ───────────────────────────────────────
+function showLogin(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('app').classList.remove('on');
+}
+function showApp(email){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').classList.add('on');
+  document.getElementById('ainf').textContent=email||'Admin';
+  startListener();
+}
+
+async function doLogin(){
+  const email=document.getElementById('le').value.trim();
+  const pass=document.getElementById('lp').value;
+  const btn=document.getElementById('lbtn');
+  const err=document.getElementById('lerr');
+  err.classList.remove('show');
+  if(!email||!pass){err.textContent='⚠️ Enter email and password.';err.classList.add('show');return;}
+  if(!window._auth){err.textContent='⚠️ App loading…';err.classList.add('show');return;}
+  btn.textContent='Signing in…';btn.disabled=true;
+  try{
+    const cred=await window._fbSignIn(window._auth,email,pass);
+    if(cred.user.email.toLowerCase()!==ADMIN){
+      await window._fbSignOut(window._auth);
+      err.textContent='❌ Access denied. Admin only.';err.classList.add('show');
+    }
+  }catch(e){
+    const c=e.code||'';
+    err.textContent=c.includes('invalid-credential')||c.includes('wrong-password')||c.includes('user-not-found')
+      ?'❌ Incorrect email or password.'
+      :c.includes('too-many')
+      ?'⚠️ Too many attempts. Try later.'
+      :'⚠️ '+(e.message||'Something went wrong.');
+    err.classList.add('show');
+  }finally{btn.textContent='Sign In →';btn.disabled=false;}
+}
+
+async function doLogout(){
+  if(unsub){unsub();unsub=null;}
+  try{await window._fbSignOut(window._auth);}catch(e){}
+  allOrders=[];isInit=true;newCnt=0;showLogin();
+}
+
+function setupAuth(){
+  if(!window._fbOnAuth||!window._auth) return;
+  window._fbOnAuth(window._auth,user=>{
+    if(user&&user.email.toLowerCase()===ADMIN) showApp(user.email);
+    else{ if(user) window._fbSignOut(window._auth); showLogin(); }
+  });
+}
+window.addEventListener('firebaseReady',setupAuth);
+if(window._fbReady) setupAuth();
+
+// ── LISTENER ───────────────────────────────────
+function startListener(){
+  if(unsub) unsub();
+  if(!window._db) return;
+  isInit=true;
+  const q=window._fbQuery(window._fbCol(window._db,'orders'),window._fbOrderBy('createdAt','desc'));
+  unsub=window._fbSnap(q,snap=>{
+    allOrders=snap.docs.map(d=>({_id:d.id,...d.data()}));
+    if(isInit){ isInit=false; }
+    else{
+      const added=snap.docChanges().filter(c=>c.type==='added');
+      if(added.length){
+        newCnt+=added.length;
+        updBadge();beep();
+        toast(`🔔 ${added.length} new order${added.length>1?'s':''} received!`);
+      }
+    }
+    document.getElementById('ldot').style.display='block';
+    document.getElementById('llbl').style.display='block';
+    renderStats(); afr();
+  },err=>console.warn('Listener error:',err));
+}
+
+function updBadge(){
+  const b=document.getElementById('nob');
+  if(newCnt>0){b.textContent=newCnt;b.classList.add('on');document.title=`(${newCnt}) LinkUp Admin`;}
+  else{b.classList.remove('on');document.title='LinkUp Admin';}
+}
+
+// ── STATS ──────────────────────────────────────
+function renderStats(){
+  const tod=allOrders.filter(o=>isToday(o.createdAt));
+  const wk=allOrders.filter(o=>isWeek(o.createdAt));
+  const tRev=tod.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.amount||0),0);
+  const wRev=wk.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.amount||0),0);
+  const act=allOrders.filter(o=>['pending','confirmed','dispatched'].includes(o.status)).length;
+  const phones=new Set(allOrders.map(o=>o.phone).filter(Boolean));
+  document.getElementById('sg').innerHTML=`
+    <div class="sc hl"><div class="sc-lbl">Today's Orders</div><div class="sc-val">${tod.length}</div><div class="sc-sub">₹${tRev.toLocaleString('en-IN')} revenue</div></div>
+    <div class="sc hl"><div class="sc-lbl">Today's Revenue</div><div class="sc-val">₹${tRev.toLocaleString('en-IN')}</div><div class="sc-sub">${tod.filter(o=>o.status!=='cancelled').length} completed</div></div>
+    <div class="sc"><div class="sc-lbl">Active Orders</div><div class="sc-val" style="color:var(--yellow);">${act}</div><div class="sc-sub">pending/confirmed/dispatched</div></div>
+    <div class="sc"><div class="sc-lbl">Total Customers</div><div class="sc-val">${phones.size}</div><div class="sc-sub">unique phone numbers</div></div>
+    <div class="sc"><div class="sc-lbl">Week Orders</div><div class="sc-val">${wk.length}</div><div class="sc-sub">last 7 days</div></div>
+    <div class="sc"><div class="sc-lbl">Week Revenue</div><div class="sc-val">₹${wRev.toLocaleString('en-IN')}</div><div class="sc-sub">excl. cancelled</div></div>`;
+}
+
+// ── FILTERS + TABLE ────────────────────────────
+function getFiltered(){
+  const st=document.getElementById('fst').value;
+  const dt=document.getElementById('fdt').value;
+  const py=document.getElementById('fpy').value;
+  return allOrders.filter(o=>{
+    if(st!=='all'&&o.status!==st) return false;
+    if(dt==='today'&&!isToday(o.createdAt)) return false;
+    if(dt==='yesterday'&&!isYest(o.createdAt)) return false;
+    if(dt==='week'&&!isWeek(o.createdAt)) return false;
+    if(dt==='month'&&!isMon(o.createdAt)) return false;
+    if(py==='cod'&&!(o.paymentMethod||'').toLowerCase().includes('cod')) return false;
+    if(py==='online'&&(o.paymentMethod||'').toLowerCase().includes('cod')) return false;
+    return true;
+  });
+}
+
+function afr(){
+  const orders=getFiltered();
+  document.getElementById('fcnt').textContent=orders.length+' order'+(orders.length!==1?'s':'');
+  renderTable(orders);
+}
+
+function renderTable(orders){
+  const tb=document.getElementById('otb');
+  const em=document.getElementById('te');
+  if(!orders.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=orders.map(o=>{
+    const its=(o.itemDetails||[]).map(i=>`${i.name}×${i.qty}`).join(', ')||(o.items||[]).join(', ')||'—';
+    const sh=its.length>45?its.slice(0,45)+'…':its;
+    const st=o.status||'pending';
+    return `<tr data-id="${o._id}">
+      <td class="oid">${o.orderId||o._id}</td>
+      <td><div class="cname">${o.customerName||'—'}</div><div class="cphone">${o.email||''}</div></td>
+      <td style="font-size:11px;color:var(--muted);">${o.phone||'—'}</td>
+      <td><div class="iline" title="${its}">${sh}</div></td>
+      <td class="amt">₹${(o.amount||0).toLocaleString('en-IN')}</td>
+      <td style="font-size:11px;">${o.paymentMethod||'—'}</td>
+      <td><span class="bdg ${st}">${st}</span></td>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap;">${fd(o.createdAt)}</td>
+      <td class="ac">${actBtns(o._id,st)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function actBtns(id,st){
+  const b=[];
+  if(st==='pending')    b.push(`<button class="bs bc" onclick="updSt('${id}','confirmed')">✅ Confirm</button>`);
+  if(st==='confirmed')  b.push(`<button class="bs bd" onclick="showRider('${id}')">🛵 Dispatch</button>`);
+  if(st==='dispatched') b.push(`<button class="bs bv" onclick="updSt('${id}','delivered')">📦 Delivered</button>`);
+  if(!['delivered','cancelled'].includes(st)) b.push(`<button class="bs bx" onclick="updSt('${id}','cancelled')">✕</button>`);
+  return b.join('')||'—';
+}
+
+// ── STATUS UPDATE ──────────────────────────────
+async function updSt(id,status,extra={}){
+  if(!window._db){toast('Not connected.','#ef4444');return;}
+  try{
+    const data={status,...extra};
+    if(status==='delivered') data.deliveryTime=new Date();
+    await window._fbUpdate(window._fbDoc(window._db,'orders',id),data);
+    toast(`✅ Order marked ${status}`,'#22c55e');
+  }catch(e){toast('❌ '+e.message,'#ef4444');}
+}
+
+// ── RIDER MODAL ────────────────────────────────
+function showRider(id){
+  riderOrderId=id;
+  document.getElementById('rmo').classList.add('on');
+  setTimeout(()=>document.getElementById('rnm').focus(),80);
+}
+function closeRider(){riderOrderId=null;document.getElementById('rmo').classList.remove('on');}
+async function confirmDispatch(){
+  const nm=document.getElementById('rnm').value.trim();
+  const ph=document.getElementById('rph').value.trim();
+  if(!nm){toast('⚠️ Enter rider name.','#f59e0b');return;}
+  const id=riderOrderId; closeRider();
+  await updSt(id,'dispatched',{riderName:nm,riderPhone:ph,dispatchTime:new Date()});
+}
+
+// ── SEARCH ─────────────────────────────────────
+function doSearch(){
+  const q=document.getElementById('sq').value.trim().toLowerCase();
+  const ra=document.getElementById('sra');
+  ra.classList.add('on');
+  if(!q){ra.innerHTML='<p style="color:var(--muted);">Enter a search term.</p>';return;}
+  const hits=allOrders.filter(o=>
+    (o.orderId||'').toLowerCase().includes(q)||
+    (o._id||'').toLowerCase().includes(q)||
+    (o.customerName||'').toLowerCase().includes(q)||
+    (o.phone||'').replace(/\s/g,'').includes(q.replace(/\s/g,''))
+  );
+  if(!hits.length){ra.innerHTML=`<div class="snf">❌ No orders found for "<strong>${q}</strong>"</div>`;return;}
+  const o=hits[0];
+  const cOrds=o.phone?allOrders.filter(x=>x.phone===o.phone):[o];
+  const spent=cOrds.filter(x=>x.status!=='cancelled').reduce((s,x)=>s+(x.amount||0),0);
+  const canc=cOrds.filter(x=>x.status==='cancelled').length;
+  const itsH=(o.itemDetails||[]).map(i=>`<div class="il"><span>${i.name} ×${i.qty}</span><span style="color:var(--orange);">₹${(i.price*i.qty).toLocaleString('en-IN')}</span></div>`).join('')
+             ||(o.items||[]).map(i=>`<div class="il"><span>${i}</span></div>`).join('');
+  const cOrdH=cOrds.slice(0,12).map(x=>`
+    <div class="omi">
+      <span class="omid">${x.orderId||x._id}</span>
+      <span class="omdt">${fds(x.createdAt)}</span>
+      <span class="omamt">₹${(x.amount||0).toLocaleString('en-IN')}</span>
+      <span class="bdg ${x.status||'pending'}" style="font-size:9px;">${x.status||'pending'}</span>
+    </div>`).join('');
+  const ini=(o.customerName||'?').charAt(0).toUpperCase();
+  ra.innerHTML=`
+    ${hits.length>1?`<p style="font-size:12px;color:var(--muted);margin-bottom:12px;">${hits.length} orders found — showing most recent.</p>`:''}
+    <div class="rg">
+      <div class="odc">
+        <h3>📦 Order Details</h3>
+        <div class="dr"><span class="dl">Order ID</span><span class="dv org">${o.orderId||o._id}</span></div>
+        <div class="dr"><span class="dl">Status</span><span class="dv"><span class="bdg ${o.status||'pending'}">${o.status||'pending'}</span></span></div>
+        <div class="dr"><span class="dl">Total</span><span class="dv org">₹${(o.amount||0).toLocaleString('en-IN')}</span></div>
+        <div class="dr"><span class="dl">Payment</span><span class="dv">${o.paymentMethod||'—'}</span></div>
+        <div class="dr"><span class="dl">Address</span><span class="dv">${o.address||'—'}</span></div>
+        <div class="dr"><span class="dl">Rider</span><span class="dv">${o.riderName||'Not assigned'}${o.riderPhone?' · '+o.riderPhone:''}</span></div>
+        <div class="dr"><span class="dl">Ordered</span><span class="dv">${fd(o.createdAt)}</span></div>
+        <div class="dr"><span class="dl">Dispatched</span><span class="dv">${o.dispatchTime?fd(o.dispatchTime):'—'}</span></div>
+        <div class="dr"><span class="dl">Delivered</span><span class="dv">${o.deliveryTime?fd(o.deliveryTime):'—'}</span></div>
+        <div class="ilist" style="margin-top:12px;">${itsH}</div>
+        <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;">${actBtns(o._id,o.status||'pending')}</div>
+      </div>
+      <div class="cpc">
+        <h3>👤 Customer</h3>
+        <div class="cav">${ini}</div>
+        <div class="dr"><span class="dl">Name</span><span class="dv">${o.customerName||'—'}</span></div>
+        <div class="dr"><span class="dl">Phone</span><span class="dv">${o.phone||'—'}</span></div>
+        <div class="dr"><span class="dl">Email</span><span class="dv">${o.email||'—'}</span></div>
+        <div class="csr">
+          <div class="css2"><div class="csv2">${cOrds.length}</div><div class="csl">Orders</div></div>
+          <div class="css2"><div class="csv2">${canc}</div><div class="csl">Cancelled</div></div>
+          <div class="css2"><div class="csv2">₹${spent.toLocaleString('en-IN')}</div><div class="csl">Spent</div></div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Order History</div>
+        <div class="oml">${cOrdH}</div>
+      </div>
+    </div>`;
+}
+
+// ── SECTION NAV ────────────────────────────────
+function showSec(name){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.getElementById('sec-'+name).classList.add('on');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById(name==='dashboard'?'nd':'ns').classList.add('active');
+  document.getElementById('mnd').classList.toggle('active',name==='dashboard');
+  document.getElementById('mns').classList.toggle('active',name==='search');
+  document.getElementById('mtitle').textContent=name==='dashboard'?'Dashboard':'Order Search';
+  if(name==='dashboard'){newCnt=0;updBadge();}
+}
+
+// ── CSV EXPORT ─────────────────────────────────
+function exportCSV(){
+  const orders=getFiltered();
+  if(!orders.length){toast('No orders to export.','#f59e0b');return;}
+  const hdr=['OrderID','Customer','Phone','Email','Items','Qty','Amount','Payment','Status','OrderTime','DispatchTime','DeliveryTime'];
+  const rows=orders.map(o=>{
+    const its=(o.itemDetails||[]).map(i=>i.name).join('|')||(o.items||[]).join('|');
+    const qty=(o.itemDetails||[]).map(i=>i.qty).join('|')||'';
+    return [o.orderId||o._id,o.customerName||'',o.phone||'',o.email||'',
+      `"${its.replace(/"/g,'""')}"`,`"${qty}"`,
+      o.amount||0,o.paymentMethod||'',o.status||'',
+      fd(o.createdAt),o.dispatchTime?fd(o.dispatchTime):'',o.deliveryTime?fd(o.deliveryTime):''].join(',');
+  });
+  const csv=[hdr.join(','),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`linkup-orders-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast(`⬇ ${orders.length} orders exported`,'#22c55e');
+}
+</script>
+</body>
+</html>
