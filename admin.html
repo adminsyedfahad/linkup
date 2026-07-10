@@ -29,7 +29,7 @@ window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;}
-body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size:14px;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
 :root{
   --orange:#ff8c00;--odim:rgba(255,140,0,0.12);
   --bg:#0b0b0f;--surface:#13131a;--card:#1a1a26;--border:#222235;
@@ -142,7 +142,7 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
 .bdg.dispatched{background:rgba(59,130,246,.14);color:#3b82f6;}
 
 /* ACTION BUTTONS */
-.ac{display:flex;gap:4px;flex-wrap:wrap;}
+.ac{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap;width:1%;}
 .bs{padding:4px 9px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;font-family:'Poppins',sans-serif;transition:opacity .15s;white-space:nowrap;}
 .bs:hover{opacity:.75;}
 .bc{background:rgba(34,197,94,.14);color:#22c55e;}
@@ -391,7 +391,7 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
           <thead>
             <tr>
               <th>Order</th><th>Customer</th><th>Items</th>
-              <th>Amount</th><th>Status</th><th>Actions</th>
+              <th>Amount</th><th>Status</th><th>Dispatch</th><th>Delivery</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="otb"></tbody>
@@ -724,6 +724,7 @@ function renderStats(){
   const wRev=wk.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.amount||0),0);
   const act=allOrders.filter(o=>['placed','accepted','preparing','picked_up','on_the_way','pending','confirmed','dispatched'].includes(o.status)).length;
   const phones=new Set(allOrders.map(o=>o.phone).filter(Boolean));
+  const wCompleted=wk.filter(o=>o.status==='delivered').length;
   document.getElementById('sg').innerHTML=`
     <div class="sc hl" onclick="filterStat('today')" title="Show today's orders">
       <div class="sc-lbl">Today's Orders</div><div class="sc-val">${tod.length}</div>
@@ -734,15 +735,14 @@ function renderStats(){
     <div class="sc" onclick="filterStat('active')" title="Show active orders">
       <div class="sc-lbl">Active Orders</div><div class="sc-val" style="color:var(--yellow);">${act}</div>
       <div class="sc-sub">in progress</div></div>
-    <div class="sc" onclick="filterStat('customers')" title="Show all orders by unique customers">
-      <div class="sc-lbl">Total Customers</div><div class="sc-val">${phones.size}</div>
-      <div class="sc-sub">unique phone numbers</div></div>
+    <div class="sc" onclick="filterStat('customers')" title="Show all customer orders">
+      <div class="sc-lbl">Total Customers</div><div class="sc-val">${phones.size}</div></div>
     <div class="sc" onclick="filterStat('week')" title="Show last 7 days orders">
       <div class="sc-lbl">Week Orders</div><div class="sc-val">${wk.length}</div>
       <div class="sc-sub">last 7 days</div></div>
-    <div class="sc" onclick="filterStat('week-rev')" title="Show week's delivered orders">
-      <div class="sc-lbl">Week Revenue</div><div class="sc-val">₹${wRev.toLocaleString('en-IN')}</div>
-      <div class="sc-sub">excl. cancelled</div></div>`;
+    <div class="sc" onclick="filterStat('week-completed')" title="Show week's completed orders">
+      <div class="sc-lbl">Orders Completed</div><div class="sc-val" style="color:var(--green);">${wCompleted}</div>
+      <div class="sc-sub">this week delivered</div></div>`;
 }
 
 // ── FILTERS + TABLE ────────────────────────────
@@ -794,12 +794,17 @@ function renderTable(orders){
     const st=o.status||'pending';
     const totalQty=(o.itemDetails||[]).reduce((s,i)=>s+(i.qty||0),0)||(o.items||[]).length||'';
     const timeStr=fd(o.createdAt);
+    const dispAt=o.dispatchedAt||o.dispatchTime||null;
+    const delAt=o.deliveredAt||o.deliveryTime||null;
+    const dur=dispDur(dispAt,delAt);
     return `<tr data-id="${o._id}" onclick="openOrderDetail('${o._id}')">
       <td><div class="oid">${o.orderId||o._id}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">${timeStr}</div></td>
       <td><div class="cname">${o.customerName||'—'}</div><div class="cphone">${o.phone||''}</div></td>
       <td><div class="iline" title="${its}">${sh}</div>${totalQty?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">${totalQty} item${totalQty>1?'s':''}</div>`:''}</td>
       <td class="amt">₹${(o.amount||0).toLocaleString('en-IN')}</td>
       <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span></td>
+      <td class="tcol">${fmtTime12(dispAt)}</td>
+      <td class="tcol">${fmtTime12(delAt)}${dur?`<div class="tdur">${dur}</div>`:''}</td>
       <td class="ac" onclick="event.stopPropagation()">${actBtns(o._id,st)}</td>
     </tr>`;
   }).join('');
@@ -933,7 +938,7 @@ function filterStat(key){
   event.currentTarget.classList.add('stat-active');
   if(key==='today'||key==='today-rev'){ fdt.value='today'; fst.value=key==='today-rev'?'delivered':'all'; }
   else if(key==='active'){ fdt.value='all'; fst.value='all'; }
-  else if(key==='week'||key==='week-rev'){ fdt.value='week'; fst.value=key==='week-rev'?'delivered':'all'; }
+  else if(key==='week'||key==='week-completed'){ fdt.value='week'; fst.value=key==='week-completed'?'delivered':'all'; }
   else if(key==='customers'){ fdt.value='all'; fst.value='all'; }
   afr();
   document.getElementById('sec-dashboard').scrollTop=200;
