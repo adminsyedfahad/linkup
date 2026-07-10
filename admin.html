@@ -448,6 +448,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         <h3>💸 Issue Refund</h3>
         <input type="hidden" id="refOrderId">
         <input type="hidden" id="refPhone">
+        <input type="hidden" id="refWalletToken">
 
         <div class="ref-field">
           <label class="ref-lbl">Refund Type</label>
@@ -912,9 +913,10 @@ async function updSt(id,status,extra={}){
     if(status==='delivered'){
       data.deliveredAt=now; data.deliveryTime=now;
       // Credit 5 LinkUp Points to customer wallet on delivery
+      // Uses walletToken (24-char secret from order doc) — same path-based security as orderTracking
       const delOrder=allOrders.find(o=>o._id===id);
-      if(delOrder?.phone){
-        const wref=window._fbDoc(window._db,'wallets',delOrder.phone);
+      if(delOrder?.walletToken){
+        const wref=window._fbDoc(window._db,'wallets',delOrder.walletToken);
         window._fbGetDoc(wref).then(ws=>{
           const cur=ws.exists()?(ws.data().balance||0):0;
           const ptxn={type:'earned',amount:5,orderId:id,date:now,note:'Delivered order reward'};
@@ -1170,6 +1172,7 @@ function doRefundSearch(){
   </div>`;
   document.getElementById('refOrderId').value=o.orderId||o._id;
   document.getElementById('refPhone').value=o.phone||'';
+  document.getElementById('refWalletToken').value=o.walletToken||'';
   document.getElementById('refAmt').value=o.amount||'';
   form.style.display='block';
 }
@@ -1184,42 +1187,45 @@ function toggleCustomerMsg(){
 async function submitRefund(){
   const orderId=document.getElementById('refOrderId').value;
   const phone=document.getElementById('refPhone').value;
+  const wtoken=document.getElementById('refWalletToken').value;
   const type=document.getElementById('refType').value;
   const amt=parseFloat(document.getElementById('refAmt').value);
   const note=document.getElementById('refNote').value.trim();
   const showToCustomer=document.getElementById('refShowToCustomer').checked;
   const customerMsg=document.getElementById('refCustomerMsg').value.trim();
-  if(!orderId||!phone){toast('⚠️ No order selected.','#f59e0b');return;}
+  if(!orderId){toast('⚠️ No order selected.','#f59e0b');return;}
   if(!amt||amt<=0){toast('⚠️ Enter a valid refund amount.','#f59e0b');return;}
   if(type==='bank'&&!document.getElementById('refUpi').value.trim()){toast('⚠️ Enter UPI ID or bank details.','#f59e0b');return;}
   if(showToCustomer&&!customerMsg){toast('⚠️ Enter a message for the customer.','#f59e0b');return;}
+  if(type==='wallet'&&!wtoken){toast('⚠️ This order has no wallet token — customer may have used an older version. Use Bank/UPI refund instead.','#f59e0b');return;}
   try{
     if(type==='wallet'){
-      const wref=window._fbDoc(window._db,'wallets',phone);
+      // wallets/{walletToken} — path-based security, no customer auth needed
+      const wref=window._fbDoc(window._db,'wallets',wtoken);
       const ws=await window._fbGetDoc(wref);
       const cur=ws.exists()?(ws.data().balance||0):0;
       const txn={type:'refund',amount:amt,orderId,date:new Date(),note:note||'Refund from LinkUp'};
       await window._fbSetDoc(wref,{balance:cur+amt,transactions:window._fbArrUnion(txn)},{merge:true});
-      toast(`✅ ₹${amt} credited to ${phone}'s wallet!`,'#22c55e');
+      toast(`✅ ₹${amt} refunded to customer wallet!`,'#22c55e');
     } else {
       const bref=window._fbDoc(window._db,'refunds',orderId+'_'+Date.now());
       await window._fbSetDoc(bref,{
-        orderId,phone,amount:amt,type:'bank',
+        orderId,phone,walletToken:wtoken,amount:amt,type:'bank',
         upiDetails:document.getElementById('refUpi').value.trim(),
         note,status:'pending manual transfer',createdAt:new Date()
       });
       toast('📋 Bank refund recorded — pending manual transfer.','#3b82f6');
     }
-    if(showToCustomer&&customerMsg&&phone){
-      const nref=window._fbDoc(window._db,'notifications',phone);
-      await window._fbSetDoc(nref,{messages:window._fbArrUnion({text:customerMsg,orderId,date:new Date(),read:false,type:'refund_message'})},{merge:true});
+    if(showToCustomer&&customerMsg&&wtoken){
+      // notifications/{walletToken} — path-based security, customer reads by token
+      const nref=window._fbDoc(window._db,'notifications',wtoken);
+      await window._fbSetDoc(nref,{messages:window._fbArrUnion({text:customerMsg,orderId,date:new Date(),type:'refund_message'})},{merge:true});
       toast('📬 Message sent to customer.','#3b82f6');
     }
     await window._fbUpdate(window._fbDoc(window._db,'orders',orderId),{
       refundStatus:type==='wallet'?'refunded_to_wallet':'pending_bank_transfer',
       refundAmount:amt,refundNote:note,refundedAt:new Date()
     });
-    // Reset form
     document.getElementById('refSq').value='';
     document.getElementById('refResult').innerHTML='';
     document.getElementById('refForm').style.display='none';

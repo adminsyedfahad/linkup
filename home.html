@@ -2953,6 +2953,18 @@ let walletTxns=[];
 let _pendingPayMethod=null;
 let _pendingPayTotal=0;
 let _adminNotifsUnsub=null;
+// One 24-char secret token per device — used as doc ID for wallets/ and notifications/
+// Mirrors the orderTracking/{token} security model: path IS the secret, no Firebase auth needed
+const walletToken=(()=>{
+  let t=localStorage.getItem('lu_wallet_token');
+  if(!t){
+    const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const buf=new Uint8Array(24);crypto.getRandomValues(buf);
+    t=Array.from(buf,b=>chars[b%chars.length]).join('');
+    localStorage.setItem('lu_wallet_token',t);
+  }
+  return t;
+})();
 
 // ── PROFILE DATA ──────────────────────────────────────────────
 let favorites=JSON.parse(localStorage.getItem('lu_favs')||'[]');
@@ -3478,8 +3490,8 @@ function enterApp(){
   applyLang(); // sync language display in profile
   pushNotification('👋 Welcome back!',`Hey ${currentUser.name}, ready to order something delicious?`,'🍔');
   if(localStorage.getItem('lu_theme')==='light'){document.body.classList.add('light-theme');document.getElementById('themeToggle').checked=true;}
-  const ph=localStorage.getItem('lu_phone')||currentUser.phone||'';
-  if(ph){ loadWallet(ph); loadAdminNotifications(ph); }
+  loadWallet();
+  loadAdminNotifications();
   loadOffers();
 }
 async function doLogout(){
@@ -3673,8 +3685,7 @@ function goToCheckout(){
   else btn.textContent='⚡ Pay & Place Order';
 
   // Load wallet and update wallet pay desc
-  const phone=document.getElementById('cdPhone')?.value.trim()||currentUser?.phone||'';
-  loadWallet(phone).then(()=>refreshWalletPayDesc(total));
+  loadWallet().then(()=>refreshWalletPayDesc(total));
 
   // Auto-fill customer details
   const savedPhone = localStorage.getItem('lu_phone') || '';
@@ -3849,6 +3860,7 @@ async function confirmOrder(payMethod,total,pointsUsed=0){
       await window._fbSetDoc(orderRef, {
         orderId,
         trackingToken,
+        walletToken,   // admin uses this to credit wallet on delivery
         customerName:  name,
         phone,
         email,
@@ -3901,17 +3913,17 @@ async function confirmOrder(payMethod,total,pointsUsed=0){
   orderHistory.unshift(order);
   localStorage.setItem('lu_orders', JSON.stringify(orderHistory));
 
-  // Spend wallet points if used
-  if(pointsUsed>0&&phone){
+  // Spend wallet points if used — write to wallets/{walletToken} (path-based security)
+  if(pointsUsed>0){
     const txn={type:'spent',amount:pointsUsed,orderId,date:now,note:'Used at checkout'};
     walletBalance=Math.max(0,walletBalance-pointsUsed);
     walletTxns.push(txn);
     const badge=document.getElementById('walletBadge');
     if(badge) badge.textContent=`₹${walletBalance}`;
     if(window._fbReady&&window._db){
-      window._fbGetDoc(window._fbDoc(window._db,'wallets',phone)).then(ws=>{
+      window._fbGetDoc(window._fbDoc(window._db,'wallets',walletToken)).then(ws=>{
         const cur=ws.exists()?(ws.data().balance||0):0;
-        window._fbSetDoc(window._fbDoc(window._db,'wallets',phone),{balance:Math.max(0,cur-pointsUsed),transactions:window._fbArrUnion(txn)},{merge:true}).catch(()=>{});
+        window._fbSetDoc(window._fbDoc(window._db,'wallets',walletToken),{balance:Math.max(0,cur-pointsUsed),transactions:window._fbArrUnion(txn)},{merge:true}).catch(()=>{});
       }).catch(()=>{});
     }
   }
@@ -3941,10 +3953,11 @@ function renderOrders(){
 }
 
 // ── WALLET ────────────────────────────────────────
-async function loadWallet(phone){
-  if(!window._fbReady||!window._db||!phone) return;
+// wallets/{walletToken}: path-based security — token is 24-char secret, allow get:true allow list:false
+async function loadWallet(){
+  if(!window._fbReady||!window._db) return;
   try{
-    const snap=await window._fbGetDoc(window._fbDoc(window._db,'wallets',phone));
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'wallets',walletToken));
     if(snap.exists()){walletBalance=snap.data().balance||0; walletTxns=snap.data().transactions||[];}
     else{walletBalance=0; walletTxns=[];}
   } catch(e){ walletBalance=0; walletTxns=[]; }
@@ -4009,18 +4022,19 @@ async function loadOffers(){
 }
 
 // ── ADMIN NOTIFICATIONS ───────────────────────────
-function loadAdminNotifications(phone){
-  if(!window._fbReady||!window._db||!phone) return;
+// notifications/{walletToken}: path-based security, no customer write needed
+// "seen" count tracked in localStorage so no Firestore write required from customer side
+function loadAdminNotifications(){
+  if(!window._fbReady||!window._db) return;
   if(_adminNotifsUnsub){_adminNotifsUnsub();_adminNotifsUnsub=null;}
-  const ref=window._fbDoc(window._db,'notifications',phone);
+  const ref=window._fbDoc(window._db,'notifications',walletToken);
   _adminNotifsUnsub=window._fbSnap(ref,snap=>{
     if(!snap.exists()) return;
-    const msgs=(snap.data().messages||[]).filter(m=>!m.read);
-    msgs.forEach(m=>pushNotification('📬 Message from LinkUp',m.text||'','📬'));
-    if(msgs.length){
-      const allRead=(snap.data().messages||[]).map(m=>({...m,read:true}));
-      window._fbUpdate(ref,{messages:allRead}).catch(()=>{});
-    }
+    const msgs=snap.data().messages||[];
+    const seen=parseInt(localStorage.getItem('lu_notif_seen')||'0');
+    const fresh=msgs.slice(seen);
+    fresh.forEach(m=>pushNotification('📬 Message from LinkUp',m.text||'','📬'));
+    if(fresh.length) localStorage.setItem('lu_notif_seen',String(msgs.length));
   });
 }
 
