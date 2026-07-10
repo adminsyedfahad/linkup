@@ -120,6 +120,13 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
 .cphone{font-size:11px;color:var(--muted);}
 .iline{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .amt{font-weight:700;color:var(--orange);}
+.qbdg{display:inline-block;min-width:20px;text-align:center;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--border);font-size:11px;font-weight:700;cursor:default;}
+.pku{display:inline-block;padding:2px 7px;border-radius:12px;font-size:10px;font-weight:700;white-space:nowrap;}
+.pku-y{background:rgba(234,179,8,.14);color:#eab308;}
+.pku-o{background:rgba(255,140,0,.14);color:#ff8c00;}
+.pku-g{background:rgba(34,197,94,.14);color:#22c55e;}
+.tcol{font-size:11px;white-space:nowrap;}
+.tdur{font-size:10px;color:var(--muted);margin-top:2px;}
 
 /* BADGES */
 .bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
@@ -315,8 +322,9 @@ body{font-family:'Poppins',sans-serif;background:#0b0b0f;color:#e8e8f0;font-size
           <thead>
             <tr>
               <th>Order ID</th><th>Customer</th><th>Phone</th>
-              <th>Items</th><th>Total</th><th>Payment</th>
-              <th>Status</th><th>Time</th><th>Actions</th>
+              <th>Items</th><th>QTY</th><th>Total</th><th>Payment</th>
+              <th>Status</th><th>Pickup</th><th>Time</th>
+              <th>Dispatch</th><th>Delivery</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="otb"></tbody>
@@ -537,6 +545,21 @@ function afr(){
   renderTable(orders);
 }
 
+function pickupStatus(st){
+  if(st==='accepted') return {l:'Pending for Pickup',c:'pku-y'};
+  if(['preparing','picking'].includes(st)) return {l:'Picking in Progress',c:'pku-o'};
+  if(['picked_up','on_the_way','delivered'].includes(st)) return {l:'Picked',c:'pku-g'};
+  return null;
+}
+function fmtTime12(ts){
+  const d=td(ts); if(!d) return '—';
+  return d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}).toUpperCase();
+}
+function dispDur(dispAt,delAt){
+  const d1=td(dispAt),d2=td(delAt); if(!d1||!d2) return '';
+  const m=Math.round((d2-d1)/60000); return m>0?`${m} min`:'';
+}
+
 function renderTable(orders){
   const tb=document.getElementById('otb');
   const em=document.getElementById('te');
@@ -546,15 +569,25 @@ function renderTable(orders){
     const its=(o.itemDetails||[]).map(i=>`${i.name}×${i.qty}`).join(', ')||(o.items||[]).join(', ')||'—';
     const sh=its.length>45?its.slice(0,45)+'…':its;
     const st=o.status||'pending';
+    const totalQty=(o.itemDetails||[]).reduce((s,i)=>s+(i.qty||0),0)||(o.items||[]).length||0;
+    const qtyTip=(o.itemDetails||[]).map(i=>`${i.name} x${i.qty}`).join(', ')||(o.items||[]).join(', ')||'';
+    const pk=pickupStatus(st);
+    const dispAt=o.dispatchedAt||o.dispatchTime||null;
+    const delAt=o.deliveredAt||o.deliveryTime||null;
+    const dur=dispDur(dispAt,delAt);
     return `<tr data-id="${o._id}">
       <td class="oid">${o.orderId||o._id}</td>
       <td><div class="cname">${o.customerName||'—'}</div><div class="cphone">${o.email||''}</div></td>
       <td style="font-size:11px;color:var(--muted);">${o.phone||'—'}</td>
       <td><div class="iline" title="${its}">${sh}</div></td>
+      <td><span class="qbdg" title="${qtyTip}">${totalQty||'—'}</span></td>
       <td class="amt">₹${(o.amount||0).toLocaleString('en-IN')}</td>
       <td style="font-size:11px;">${o.paymentMethod||'—'}</td>
       <td><span class="bdg ${st}">${st}</span></td>
+      <td>${pk?`<span class="pku ${pk.c}">${pk.l}</span>`:'—'}</td>
       <td style="font-size:11px;color:var(--muted);white-space:nowrap;">${fd(o.createdAt)}</td>
+      <td class="tcol">${fmtTime12(dispAt)}</td>
+      <td class="tcol">${fmtTime12(delAt)}${dur?`<div class="tdur">${dur}</div>`:''}</td>
       <td class="ac">${actBtns(o._id,st)}</td>
     </tr>`;
   }).join('');
@@ -578,7 +611,10 @@ async function updSt(id,status,extra={}){
     const now=new Date();
     const histEntry={status,time:now};
     const data={status,...extra,statusHistory:window._fbArrUnion(histEntry)};
-    if(status==='delivered') data.deliveryTime=now;
+    // Per-status timestamp stored in a map for future queries
+    data[`statusTimestamps.${status}`]=now;
+    if(status==='on_the_way') data.dispatchedAt=now;
+    if(status==='delivered'){data.deliveredAt=now; data.deliveryTime=now;}
 
     // Update full order doc (admin)
     await window._fbUpdate(window._fbDoc(window._db,'orders',id),data);
@@ -586,12 +622,13 @@ async function updSt(id,status,extra={}){
     // Mirror tracking-relevant fields to orderTracking/{token} (no sensitive data)
     const order=allOrders.find(o=>o._id===id);
     if(order?.trackingToken){
-      const td={status,statusHistory:window._fbArrUnion(histEntry)};
+      const tdata={status,statusHistory:window._fbArrUnion(histEntry)};
       ['riderName','riderPhone','etaMinutes','estimatedDeliveryTime'].forEach(f=>{
-        if(f in extra) td[f]=extra[f];
+        if(f in extra) tdata[f]=extra[f];
       });
-      if(status==='delivered') td.deliveryTime=now;
-      await window._fbUpdate(window._fbDoc(window._db,'orderTracking',order.trackingToken),td);
+      if(status==='on_the_way') tdata.dispatchedAt=now;
+      if(status==='delivered'){tdata.deliveredAt=now; tdata.deliveryTime=now;}
+      await window._fbUpdate(window._fbDoc(window._db,'orderTracking',order.trackingToken),tdata);
     }
 
     toast(`✅ Order marked ${status.replace(/_/g,' ')}`,'#22c55e');
@@ -692,14 +729,23 @@ function showSec(name){
 function exportCSV(){
   const orders=getFiltered();
   if(!orders.length){toast('No orders to export.','#f59e0b');return;}
-  const hdr=['OrderID','Customer','Phone','Email','Items','Qty','Amount','Payment','Status','OrderTime','DispatchTime','DeliveryTime'];
+  const hdr=['OrderID','Customer','Phone','Email','Items','ItemQtys','TotalQty','Amount','Payment','Status','PickupStatus','OrderTime','DispatchTime','DeliveryTime','DeliveryDuration'];
   const rows=orders.map(o=>{
     const its=(o.itemDetails||[]).map(i=>i.name).join('|')||(o.items||[]).join('|');
     const qty=(o.itemDetails||[]).map(i=>i.qty).join('|')||'';
+    const totalQty=(o.itemDetails||[]).reduce((s,i)=>s+(i.qty||0),0)||(o.items||[]).length||0;
+    const pk=pickupStatus(o.status||'');
+    const dispAt=o.dispatchedAt||o.dispatchTime||null;
+    const delAt=o.deliveredAt||o.deliveryTime||null;
+    const dur=dispDur(dispAt,delAt);
     return [o.orderId||o._id,o.customerName||'',o.phone||'',o.email||'',
-      `"${its.replace(/"/g,'""')}"`,`"${qty}"`,
+      `"${its.replace(/"/g,'""')}"`,`"${qty}"`,totalQty,
       o.amount||0,o.paymentMethod||'',o.status||'',
-      fd(o.createdAt),o.dispatchTime?fd(o.dispatchTime):'',o.deliveryTime?fd(o.deliveryTime):''].join(',');
+      pk?pk.l:'',
+      fd(o.createdAt),
+      dispAt?fmtTime12(dispAt):'',
+      delAt?fmtTime12(delAt):'',
+      dur].join(',');
   });
   const csv=[hdr.join(','),...rows].join('\n');
   const a=document.createElement('a');
