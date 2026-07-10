@@ -28,7 +28,7 @@
   import {
     getFirestore, collection, addDoc, getDocs,
     updateDoc, doc, onSnapshot, query, orderBy, where,
-    setDoc, runTransaction, arrayUnion
+    setDoc, runTransaction, arrayUnion, getDoc
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
   import {
     getAuth, signInWithEmailAndPassword, signOut,
@@ -65,6 +65,7 @@
   window._fbSetDoc    = setDoc;
   window._fbTxn       = runTransaction;
   window._fbArrUnion  = arrayUnion;
+  window._fbGetDoc    = getDoc;
   // Expose Auth
   window._auth        = auth;
   window._fbSignIn    = signInWithEmailAndPassword;
@@ -609,6 +610,54 @@ body{
 .cod-box{display:none;margin-top:14px;padding:14px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:10px;}
 .cod-box.show{display:block;}
 .cod-box p{font-size:13px;color:var(--green);font-weight:600;}
+/* UPI input box (checkout) */
+.upi-box{display:none;margin-top:14px;padding:14px;background:var(--card);border-radius:10px;border:1px solid var(--border);}
+.upi-box.show{display:block;}
+/* Wallet payment box (checkout) */
+.wallet-pay-box{display:none;margin-top:14px;padding:16px;background:linear-gradient(135deg,rgba(255,140,0,0.1),rgba(255,140,0,0.04));border:1px solid rgba(255,140,0,0.3);border-radius:10px;}
+.wallet-pay-box.show{display:block;}
+.wallet-bal-line{font-size:15px;font-weight:800;color:var(--orange);}
+.wallet-apply-info{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;}
+.discount-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);color:var(--green);font-weight:600;}
+/* Payment failure modal */
+.pay-fail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.pay-fail-overlay.open{display:flex;}
+.pay-fail-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px 24px;max-width:360px;width:100%;text-align:center;}
+.pay-fail-icon{font-size:44px;margin-bottom:12px;}
+.pay-fail-title{font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px;}
+.pay-fail-msg{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;}
+.pay-fail-btns{display:flex;flex-direction:column;gap:10px;}
+.pay-fail-retry{padding:13px;background:var(--orange);color:#000;font-weight:800;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:14px;transition:opacity .2s;}
+.pay-fail-retry:hover{opacity:.88;}
+.pay-fail-cod{padding:13px;background:var(--card);color:var(--text);font-weight:700;border:1px solid var(--border);border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:14px;transition:opacity .2s;}
+.pay-fail-cod:hover{opacity:.8;}
+/* Offers section (home page) */
+.offers-section{padding:0;}
+.offers-scroll{display:flex;gap:12px;overflow-x:auto;padding:6px 16px 14px;scrollbar-width:none;}
+.offers-scroll::-webkit-scrollbar{display:none;}
+.offer-card{flex-shrink:0;width:220px;border-radius:16px;padding:18px;position:relative;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.offer-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.offer-card-title{font-size:14px;font-weight:800;color:#fff;margin-bottom:5px;line-height:1.3;}
+.offer-card-desc{font-size:11px;color:rgba(255,255,255,0.85);line-height:1.55;}
+.offer-card-tag{display:inline-block;background:rgba(255,255,255,0.22);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:8px;letter-spacing:.4px;}
+/* Wallet bottom sheet */
+.wallet-bal-hero{text-align:center;padding:24px 0 18px;}
+.wallet-bal-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.wallet-bal-amount{font-size:52px;font-weight:800;color:var(--orange);line-height:1;}
+.wallet-bal-pts{font-size:13px;color:var(--muted);margin-top:5px;}
+.wallet-txn-list{margin-top:4px;}
+.wallet-txn-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.wallet-txn-item:last-child{border-bottom:none;}
+.wallet-txn-left{display:flex;align-items:center;gap:10px;}
+.wallet-txn-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.wallet-txn-title{font-size:13px;font-weight:600;}
+.wallet-txn-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.wallet-txn-amount{font-size:14px;font-weight:800;}
+.wallet-txn-amount.earned{color:var(--green);}
+.wallet-txn-amount.spent{color:var(--orange);}
+.wallet-txn-amount.refund{color:var(--blue);}
+/* Wallet badge in profile */
+.wallet-profile-badge{font-size:11px;color:var(--orange);background:rgba(255,140,0,0.12);padding:2px 8px;border-radius:10px;font-weight:700;}
 
 /* TRACKING */
 .tracking-page{display:none;padding:16px;}
@@ -1653,7 +1702,7 @@ img[alt="LinkUp"]{
       <div class="features-grid">
         <div class="feature-card"><div class="feature-icon">🏪</div><div class="feature-title">Local First</div><div class="feature-desc">We partner with neighbourhood restaurants, cafes, and kirana stores — not just big chains.</div></div>
         <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Lightning Fast</div><div class="feature-desc">Average delivery in 20 minutes. Our riders know your area like the back of their hand.</div></div>
-        <div class="feature-card"><div class="feature-icon">💵</div><div class="feature-title">Pay Your Way</div><div class="feature-desc">Cash on Delivery, UPI, cards, net banking — we accept whatever's easiest for you.</div></div>
+        <div class="feature-card"><div class="feature-icon">💵</div><div class="feature-title">Pay Your Way</div><div class="feature-desc">COD, UPI, cards, or LinkUp Points — pay however's easiest. Earn 5 points on every order!</div></div>
         <div class="feature-card"><div class="feature-icon">🗺️</div><div class="feature-title">Live Tracking</div><div class="feature-desc">Know exactly where your order is at every step — from kitchen to your doorstep.</div></div>
         <div class="feature-card"><div class="feature-icon">🛒</div><div class="feature-title">Grocery Too</div><div class="feature-desc">Not just food — order daily essentials from your trusted local kirana store.</div></div>
         <div class="feature-card"><div class="feature-icon">🔔</div><div class="feature-title">Smart Alerts</div><div class="feature-desc">Get notified the moment your order is confirmed, out for delivery, and arrived.</div></div>
@@ -2082,6 +2131,17 @@ img[alt="LinkUp"]{
     <div class="cat" onclick="filter('grocery',this)">🛒 Grocery</div>
     <div class="cat" onclick="showPage('restaurants')" style="background:rgba(255,140,0,0.08);border-color:rgba(255,140,0,0.4);color:var(--orange);font-weight:700;">🏪 Restaurants</div>
   </div>
+  <!-- OFFERS SECTION -->
+  <div class="offers-section" id="offersSection">
+    <div class="offers-scroll" id="offersScroll">
+      <div class="offer-card" style="background:linear-gradient(135deg,#ff8c00,#ff5500);">
+        <div class="offer-card-title">Earn LinkUp Points!</div>
+        <div class="offer-card-desc">Get 5 points (₹5 value) on every delivered order. Redeem at checkout.</div>
+        <div class="offer-card-tag">Rewards</div>
+      </div>
+    </div>
+  </div>
+
   <!-- RESTAURANTS STRIP -->
   <div id="homeRestSection">
     <div class="home-rest-header">
@@ -2129,6 +2189,7 @@ img[alt="LinkUp"]{
       </span>
     </div>
     <div class="profile-item" onclick="openPsheet('addr')"><span>📍 Delivery Address</span><span>›</span></div>
+    <div class="profile-item" onclick="openWalletSheet()"><span>⭐ My Wallet & Points</span><span class="wallet-profile-badge" id="walletBadge">₹0</span></div>
     <div class="profile-item" onclick="openPsheet('payment')"><span>💳 Payment Methods</span><span>›</span></div>
     <div class="profile-item" onclick="openPsheet('notifs')"><span>🔔 Notifications</span><span>›</span></div>
     <div class="profile-item" onclick="openFavourites()"><span>⭐ Favourites</span><span>›</span></div>
@@ -2186,23 +2247,50 @@ img[alt="LinkUp"]{
         <div class="pay-method-info"><div class="pay-method-name">Cash on Delivery</div><div class="pay-method-desc">Pay when your order arrives — no hassle</div></div>
         <input type="radio" class="pay-radio" name="pay" checked>
       </div>
-      <div class="pay-method" id="pm-razorpay" onclick="selectPay('razorpay',this)">
-        <div class="pay-method-icon">⚡</div>
-        <div class="pay-method-info"><div class="pay-method-name">Pay Online (Razorpay)</div><div class="pay-method-desc">UPI · Cards · Net Banking · Wallets</div></div>
+      <div class="pay-method" id="pm-upi" onclick="selectPay('upi',this)">
+        <div class="pay-method-icon">📱</div>
+        <div class="pay-method-info"><div class="pay-method-name">UPI</div><div class="pay-method-desc">Google Pay · PhonePe · Paytm</div></div>
+        <input type="radio" class="pay-radio" name="pay">
+      </div>
+      <div class="pay-method" id="pm-card" onclick="selectPay('card',this)">
+        <div class="pay-method-icon">💳</div>
+        <div class="pay-method-info"><div class="pay-method-name">Debit / Credit Card</div><div class="pay-method-desc">Visa · Mastercard · RuPay</div></div>
+        <input type="radio" class="pay-radio" name="pay">
+      </div>
+      <div class="pay-method" id="pm-wallet" onclick="selectPay('wallet',this)">
+        <div class="pay-method-icon">⭐</div>
+        <div class="pay-method-info"><div class="pay-method-name">LinkUp Points</div><div class="pay-method-desc" id="walletPayDesc">Loading wallet...</div></div>
         <input type="radio" class="pay-radio" name="pay">
       </div>
     </div>
+    <!-- COD info -->
     <div class="cod-box show" id="codBox">
-      <p>✅ Great choice! Pay ₹<span id="codAmount">0</span> in cash when your rider arrives. No advance needed.</p>
+      <p>✅ Pay ₹<span id="codAmount">0</span> in cash when your rider arrives. No advance needed.</p>
     </div>
-    <div class="card-fields" id="cardFields">
-      <div class="form-group"><label>CARD NUMBER</label><input type="text" placeholder="1234 5678 9012 3456" maxlength="19"></div>
-      <div class="card-row">
-        <div class="form-group"><label>EXPIRY</label><input type="text" placeholder="MM / YY" maxlength="7"></div>
-        <div class="form-group"><label>CVV</label><input type="password" placeholder="•••" maxlength="3"></div>
+    <!-- UPI input -->
+    <div class="upi-box" id="upiBox">
+      <div class="form-group" style="margin-bottom:0;">
+        <label>UPI ID</label>
+        <input type="text" id="checkoutUpiId" placeholder="yourname@upi or phone@gpay">
       </div>
-      <div class="form-group"><label>NAME ON CARD</label><input type="text" placeholder="Full name as on card"></div>
-      <p style="font-size:11px;color:var(--muted);margin-top:6px;">🔒 Secured by Razorpay · 256-bit SSL encryption</p>
+    </div>
+    <!-- Card fields -->
+    <div class="card-fields" id="cardFields">
+      <div class="form-group"><label>CARD NUMBER</label><input type="text" id="checkoutCardNum" placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCheckoutCard(this)"></div>
+      <div class="card-row">
+        <div class="form-group"><label>EXPIRY</label><input type="text" id="checkoutCardExpiry" placeholder="MM / YY" maxlength="7" oninput="fmtExpiry(this)"></div>
+        <div class="form-group"><label>CVV</label><input type="password" id="checkoutCvv" placeholder="•••" maxlength="3"></div>
+      </div>
+      <div class="form-group"><label>NAME ON CARD</label><input type="text" id="checkoutCardName" placeholder="Full name as on card"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:6px;cursor:pointer;">
+        <input type="checkbox" id="saveCardChk" style="accent-color:var(--orange);"> Save card for next order (last 4 digits only — never full number)
+      </label>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px;">🔒 Payments are processed securely · 256-bit SSL encryption</p>
+    </div>
+    <!-- Wallet / Points box -->
+    <div class="wallet-pay-box" id="walletPayBox">
+      <div class="wallet-bal-line">⭐ <span id="walletPayBal">0</span> points = ₹<span id="walletPayRs">0</span></div>
+      <div class="wallet-apply-info" id="walletApplyInfo"></div>
     </div>
   </div>
   <div class="checkout-section">
@@ -2501,6 +2589,46 @@ rzp.open();</div>
 </div>
 
 <!-- ══════════════════════════════════════
+     WALLET SHEET
+══════════════════════════════════════ -->
+<div class="psheet-overlay" id="walletOverlay" onclick="closeWalletSheet()">
+  <div class="psheet" onclick="event.stopPropagation()">
+    <div class="psheet-handle"></div>
+    <div class="psheet-head">
+      <button class="psheet-back-btn" onclick="closeWalletSheet()">‹</button>
+      <div class="psheet-title">⭐ My Wallet & Points</div>
+    </div>
+    <div class="wallet-bal-hero">
+      <div class="wallet-bal-label">Available Balance</div>
+      <div class="wallet-bal-amount">₹<span id="sheetWalletBal">0</span></div>
+      <div class="wallet-bal-pts"><span id="sheetWalletPts">0</span> LinkUp Points</div>
+    </div>
+    <div style="background:rgba(255,140,0,0.08);border:1px solid rgba(255,140,0,0.2);border-radius:12px;padding:12px 14px;margin-bottom:18px;font-size:12px;color:var(--muted);line-height:1.6;">
+      💡 Earn <strong style="color:var(--orange);">5 points (₹5)</strong> on every delivered order. Use points at checkout — up to 50% of order value.
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Transaction History</div>
+    <div class="wallet-txn-list" id="walletTxnList">
+      <div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No transactions yet. Place your first order!</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAYMENT FAILURE MODAL
+══════════════════════════════════════ -->
+<div class="pay-fail-overlay" id="payFailOverlay">
+  <div class="pay-fail-box">
+    <div class="pay-fail-icon">❌</div>
+    <div class="pay-fail-title">Payment Failed</div>
+    <div class="pay-fail-msg" id="payFailMsg">Payment failed due to insufficient funds. Please try another payment method or switch to COD.</div>
+    <div class="pay-fail-btns">
+      <button class="pay-fail-retry" onclick="retryPayment()">🔄 Retry Payment</button>
+      <button class="pay-fail-cod" onclick="switchToCOD()">💵 Switch to COD</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      NOTIFICATIONS SHEET
 ══════════════════════════════════════ -->
 <div class="psheet-overlay" id="notifsOverlay" onclick="closePsheet('notifs')">
@@ -2536,7 +2664,7 @@ rzp.open();</div>
     </div>
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)"><span>What payment methods are accepted?</span><span class="faq-arr">▾</span></div>
-      <div class="faq-a">LinkUp accepts Cash on Delivery (COD), UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, and Net Banking — all powered by Razorpay.</div>
+      <div class="faq-a">LinkUp accepts Cash on Delivery (COD), UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, and LinkUp Points (earned on every order). Online payments are processed securely via Razorpay.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)"><span>My order is late — what should I do?</span><span class="faq-arr">▾</span></div>
@@ -2548,7 +2676,7 @@ rzp.open();</div>
     </div>
     <div class="faq-item">
       <div class="faq-q" onclick="toggleFaq(this)"><span>How do I get a refund?</span><span class="faq-arr">▾</span></div>
-      <div class="faq-a">Refunds for cancelled or incorrect orders are processed within 3–5 business days to your original payment method. COD orders are refunded as LinkUp credits. Reach out to our support team with your order ID for assistance.</div>
+      <div class="faq-a">Refunds are processed to your LinkUp Wallet (instant) or original payment method (3–5 business days). Wallet refunds appear instantly in your ⭐ My Wallet section. Contact support with your Order ID.</div>
     </div>
     <div style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin:22px 0 14px;">Contact Us</div>
     <div class="help-contacts">
@@ -2820,6 +2948,11 @@ let orderHistory=JSON.parse(localStorage.getItem('lu_orders')||'[]');
 let notifications=[];
 let etaInterval=null;
 let nextItemId=20;
+let walletBalance=0;
+let walletTxns=[];
+let _pendingPayMethod=null;
+let _pendingPayTotal=0;
+let _adminNotifsUnsub=null;
 
 // ── PROFILE DATA ──────────────────────────────────────────────
 let favorites=JSON.parse(localStorage.getItem('lu_favs')||'[]');
@@ -3345,12 +3478,16 @@ function enterApp(){
   applyLang(); // sync language display in profile
   pushNotification('👋 Welcome back!',`Hey ${currentUser.name}, ready to order something delicious?`,'🍔');
   if(localStorage.getItem('lu_theme')==='light'){document.body.classList.add('light-theme');document.getElementById('themeToggle').checked=true;}
+  const ph=localStorage.getItem('lu_phone')||currentUser.phone||'';
+  if(ph){ loadWallet(ph); loadAdminNotifications(ph); }
+  loadOffers();
 }
 async function doLogout(){
   try { if(window._auth) await window._fbSignOut(window._auth); } catch(e){}
-  currentUser = null; cart = []; notifications = [];
+  currentUser = null; cart = []; notifications = []; walletBalance=0; walletTxns=[];
   localStorage.removeItem('lu_session');
   if(_adminOrdersUnsub){ _adminOrdersUnsub(); _adminOrdersUnsub = null; }
+  if(_adminNotifsUnsub){ _adminNotifsUnsub(); _adminNotifsUnsub = null; }
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('authPage').classList.add('active');
   showToast('👋 Signed out!');
@@ -3517,14 +3654,27 @@ function closeCart(){document.getElementById('cartOverlay').classList.remove('op
 function goToCheckout(){
   closeCart();
   const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
-  document.getElementById('checkoutSummary').innerHTML=cart.map(c=>`<div class="order-summary-item"><span>${c.name} ×${c.qty}</span><span>₹${c.price*c.qty}</span></div>`).join('')+`<div class="order-summary-item"><span>Delivery Fee</span><span style="color:var(--green);">FREE</span></div>`;
-  document.getElementById('checkoutTotal').textContent=`₹${total}`;
   document.getElementById('codAmount').textContent=total;
-  selectedPayment='cod';
-  document.getElementById('codBox').classList.add('show');
-  document.getElementById('cardFields').classList.remove('show');
+  updateCheckoutTotal();
+
+  // Auto-select last used payment method
+  const lastPay=localStorage.getItem('lu_last_pay')||'cod';
+  const pmEl=document.getElementById('pm-'+lastPay)||document.getElementById('pm-cod');
+  selectedPayment=lastPay&&document.getElementById('pm-'+lastPay)?lastPay:'cod';
   document.querySelectorAll('.pay-method').forEach(m=>m.classList.remove('selected'));
-  document.getElementById('pm-cod').classList.add('selected');
+  pmEl.classList.add('selected');
+  pmEl.querySelector('.pay-radio').checked=true;
+  ['codBox','upiBox','cardFields','walletPayBox'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  const boxMap={cod:'codBox',upi:'upiBox',card:'cardFields',wallet:'walletPayBox'};
+  if(boxMap[selectedPayment]) document.getElementById(boxMap[selectedPayment]).classList.add('show');
+  const btn=document.getElementById('confirmOrderBtn');
+  if(selectedPayment==='cod') btn.textContent='🎉 Confirm & Place Order';
+  else if(selectedPayment==='wallet') btn.textContent='⭐ Pay with LinkUp Points';
+  else btn.textContent='⚡ Pay & Place Order';
+
+  // Load wallet and update wallet pay desc
+  const phone=document.getElementById('cdPhone')?.value.trim()||currentUser?.phone||'';
+  loadWallet(phone).then(()=>refreshWalletPayDesc(total));
 
   // Auto-fill customer details
   const savedPhone = localStorage.getItem('lu_phone') || '';
@@ -3550,13 +3700,52 @@ function goToCheckout(){
 }
 function selectPay(type,el){
   selectedPayment=type;
+  localStorage.setItem('lu_last_pay',type);
   document.querySelectorAll('.pay-method').forEach(m=>m.classList.remove('selected'));
   el.classList.add('selected');
   el.querySelector('.pay-radio').checked=true;
-  document.getElementById('codBox').classList.toggle('show',type==='cod');
-  document.getElementById('cardFields').classList.toggle('show',type==='razorpay');
+  ['codBox','upiBox','cardFields','walletPayBox'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  const boxMap={cod:'codBox',upi:'upiBox',card:'cardFields',wallet:'walletPayBox'};
+  if(boxMap[type]) document.getElementById(boxMap[type]).classList.add('show');
+  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  if(type==='wallet') refreshWalletPayDesc(total);
+  updateCheckoutTotal();
   const btn=document.getElementById('confirmOrderBtn');
-  btn.textContent=type==='cod'?'🎉 Confirm & Place Order':'⚡ Pay & Place Order';
+  if(type==='cod') btn.textContent='🎉 Confirm & Place Order';
+  else if(type==='wallet') btn.textContent='⭐ Pay with LinkUp Points';
+  else btn.textContent='⚡ Pay & Place Order';
+}
+function updateCheckoutTotal(){
+  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const baseRows=cart.map(c=>`<div class="order-summary-item"><span>${c.name} ×${c.qty}</span><span>₹${c.price*c.qty}</span></div>`).join('')
+    +`<div class="order-summary-item"><span>Delivery Fee</span><span style="color:var(--green);">FREE</span></div>`;
+  if(selectedPayment==='wallet'&&walletBalance>0){
+    const maxPts=Math.floor(total*0.5);
+    const usable=Math.min(walletBalance,maxPts);
+    document.getElementById('checkoutSummary').innerHTML=baseRows+`<div class="discount-row"><span>⭐ LinkUp Points</span><span>−₹${usable}</span></div>`;
+    document.getElementById('checkoutTotal').textContent=`₹${total-usable}`;
+  } else {
+    document.getElementById('checkoutSummary').innerHTML=baseRows;
+    document.getElementById('checkoutTotal').textContent=`₹${total}`;
+  }
+}
+function refreshWalletPayDesc(total){
+  const desc=document.getElementById('walletPayDesc');
+  const box=document.getElementById('walletApplyInfo');
+  if(!desc||!box) return;
+  if(walletBalance<=0){
+    desc.textContent='No points yet — earn 5 on every order!';
+    box.textContent='Place an order to start earning LinkUp Points.';
+    return;
+  }
+  const maxPts=Math.floor(total*0.5);
+  const usable=Math.min(walletBalance,maxPts);
+  desc.textContent=`${walletBalance} pts = ₹${walletBalance} available`;
+  box.textContent=`₹${usable} will be applied (max 50% of ₹${total}). Remaining ₹${total-usable} paid via COD.`;
+}
+function fmtCheckoutCard(el){
+  let v=el.value.replace(/\D/g,'').slice(0,16);
+  el.value=v.match(/.{1,4}/g)?.join(' ')||v;
 }
 
 // ── ORDER ─────────────────────────────────────────
@@ -3565,30 +3754,69 @@ function placeOrder(){
   const name  = document.getElementById('cdName').value.trim();
   const phone = document.getElementById('cdPhone').value.trim();
   const errEl = document.getElementById('cdError');
-  errEl.style.display = 'none';
-  if(!name){
-    errEl.textContent = '⚠️ Please enter your full name.';
-    errEl.style.display = 'block';
-    document.getElementById('cdName').focus(); return;
-  }
-  if(!phone || !/^\d{10}$/.test(phone)){
-    errEl.textContent = '⚠️ Enter a valid 10-digit phone number.';
-    errEl.style.display = 'block';
-    document.getElementById('cdPhone').focus(); return;
-  }
-  localStorage.setItem('lu_phone', phone);
+  errEl.style.display='none';
+  if(!name){ errEl.textContent='⚠️ Please enter your full name.'; errEl.style.display='block'; document.getElementById('cdName').focus(); return; }
+  if(!phone||!/^\d{10}$/.test(phone)){ errEl.textContent='⚠️ Enter a valid 10-digit phone number.'; errEl.style.display='block'; document.getElementById('cdPhone').focus(); return; }
+  localStorage.setItem('lu_phone',phone);
   const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
-  if(selectedPayment==='razorpay'){simulateRazorpay(total);return;}
-  confirmOrder('COD',total);
+
+  if(selectedPayment==='upi'){
+    const upiId=document.getElementById('checkoutUpiId').value.trim();
+    if(!upiId||!upiId.includes('@')){ errEl.textContent='⚠️ Enter a valid UPI ID (e.g. name@upi)'; errEl.style.display='block'; return; }
+    simulatePayment('UPI',total,{upiId});
+    return;
+  }
+  if(selectedPayment==='card'){
+    const num=document.getElementById('checkoutCardNum').value.replace(/\s/g,'');
+    const expiry=document.getElementById('checkoutCardExpiry').value;
+    const cvv=document.getElementById('checkoutCvv').value;
+    const cname=document.getElementById('checkoutCardName').value.trim();
+    if(num.length<16||!expiry||!cvv||!cname){ errEl.textContent='⚠️ Please fill in all card details'; errEl.style.display='block'; return; }
+    simulatePayment('Card',total,{last4:num.slice(-4),expiry,name:cname,save:document.getElementById('saveCardChk').checked});
+    return;
+  }
+  if(selectedPayment==='wallet'){
+    const maxPts=Math.floor(total*0.5);
+    const usable=Math.min(walletBalance,maxPts);
+    confirmOrder(usable>0?`Wallet/Points (₹${usable})`:'COD',total,usable);
+    return;
+  }
+  confirmOrder('COD',total,0);
 }
-function simulateRazorpay(total){
-  showToast('⚡ Opening Razorpay...');
+
+// TODO: Replace with real Razorpay payment response
+// Razorpay integration: open Razorpay checkout here, handle razorpay.on('payment.success') and razorpay.on('payment.failed')
+function simulatePayment(method,total,info={}){
+  const btn=document.getElementById('confirmOrderBtn');
+  btn.textContent='Processing...'; btn.disabled=true;
+  showToast(`⚡ Processing ${method} payment...`);
   setTimeout(()=>{
-    showToast('✅ Payment of ₹'+total+' successful!');
-    setTimeout(()=>confirmOrder('Online · Razorpay',total),500);
-  },2000);
+    btn.textContent=method==='Card'?'⚡ Pay & Place Order':'⚡ Pay & Place Order'; btn.disabled=false;
+    const SIMULATE_FAILURE=false; // set true to test failure popup
+    if(SIMULATE_FAILURE&&Math.random()<0.25){ _pendingPayMethod=method; _pendingPayTotal=total; showPayFailModal(); return; }
+    // Save payment method (last 4 digits only for card, never full number)
+    if(method==='Card'&&info.last4&&info.save){
+      savedPayments=savedPayments.filter(p=>!(p.type==='card'&&p.last4===info.last4));
+      savedPayments.push({type:'card',last4:info.last4,expiry:info.expiry,name:info.name});
+      localStorage.setItem('lu_payments',JSON.stringify(savedPayments));
+    }
+    if(method==='UPI'&&info.upiId){
+      if(!savedPayments.some(p=>p.type==='upi'&&p.upi===info.upiId)){
+        savedPayments.push({type:'upi',upi:info.upiId});
+        localStorage.setItem('lu_payments',JSON.stringify(savedPayments));
+      }
+    }
+    showToast(`✅ ${method} payment of ₹${total} successful!`);
+    setTimeout(()=>confirmOrder(`Online · ${method}`,total,0),400);
+  },1800);
 }
-async function confirmOrder(payMethod,total){
+function showPayFailModal(){
+  document.getElementById('payFailOverlay').classList.add('open');
+}
+function closePayFailModal(){ document.getElementById('payFailOverlay').classList.remove('open'); }
+function retryPayment(){ closePayFailModal(); simulatePayment(_pendingPayMethod,_pendingPayTotal); }
+function switchToCOD(){ closePayFailModal(); selectPay('cod',document.getElementById('pm-cod')); showToast('💵 Switched to Cash on Delivery'); }
+async function confirmOrder(payMethod,total,pointsUsed=0){
   const now   = new Date();
   const name  = document.getElementById('cdName').value.trim();
   const phone = document.getElementById('cdPhone').value.trim();
@@ -3672,10 +3900,24 @@ async function confirmOrder(payMethod,total){
 
   orderHistory.unshift(order);
   localStorage.setItem('lu_orders', JSON.stringify(orderHistory));
+
+  // Spend wallet points if used
+  if(pointsUsed>0&&phone){
+    const txn={type:'spent',amount:pointsUsed,orderId,date:now,note:'Used at checkout'};
+    walletBalance=Math.max(0,walletBalance-pointsUsed);
+    walletTxns.push(txn);
+    const badge=document.getElementById('walletBadge');
+    if(badge) badge.textContent=`₹${walletBalance}`;
+    if(window._fbReady&&window._db){
+      window._fbGetDoc(window._fbDoc(window._db,'wallets',phone)).then(ws=>{
+        const cur=ws.exists()?(ws.data().balance||0):0;
+        window._fbSetDoc(window._fbDoc(window._db,'wallets',phone),{balance:Math.max(0,cur-pointsUsed),transactions:window._fbArrUnion(txn)},{merge:true}).catch(()=>{});
+      }).catch(()=>{});
+    }
+  }
+
   cart=[]; updateCartUI();
-
   btn.textContent = '🎉 Confirm & Place Order'; btn.disabled = false;
-
   showPage('orders'); renderOrders();
   showToast('🎉 Order placed!');
   pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'✅');
@@ -3696,6 +3938,90 @@ function renderOrders(){
       <div style="font-size:11px;color:var(--muted);margin-top:4px;">${o.date||''} ${o.time}</div>
       <button class="track-order-btn" onclick="openTracking('${o.id}',${o.eta||24},'${o.trackingToken||''}')">🗺️ Track Order</button>
     </div>`).join('');
+}
+
+// ── WALLET ────────────────────────────────────────
+async function loadWallet(phone){
+  if(!window._fbReady||!window._db||!phone) return;
+  try{
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'wallets',phone));
+    if(snap.exists()){walletBalance=snap.data().balance||0; walletTxns=snap.data().transactions||[];}
+    else{walletBalance=0; walletTxns=[];}
+  } catch(e){ walletBalance=0; walletTxns=[]; }
+  const badge=document.getElementById('walletBadge');
+  if(badge) badge.textContent=`₹${walletBalance}`;
+}
+function openWalletSheet(){
+  document.getElementById('sheetWalletBal').textContent=walletBalance;
+  document.getElementById('sheetWalletPts').textContent=walletBalance;
+  renderWalletTxns();
+  document.getElementById('walletOverlay').classList.add('open');
+}
+function closeWalletSheet(){ document.getElementById('walletOverlay').classList.remove('open'); }
+function renderWalletTxns(){
+  const el=document.getElementById('walletTxnList');
+  if(!walletTxns.length){
+    el.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No transactions yet. Place your first order!</div>';
+    return;
+  }
+  el.innerHTML=[...walletTxns].reverse().map(t=>{
+    const isE=t.type==='earned', isR=t.type==='refund';
+    const icon=isE?'⭐':isR?'↩️':'🛒';
+    const bg=isE?'rgba(34,197,94,0.12)':isR?'rgba(59,130,246,0.12)':'rgba(255,140,0,0.12)';
+    const cls=isE?'earned':isR?'refund':'spent';
+    const sign=isE||isR?'+':'−';
+    let d=t.date;
+    if(d&&d.toDate) d=d.toDate();
+    else if(d&&!(d instanceof Date)) d=new Date(d);
+    const ds=d?d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'}):'';
+    return `<div class="wallet-txn-item">
+      <div class="wallet-txn-left">
+        <div class="wallet-txn-icon" style="background:${bg};">${icon}</div>
+        <div><div class="wallet-txn-title">${t.note||t.type}</div><div class="wallet-txn-sub">${t.orderId?t.orderId+' · ':''}${ds}</div></div>
+      </div>
+      <div class="wallet-txn-amount ${cls}">${sign}₹${t.amount||0}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── OFFERS ────────────────────────────────────────
+async function loadOffers(){
+  const el=document.getElementById('offersScroll'); if(!el) return;
+  const defaults=[
+    {title:'Earn LinkUp Points!',description:'Get 5 points (₹5 value) on every delivered order. Redeem at checkout.',gradient:'linear-gradient(135deg,#ff8c00,#ff5500)',tag:'Rewards'},
+    {title:'Free Delivery Always',description:'Every order ships free — no minimum, no hidden charges.',gradient:'linear-gradient(135deg,#22c55e,#15803d)',tag:'Always On'},
+    {title:'Fresh & Fast',description:'Food from top local restaurants, delivered hot in under 30 min.',gradient:'linear-gradient(135deg,#3b82f6,#1d4ed8)',tag:'Quality'}
+  ];
+  let offers=[...defaults];
+  if(window._fbReady&&window._db){
+    try{
+      const snap=await window._fbGet(window._fbQuery(window._fbCol(window._db,'offers'),window._fbWhere('active','==',true)));
+      const fs=snap.docs.map(d=>({id:d.id,...d.data()}));
+      if(fs.length) offers=[...fs,...defaults];
+    } catch(e){}
+  }
+  el.innerHTML=offers.map(o=>`
+    <div class="offer-card" style="background:${o.gradient||'linear-gradient(135deg,#ff8c00,#ff5500)'};">
+      <div class="offer-card-title">${o.title||''}</div>
+      <div class="offer-card-desc">${o.description||''}</div>
+      ${o.tag?`<div class="offer-card-tag">${o.tag}</div>`:''}
+    </div>`).join('');
+}
+
+// ── ADMIN NOTIFICATIONS ───────────────────────────
+function loadAdminNotifications(phone){
+  if(!window._fbReady||!window._db||!phone) return;
+  if(_adminNotifsUnsub){_adminNotifsUnsub();_adminNotifsUnsub=null;}
+  const ref=window._fbDoc(window._db,'notifications',phone);
+  _adminNotifsUnsub=window._fbSnap(ref,snap=>{
+    if(!snap.exists()) return;
+    const msgs=(snap.data().messages||[]).filter(m=>!m.read);
+    msgs.forEach(m=>pushNotification('📬 Message from LinkUp',m.text||'','📬'));
+    if(msgs.length){
+      const allRead=(snap.data().messages||[]).map(m=>({...m,read:true}));
+      window._fbUpdate(ref,{messages:allRead}).catch(()=>{});
+    }
+  });
 }
 
 // ── TRACKING ──────────────────────────────────────
@@ -4242,7 +4568,9 @@ function setDefaultAddr(i) {
 function renderPayments() {
   const fixed = [
     { icon:'💵', name:'Cash on Delivery', sub:'Pay when your order arrives' },
-    { icon:'⚡', name:'UPI / Razorpay', sub:'Google Pay · PhonePe · Paytm · Cards' }
+    { icon:'📱', name:'UPI', sub:'Google Pay · PhonePe · Paytm' },
+    { icon:'💳', name:'Debit / Credit Card', sub:'Visa · Mastercard · RuPay' },
+    { icon:'⭐', name:'LinkUp Points', sub:'Earn 5 pts per delivered order' }
   ];
   let html = fixed.map(m => `
     <div class="pm-row">

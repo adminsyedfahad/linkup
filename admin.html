@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, arrayUnion, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 const cfg = {
   apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
@@ -24,6 +24,7 @@ window._fbSignOut=signOut; window._fbOnAuth=onAuthStateChanged;
 window._fbSnap=onSnapshot; window._fbQuery=query;
 window._fbOrderBy=orderBy; window._fbCol=collection;
 window._fbDoc=doc; window._fbUpdate=updateDoc; window._fbArrUnion=arrayUnion;
+window._fbSetDoc=setDoc; window._fbGetDoc=getDoc;
 window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
 </script>
 <style>
@@ -288,6 +289,21 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .tone-play{margin-left:auto;padding:3px 10px;background:rgba(255,140,0,.14);color:var(--orange);
   border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
 .tone-play:hover{background:rgba(255,140,0,.28);}
+
+/* WALLET & REFUNDS */
+.ref-block{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px;}
+.ref-block h3{font-size:12px;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;}
+.ref-input{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.ref-input:focus{border-color:var(--orange);}
+.ref-textarea{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:68px;transition:border-color .2s;}
+.ref-textarea:focus{border-color:var(--orange);}
+.ref-select{width:100%;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;cursor:pointer;}
+.ref-select:focus{border-color:var(--orange);}
+.ref-lbl{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.ref-field{margin-bottom:14px;}
+.ref-order-preview{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:12px;}
+.ref-btn{width:100%;padding:12px;background:var(--orange);color:#000;font-weight:800;border:none;border-radius:10px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:14px;transition:opacity .15s;}
+.ref-btn:hover{opacity:.88;}
 </style>
 </head>
 <body>
@@ -319,6 +335,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
     <div class="mtb-logo">LINKUP</div>
     <button class="mnb active" id="mnd" onclick="showSec('dashboard')">📊 Orders</button>
     <button class="mnb" id="mns" onclick="showSec('search')">🔍 Search</button>
+    <button class="mnb" id="mnw" onclick="showSec('wallet')">💰 Refunds</button>
     <button class="mnb" id="mnst" onclick="showSec('settings')">⚙️ Settings</button>
     <button class="mnb" onclick="doLogout()">⏻</button>
   </div>
@@ -336,6 +353,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
       </div>
       <div class="ni" id="ns" onclick="showSec('search')">
         <span class="ico">🔍</span> Order Search
+      </div>
+      <div class="ni" id="nw" onclick="showSec('wallet')">
+        <span class="ico">💰</span> Wallet & Refunds
       </div>
       <div class="ni" id="nst" onclick="showSec('settings')">
         <span class="ico">⚙️</span> Settings
@@ -408,6 +428,64 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         <button class="sbtn" onclick="doSearch()">Search</button>
       </div>
       <div class="sra" id="sra"></div>
+    </div>
+
+    <!-- WALLET & REFUNDS -->
+    <div class="sec" id="sec-wallet">
+
+      <!-- Search order -->
+      <div class="ref-block">
+        <h3>🔍 Search Order for Refund</h3>
+        <div class="sir">
+          <input class="si" id="refSq" placeholder="Order ID (LU-1001), email, or phone…" onkeydown="if(event.key==='Enter')doRefundSearch()">
+          <button class="sbtn" onclick="doRefundSearch()">Search</button>
+        </div>
+        <div id="refResult"></div>
+      </div>
+
+      <!-- Refund form (shown after search) -->
+      <div class="ref-block" id="refForm" style="display:none;">
+        <h3>💸 Issue Refund</h3>
+        <input type="hidden" id="refOrderId">
+        <input type="hidden" id="refPhone">
+
+        <div class="ref-field">
+          <label class="ref-lbl">Refund Type</label>
+          <select class="ref-select" id="refType" onchange="toggleRefundType()">
+            <option value="wallet">Refund to LinkUp Wallet (instant points)</option>
+            <option value="bank">Refund to Bank / UPI (manual transfer)</option>
+          </select>
+        </div>
+
+        <div class="ref-field">
+          <label class="ref-lbl">Refund Amount (₹)</label>
+          <input type="number" class="ref-input" id="refAmt" placeholder="Enter amount in ₹" min="1">
+        </div>
+
+        <div id="refBankFields" style="display:none;" class="ref-field">
+          <label class="ref-lbl">Customer UPI ID / Bank Details</label>
+          <input type="text" class="ref-input" id="refUpi" placeholder="customer@upi or bank account details">
+        </div>
+
+        <div class="ref-field">
+          <label class="ref-lbl">Internal Note (not visible to customer)</label>
+          <textarea class="ref-textarea" id="refNote" placeholder="Reason for refund, team notes..."></textarea>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <input type="checkbox" id="refShowToCustomer" style="accent-color:var(--orange);width:16px;height:16px;" onchange="toggleCustomerMsg()">
+          <label for="refShowToCustomer" style="font-size:13px;font-weight:600;cursor:pointer;">Send message to customer</label>
+        </div>
+
+        <div id="refCustomerMsgWrap" style="display:none;" class="ref-field">
+          <label class="ref-lbl">Message to Customer</label>
+          <textarea class="ref-textarea" id="refCustomerMsg" style="min-height:90px;" placeholder="We're sorry for the inconvenience. Your refund of ₹X has been processed to your LinkUp wallet…"></textarea>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">This message will appear as a notification in the customer's LinkUp app.</div>
+        </div>
+
+        <button class="ref-btn" onclick="submitRefund()">💸 Process Refund</button>
+      </div>
+
     </div>
 
     <!-- SETTINGS -->
@@ -831,7 +909,19 @@ async function updSt(id,status,extra={}){
     // Per-status timestamp stored in a map for future queries
     data[`statusTimestamps.${status}`]=now;
     if(status==='on_the_way') data.dispatchedAt=now;
-    if(status==='delivered'){data.deliveredAt=now; data.deliveryTime=now;}
+    if(status==='delivered'){
+      data.deliveredAt=now; data.deliveryTime=now;
+      // Credit 5 LinkUp Points to customer wallet on delivery
+      const delOrder=allOrders.find(o=>o._id===id);
+      if(delOrder?.phone){
+        const wref=window._fbDoc(window._db,'wallets',delOrder.phone);
+        window._fbGetDoc(wref).then(ws=>{
+          const cur=ws.exists()?(ws.data().balance||0):0;
+          const ptxn={type:'earned',amount:5,orderId:id,date:now,note:'Delivered order reward'};
+          window._fbSetDoc(wref,{balance:cur+5,transactions:window._fbArrUnion(ptxn)},{merge:true}).catch(()=>{});
+        }).catch(()=>{});
+      }
+    }
 
     // Update full order doc (admin)
     await window._fbUpdate(window._fbDoc(window._db,'orders',id),data);
@@ -1011,12 +1101,13 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
+  document.getElementById('mnw').classList.toggle('active',name==='wallet');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
 }
@@ -1049,6 +1140,94 @@ function exportCSV(){
   a.download=`linkup-orders-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   toast(`⬇ ${orders.length} orders exported`,'#22c55e');
+}
+
+// ── WALLET & REFUNDS ───────────────────────────
+function doRefundSearch(){
+  const q=document.getElementById('refSq').value.trim().toLowerCase();
+  const res=document.getElementById('refResult');
+  const form=document.getElementById('refForm');
+  res.innerHTML=''; form.style.display='none';
+  if(!q){toast('⚠️ Enter a search term.','#f59e0b');return;}
+  const hits=allOrders.filter(o=>
+    (o.orderId||'').toLowerCase().includes(q)||
+    (o._id||'').toLowerCase().includes(q)||
+    (o.email||'').toLowerCase().includes(q)||
+    (o.phone||'').replace(/\s/g,'').includes(q.replace(/\s/g,''))
+  );
+  if(!hits.length){res.innerHTML='<p style="color:var(--muted);font-size:13px;margin-top:10px;">❌ No order found. Try Order ID, email, or phone.</p>';return;}
+  const o=hits[0];
+  res.innerHTML=`<div class="ref-order-preview">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="color:var(--orange);font-weight:700;font-size:13px;">${o.orderId||o._id}</span>
+      <span class="bdg ${o.status||'pending'}">${o.status||'pending'}</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:3px;">👤 ${o.customerName||'—'} · 📞 ${o.phone||'—'}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">📧 ${o.email||'—'}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">📦 ${(o.items||[]).join(', ')||'—'}</div>
+    <div style="font-size:15px;font-weight:800;color:var(--orange);">₹${(o.amount||0).toLocaleString('en-IN')}</div>
+    ${hits.length>1?`<div style="font-size:11px;color:var(--muted);margin-top:4px;">${hits.length} orders matched — showing most recent.</div>`:''}
+  </div>`;
+  document.getElementById('refOrderId').value=o.orderId||o._id;
+  document.getElementById('refPhone').value=o.phone||'';
+  document.getElementById('refAmt').value=o.amount||'';
+  form.style.display='block';
+}
+function toggleRefundType(){
+  const t=document.getElementById('refType').value;
+  document.getElementById('refBankFields').style.display=t==='bank'?'block':'none';
+}
+function toggleCustomerMsg(){
+  const chk=document.getElementById('refShowToCustomer').checked;
+  document.getElementById('refCustomerMsgWrap').style.display=chk?'block':'none';
+}
+async function submitRefund(){
+  const orderId=document.getElementById('refOrderId').value;
+  const phone=document.getElementById('refPhone').value;
+  const type=document.getElementById('refType').value;
+  const amt=parseFloat(document.getElementById('refAmt').value);
+  const note=document.getElementById('refNote').value.trim();
+  const showToCustomer=document.getElementById('refShowToCustomer').checked;
+  const customerMsg=document.getElementById('refCustomerMsg').value.trim();
+  if(!orderId||!phone){toast('⚠️ No order selected.','#f59e0b');return;}
+  if(!amt||amt<=0){toast('⚠️ Enter a valid refund amount.','#f59e0b');return;}
+  if(type==='bank'&&!document.getElementById('refUpi').value.trim()){toast('⚠️ Enter UPI ID or bank details.','#f59e0b');return;}
+  if(showToCustomer&&!customerMsg){toast('⚠️ Enter a message for the customer.','#f59e0b');return;}
+  try{
+    if(type==='wallet'){
+      const wref=window._fbDoc(window._db,'wallets',phone);
+      const ws=await window._fbGetDoc(wref);
+      const cur=ws.exists()?(ws.data().balance||0):0;
+      const txn={type:'refund',amount:amt,orderId,date:new Date(),note:note||'Refund from LinkUp'};
+      await window._fbSetDoc(wref,{balance:cur+amt,transactions:window._fbArrUnion(txn)},{merge:true});
+      toast(`✅ ₹${amt} credited to ${phone}'s wallet!`,'#22c55e');
+    } else {
+      const bref=window._fbDoc(window._db,'refunds',orderId+'_'+Date.now());
+      await window._fbSetDoc(bref,{
+        orderId,phone,amount:amt,type:'bank',
+        upiDetails:document.getElementById('refUpi').value.trim(),
+        note,status:'pending manual transfer',createdAt:new Date()
+      });
+      toast('📋 Bank refund recorded — pending manual transfer.','#3b82f6');
+    }
+    if(showToCustomer&&customerMsg&&phone){
+      const nref=window._fbDoc(window._db,'notifications',phone);
+      await window._fbSetDoc(nref,{messages:window._fbArrUnion({text:customerMsg,orderId,date:new Date(),read:false,type:'refund_message'})},{merge:true});
+      toast('📬 Message sent to customer.','#3b82f6');
+    }
+    await window._fbUpdate(window._fbDoc(window._db,'orders',orderId),{
+      refundStatus:type==='wallet'?'refunded_to_wallet':'pending_bank_transfer',
+      refundAmount:amt,refundNote:note,refundedAt:new Date()
+    });
+    // Reset form
+    document.getElementById('refSq').value='';
+    document.getElementById('refResult').innerHTML='';
+    document.getElementById('refForm').style.display='none';
+    document.getElementById('refNote').value='';
+    document.getElementById('refCustomerMsg').value='';
+    document.getElementById('refShowToCustomer').checked=false;
+    document.getElementById('refCustomerMsgWrap').style.display='none';
+  } catch(e){ toast('❌ Refund failed: '+(e.message||e),'#ef4444'); }
 }
 </script>
 </body>
