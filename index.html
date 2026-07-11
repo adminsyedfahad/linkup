@@ -293,20 +293,46 @@ body{
   font-size:clamp(14px,2.5vw,17px);color:#aaa;max-width:520px;
   line-height:1.7;margin-bottom:36px;
 }
-.lp-hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:56px;}
+.lp-hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:40px;}
 .btn-primary{
   background:var(--orange);color:#000;font-weight:800;font-size:15px;
   padding:14px 32px;border-radius:12px;border:none;cursor:pointer;
-  font-family:'Poppins',sans-serif;transition:transform 0.15s,box-shadow 0.2s;
+  font-family:'Poppins',sans-serif;transition:transform 0.18s,box-shadow 0.22s,opacity 0.15s;
   box-shadow:0 4px 24px rgba(255,140,0,0.35);
 }
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(255,140,0,0.5);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(255,140,0,0.52);}
+.btn-primary:active{transform:scale(0.96)!important;box-shadow:0 2px 10px rgba(255,140,0,0.25);opacity:0.92;}
 .btn-secondary{
   background:transparent;color:#fff;font-weight:700;font-size:15px;
   padding:14px 32px;border-radius:12px;border:1px solid #333;cursor:pointer;
-  font-family:'Poppins',sans-serif;transition:border-color 0.2s,color 0.2s;
+  font-family:'Poppins',sans-serif;transition:border-color 0.2s,color 0.2s,transform 0.15s,opacity 0.15s;
 }
 .btn-secondary:hover{border-color:var(--orange);color:var(--orange);}
+.btn-secondary:active{transform:scale(0.96);opacity:0.85;}
+
+/* ── Premium hero fade-up animations ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(26px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.lp-hero-eyebrow{animation:fadeUp .55s cubic-bezier(.22,1,.36,1) both;}
+.lp-hero h1{animation:fadeUp .65s .12s cubic-bezier(.22,1,.36,1) both;}
+.lp-hero p{animation:fadeUp .65s .25s cubic-bezier(.22,1,.36,1) both;}
+.lp-hero-btns{animation:fadeUp .65s .38s cubic-bezier(.22,1,.36,1) both;}
+.lp-hero-install{animation:fadeUp .65s .50s cubic-bezier(.22,1,.36,1) both;}
+
+/* ── Global button press feel ── */
+.checkout-btn:active{transform:scale(0.97)!important;opacity:0.9;}
+.auth-btn:active{transform:scale(0.97)!important;}
+.add-btn:active{transform:scale(0.94)!important;}
+.cart-btn:active{transform:scale(0.94)!important;}
+.cat:active{transform:scale(0.93)!important;opacity:0.8;}
+.profile-item{transition:color 0.2s,opacity 0.15s;}
+.profile-item:active{opacity:0.6;}
+.nav-item:active{opacity:0.6;}
+.track-order-btn:active{transform:scale(0.97);}
+.pay-method{transition:border-color 0.2s,background 0.18s,transform 0.12s;}
+.pay-method:active{transform:scale(0.98);}
+.psheet-back-btn:active{opacity:0.5;transform:scale(0.9);}
+.fav-btn:active{transform:scale(0.85)!important;}
 
 /* Hero scooter animation */
 .hero-scooter-track{
@@ -1097,8 +1123,15 @@ body.light-theme #statusBarFill{background:#ffffff;}
 /* Payment cards */
 .pm-row{
   display:flex;align-items:center;gap:14px;padding:14px 16px;
-  background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;
+  background:var(--card);border:2px solid var(--border);border-radius:12px;margin-bottom:10px;
+  cursor:pointer;transition:border-color .18s,background .18s,transform .12s;
 }
+.pm-row:hover{background:rgba(255,255,255,0.025);}
+.pm-row:active{transform:scale(0.98);}
+.pm-row.pm-active{border-color:var(--orange);background:rgba(255,140,0,0.06);}
+.pm-row-check{margin-left:auto;width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color .18s,background .18s;}
+.pm-row.pm-active .pm-row-check{border-color:var(--orange);background:var(--orange);}
+.pm-row.pm-active .pm-row-check::after{content:'';width:8px;height:8px;border-radius:50%;background:#000;}
 .pm-icon{font-size:26px;}
 .pm-info{flex:1;}
 .pm-name{font-size:13px;font-weight:700;color:var(--text);}
@@ -1615,16 +1648,7 @@ img[alt="LinkUp"]{
     </div>
     <div class="splash-logo" style="margin-top:4px;">LinkUp</div>
   </div>
-  <div class="splash-tagline">Hot food. Cold drinks. Zero wait.</div>
-
-  <div class="splash-road">
-    <div class="road-line"></div>
-    <div class="road-dash"></div>
-    <div class="dust">
-      <span></span><span></span><span></span>
-    </div>
-    <div class="splash-scooter">🛵</div>
-  </div>
+  <div class="splash-tagline" style="margin-bottom:40px;">Your cravings, delivered.</div>
 
   <div class="splash-bar-wrap">
     <div class="splash-bar" id="splashBar"></div>
@@ -1669,20 +1693,14 @@ img[alt="LinkUp"]{
   <section class="lp-hero">
     <div class="lp-hero-eyebrow">🚀 Now in Hyderabad</div>
     <h1>Food at your door,<br><span>faster than fast.</span></h1>
-    <p>LinkUp connects you with the best local restaurants, cloud kitchens, grocery, essentials and more — all in one tap. Real food, real fast, real local.</p>
+    <p>LinkUp connects you with the best local restaurants, cloud kitchens, grocery, essentials and more — all in one tap.</p>
     <div class="lp-hero-btns">
       <button class="btn-primary" onclick="goToApp()">🚀 Get Started</button>
       <button class="btn-secondary" onclick="openLearnMore()">Learn More →</button>
     </div>
-    <button onclick="triggerInstall()" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);color:#fff;padding:11px 22px;border-radius:30px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;margin-bottom:40px;backdrop-filter:blur(8px);transition:background 0.2s,transform 0.15s;" onmouseover="this.style.background='rgba(255,140,0,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+    <button class="lp-hero-install" onclick="triggerInstall()" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);color:#fff;padding:11px 22px;border-radius:30px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;margin-bottom:48px;backdrop-filter:blur(8px);transition:background 0.2s,transform 0.15s,opacity 0.15s;" onmouseover="this.style.background='rgba(255,140,0,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
       <span style="font-size:18px;">📲</span> Add to Home Screen
     </button>
-    <div class="hero-scooter-track">
-      <div class="hero-road"></div>
-      <div class="hero-road-dashes"></div>
-      <div class="hero-scooter-emoji">🛵</div>
-      <div class="hero-pin">📍</div>
-    </div>
   </section>
 
   <!-- STATS -->
@@ -2083,7 +2101,7 @@ img[alt="LinkUp"]{
       </div>
       <div class="logo">LinkUp</div>
     </div>
-    <div class="logo-sub">Hot food. Cold drinks. Zero wait. ⚡</div>
+    <div class="logo-sub">Cravings delivered, instantly. 🔥</div>
   </div>
   <div class="header-right">
     <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
@@ -4580,27 +4598,46 @@ function setDefaultAddr(i) {
 // PAYMENT METHODS
 // ══════════════════════════════════════════════════
 function renderPayments() {
+  const lastPay = localStorage.getItem('lu_last_pay') || 'COD';
   const fixed = [
-    { icon:'💵', name:'Cash on Delivery', sub:'Pay when your order arrives' },
-    { icon:'📱', name:'UPI', sub:'Google Pay · PhonePe · Paytm' },
-    { icon:'💳', name:'Debit / Credit Card', sub:'Visa · Mastercard · RuPay' },
-    { icon:'⭐', name:'LinkUp Points', sub:'Earn 5 pts per delivered order' }
+    { key:'COD',    icon:'💵', name:'Cash on Delivery',    sub:'Pay when your order arrives' },
+    { key:'UPI',    icon:'📱', name:'UPI',                 sub:'Google Pay · PhonePe · Paytm' },
+    { key:'Card',   icon:'💳', name:'Debit / Credit Card', sub:'Visa · Mastercard · RuPay' },
+    { key:'Points', icon:'⭐', name:'LinkUp Points',        sub:`Balance: ₹${walletBalance} · Earn 5 pts per order` }
   ];
-  let html = fixed.map(m => `
-    <div class="pm-row">
+  let html = fixed.map(m => {
+    const active = lastPay === m.key ? ' pm-active' : '';
+    return `<div class="pm-row${active}" onclick="selectDefaultPayment('${m.key}')">
       <div class="pm-icon">${m.icon}</div>
       <div class="pm-info"><div class="pm-name">${m.name}</div><div class="pm-sub">${m.sub}</div></div>
-    </div>`).join('');
-  html += savedPayments.map((p, i) => `
-    <div class="pm-row">
+      <div class="pm-row-check"></div>
+    </div>`;
+  }).join('');
+  html += savedPayments.map((p, i) => {
+    const key = p.type === 'card' ? `Card:${p.last4}` : `UPI:${p.upi}`;
+    const active = lastPay === key ? ' pm-active' : '';
+    return `<div class="pm-row${active}" onclick="selectDefaultPayment('${key}')">
       <div class="pm-icon">${p.type === 'card' ? '💳' : '📱'}</div>
       <div class="pm-info">
         <div class="pm-name">${p.type === 'card' ? '**** **** **** ' + p.last4 : p.upi}</div>
         <div class="pm-sub">${p.type === 'card' ? 'Card · Expires ' + p.expiry : 'UPI ID'}</div>
       </div>
-      <button class="pm-del-btn" onclick="deletePayment(${i})">🗑️</button>
-    </div>`).join('');
+      <div class="pm-row-check"></div>
+      <button class="pm-del-btn" onclick="event.stopPropagation();deletePayment(${i})">🗑️</button>
+    </div>`;
+  }).join('');
   document.getElementById('pmList').innerHTML = html;
+}
+function selectDefaultPayment(key) {
+  localStorage.setItem('lu_last_pay', key);
+  renderPayments();
+  // Show UPI/Card input form if those options selected and no saved method yet
+  const baseKey = key.split(':')[0];
+  if (baseKey === 'UPI' || baseKey === 'Card') {
+    const hasSaved = savedPayments.some(p => p.type === (baseKey === 'Card' ? 'card' : 'upi'));
+    if (!hasSaved) { togglePmForm(true); pmSwitchType(baseKey === 'Card' ? 'card' : 'upi'); return; }
+  }
+  showToast(`✅ Default payment set to ${key.replace(':', ' ending ')}`);
 }
 function togglePmForm(show) {
   document.getElementById('pmAddForm').style.display = show ? 'block' : 'none';
