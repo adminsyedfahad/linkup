@@ -666,6 +666,87 @@ body{
 .offer-card-title{font-size:14px;font-weight:800;color:#fff;margin-bottom:5px;line-height:1.3;}
 .offer-card-desc{font-size:11px;color:rgba(255,255,255,0.85);line-height:1.55;}
 .offer-card-tag{display:inline-block;background:rgba(255,255,255,0.22);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:8px;letter-spacing:.4px;}
+/* Offers desktop: stretch cards evenly instead of scrolling */
+@media(min-width:768px){
+  .offers-scroll{display:grid;grid-template-columns:repeat(3,1fr);overflow-x:unset;gap:14px;padding:6px 20px 16px;}
+  .offer-card{flex-shrink:unset;width:auto;}
+}
+
+/* ══ VEG TOGGLE ══ */
+.veg-filter-wrap{display:flex;align-items:center;padding:0 14px 10px;flex-shrink:0;}
+.veg-toggle-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);
+  background:var(--surface);color:var(--muted);
+  font-size:12px;font-weight:700;cursor:pointer;
+  font-family:'Poppins',sans-serif;
+  transition:all .2s;white-space:nowrap;flex-shrink:0;
+}
+.veg-toggle-btn.veg-active{
+  background:rgba(22,163,74,0.12);border-color:#16a34a;color:#16a34a;
+}
+.veg-dot{
+  width:10px;height:10px;border-radius:50%;
+  border:1.5px solid #16a34a;flex-shrink:0;
+  background:transparent;transition:background .2s;
+}
+.veg-toggle-btn.veg-active .veg-dot{background:#16a34a;}
+
+/* ══ AREA SELECTOR ══ */
+.area-selector{
+  display:flex;align-items:center;gap:4px;
+  margin-top:3px;cursor:pointer;
+  font-size:11px;color:var(--orange);font-weight:600;
+  white-space:nowrap;
+}
+.area-selector:active{opacity:0.7;}
+.area-chevron{font-size:9px;opacity:0.7;}
+.area-sheet-list{display:flex;flex-direction:column;gap:4px;padding:0 4px 12px;}
+.area-sheet-opt{
+  padding:13px 14px;border-radius:10px;cursor:pointer;
+  font-size:14px;color:var(--text);
+  border:1.5px solid transparent;
+  transition:background .15s,border-color .15s;
+}
+.area-sheet-opt:hover{background:var(--surface);}
+.area-sheet-opt.area-active{
+  background:rgba(255,140,0,0.08);border-color:var(--orange);color:var(--orange);font-weight:700;
+}
+
+/* ══ ORDER AGAIN SECTION ══ */
+.oa-section{padding-bottom:4px;}
+.oa-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;}
+.oa-strip{display:flex;gap:10px;overflow-x:auto;padding:4px 16px 14px;scrollbar-width:none;}
+.oa-strip::-webkit-scrollbar{display:none;}
+.oa-card{
+  flex-shrink:0;width:130px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;cursor:pointer;
+  transition:transform .18s,border-color .18s;
+}
+.oa-card:hover{transform:translateY(-2px);border-color:var(--orange);}
+.oa-card-img{height:76px;background-size:cover;background-position:center;}
+.oa-card-body{padding:8px 9px;}
+.oa-card-name{font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.oa-card-price{font-size:11px;color:var(--orange);font-weight:700;}
+.oa-add-btn{
+  width:100%;margin-top:6px;padding:5px 0;
+  background:rgba(255,140,0,0.12);border:1px solid rgba(255,140,0,0.3);
+  color:var(--orange);font-size:11px;font-weight:700;
+  border-radius:7px;cursor:pointer;font-family:'Poppins',sans-serif;
+  transition:background .15s;
+}
+.oa-add-btn:active{background:var(--orange);color:#000;}
+
+/* ══ RESTAURANT RATING + TIME BADGES ══ */
+.rest-badge-row{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;}
+.rb{
+  display:inline-flex;align-items:center;gap:3px;
+  padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;
+}
+.rb-rating{background:rgba(255,140,0,0.12);color:var(--orange);}
+.rb-time{background:var(--surface);color:var(--muted);border:1px solid var(--border);}
+.rb-veg{background:rgba(22,163,74,0.12);color:#16a34a;border:1px solid rgba(22,163,74,0.3);}
 /* Wallet bottom sheet */
 .wallet-bal-hero{text-align:center;padding:24px 0 18px;}
 .wallet-bal-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
@@ -2099,7 +2180,12 @@ img[alt="LinkUp"]{
       <div style="width:36px;height:36px;border-radius:22%;overflow:hidden;flex-shrink:0;">
         <img src="https://i.ibb.co/HTfTK2N2/linkup-final.png" alt="LinkUp" style="width:36px;height:36px;display:block;border-radius:22%;">
       </div>
-      <div class="logo">LinkUp</div>
+      <div>
+        <div class="logo">LinkUp</div>
+        <div class="area-selector" id="areaSelector" onclick="event.stopPropagation();openAreaSheet()">
+          📍 <span id="areaLabel">Tolichowki</span> <span class="area-chevron">▾</span>
+        </div>
+      </div>
     </div>
     <div class="logo-sub">Cravings delivered, instantly. 🔥</div>
   </div>
@@ -2138,16 +2224,23 @@ img[alt="LinkUp"]{
     </div>
   </div>
   <div class="search-bar"><input type="text" id="searchInput" placeholder="🔍  Search food, restaurants..." oninput="handleSearch()"></div>
-  <div class="categories">
-    <div class="cat active" onclick="filter('all',this)">🍽️ All</div>
-    <div class="cat" onclick="filter('burger',this)">🍔 Burger</div>
-    <div class="cat" onclick="filter('pizza',this)">🍕 Pizza</div>
-    <div class="cat" onclick="filter('biryani',this)">🍛 Biryani</div>
-    <div class="cat" onclick="filter('dessert',this)">🍫 Dessert</div>
-    <div class="cat" onclick="filter('juice',this)">🧃 Juice</div>
-    <div class="cat" onclick="filter('chicken',this)">🍗 Chicken</div>
-    <div class="cat" onclick="filter('grocery',this)">🛒 Grocery</div>
-    <div class="cat" onclick="showPage('restaurants')" style="background:rgba(255,140,0,0.08);border-color:rgba(255,140,0,0.4);color:var(--orange);font-weight:700;">🏪 Restaurants</div>
+  <div style="display:flex;align-items:center;gap:0;">
+    <div class="categories" style="flex:1;min-width:0;">
+      <div class="cat active" data-cat="all"       onclick="filter('all',this)">🍽️ All</div>
+      <div class="cat"        data-cat="burger"    onclick="filter('burger',this)">🍔 Burger</div>
+      <div class="cat"        data-cat="pizza"     onclick="filter('pizza',this)">🍕 Pizza</div>
+      <div class="cat"        data-cat="biryani"   onclick="filter('biryani',this)">🍛 Biryani</div>
+      <div class="cat"        data-cat="dessert"   onclick="filter('dessert',this)">🍫 Dessert</div>
+      <div class="cat"        data-cat="juice"     onclick="filter('juice',this)">🧃 Juice</div>
+      <div class="cat"        data-cat="chicken"   onclick="filter('chicken',this)">🍗 Chicken</div>
+      <div class="cat"        data-cat="grocery"   onclick="filter('grocery',this)">🛒 Grocery</div>
+      <div class="cat" onclick="showPage('restaurants')" style="background:rgba(255,140,0,0.08);border-color:rgba(255,140,0,0.4);color:var(--orange);font-weight:700;">🏪 Restaurants</div>
+    </div>
+    <div class="veg-filter-wrap">
+      <button class="veg-toggle-btn" id="vegToggleBtn" onclick="toggleVeg()">
+        <span class="veg-dot"></span> Veg
+      </button>
+    </div>
   </div>
   <!-- OFFERS SECTION -->
   <div class="offers-section" id="offersSection">
@@ -2158,6 +2251,15 @@ img[alt="LinkUp"]{
         <div class="offer-card-tag">Rewards</div>
       </div>
     </div>
+  </div>
+
+  <!-- ORDER AGAIN SECTION -->
+  <div id="orderAgainSection" class="oa-section" style="display:none;">
+    <div class="oa-header">
+      <div class="home-rest-title">🔁 Order Again</div>
+    </div>
+    <div class="oa-strip" id="oaStrip"></div>
+    <div class="home-rest-divider"></div>
   </div>
 
   <!-- RESTAURANTS STRIP -->
@@ -2917,18 +3019,18 @@ function closeLangSheet(){
 
 // ── DATA ──────────────────────────────────────────
 let ITEMS = [
-  {id:1,name:"Cheese Burger",cat:"burger",price:199,rating:"4.5 ⭐",badge:"Bestseller",img:"https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=400",desc:"Juicy beef patty with melted cheddar, fresh lettuce, tomato, and our secret sauce.",active:true},
-  {id:2,name:"Chicken Pizza",cat:"pizza",price:399,rating:"4.7 ⭐",badge:"Popular",img:"https://images.unsplash.com/photo-1594007654729-407eedc4be65?w=400",desc:"Wood-fired pizza with grilled chicken, mozzarella, and signature tomato base.",active:true},
-  {id:3,name:"Biryani Bowl",cat:"biryani",price:249,rating:"4.8 ⭐",badge:"#1 Rated",img:"https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400",desc:"Aromatic basmati rice layered with slow-cooked chicken and caramelised onions.",active:true},
-  {id:4,name:"Chocolate Shake",cat:"dessert",price:149,rating:"4.3 ⭐",badge:"",img:"https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",desc:"Thick, creamy chocolate milkshake topped with whipped cream and chocolate drizzle.",active:true},
-  {id:5,name:"Veg Burger",cat:"burger",price:149,rating:"4.2 ⭐",badge:"",img:"https://images.unsplash.com/photo-1562967916-eb82221dfb92?w=400",desc:"Crispy veggie patty loaded with fresh veggies and tangy mayo in a soft bun.",active:true},
-  {id:6,name:"Fresh Vegetables",cat:"grocery",price:99,rating:"4.6 ⭐",badge:"Farm Fresh",img:"https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400",desc:"Handpicked seasonal vegetables delivered fresh from local farms to your door.",active:true},
-  {id:7,name:"Fresh Fruits",cat:"grocery",price:149,rating:"4.5 ⭐",badge:"Seasonal",img:"https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=400",desc:"A vibrant mix of seasonal fruits packed with vitamins and natural sweetness.",active:true},
-  {id:8,name:"Mango Juice",cat:"juice",price:89,rating:"4.4 ⭐",badge:"Summer Hit",img:"https://images.unsplash.com/photo-1546173159-315724a31696?w=400",desc:"100% natural mango juice, no added sugar, served chilled.",active:true},
-  {id:9,name:"Grilled Chicken",cat:"chicken",price:299,rating:"4.7 ⭐",badge:"Chef's Pick",img:"https://images.unsplash.com/photo-1598514983318-2f64f8f4796c?w=400",desc:"Herb-marinated grilled chicken breast with smoky charcoal flavour.",active:true},
-  {id:10,name:"Margherita Pizza",cat:"pizza",price:299,rating:"4.6 ⭐",badge:"",img:"https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400",desc:"Classic pizza with fresh tomato sauce, buffalo mozzarella and fresh basil.",active:true},
-  {id:11,name:"Butter Chicken",cat:"chicken",price:349,rating:"4.9 ⭐",badge:"🔥 Hot",img:"https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400",desc:"Rich, creamy tomato-based curry with tender chicken — a timeless classic.",active:true},
-  {id:12,name:"Ice Cream Sundae",cat:"dessert",price:129,rating:"4.4 ⭐",badge:"",img:"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400",desc:"Three scoops of premium vanilla ice cream smothered in hot fudge and nuts.",active:true},
+  {id:1, name:"Cheese Burger",     cat:"burger",  price:199, rating:"4.5 ⭐", badge:"Bestseller", isVeg:false, img:"https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=400", desc:"Juicy beef patty with melted cheddar, fresh lettuce, tomato, and our secret sauce.",active:true},
+  {id:2, name:"Chicken Pizza",     cat:"pizza",   price:399, rating:"4.7 ⭐", badge:"Popular",    isVeg:false, img:"https://images.unsplash.com/photo-1594007654729-407eedc4be65?w=400", desc:"Wood-fired pizza with grilled chicken, mozzarella, and signature tomato base.",active:true},
+  {id:3, name:"Biryani Bowl",      cat:"biryani", price:249, rating:"4.8 ⭐", badge:"#1 Rated",   isVeg:false, img:"https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400", desc:"Aromatic basmati rice layered with slow-cooked chicken and caramelised onions.",active:true},
+  {id:4, name:"Chocolate Shake",   cat:"dessert", price:149, rating:"4.3 ⭐", badge:"",           isVeg:true,  img:"https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400", desc:"Thick, creamy chocolate milkshake topped with whipped cream and chocolate drizzle.",active:true},
+  {id:5, name:"Veg Burger",        cat:"burger",  price:149, rating:"4.2 ⭐", badge:"",           isVeg:true,  img:"https://images.unsplash.com/photo-1562967916-eb82221dfb92?w=400", desc:"Crispy veggie patty loaded with fresh veggies and tangy mayo in a soft bun.",active:true},
+  {id:6, name:"Fresh Vegetables",  cat:"grocery", price:99,  rating:"4.6 ⭐", badge:"Farm Fresh", isVeg:true,  img:"https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400", desc:"Handpicked seasonal vegetables delivered fresh from local farms to your door.",active:true},
+  {id:7, name:"Fresh Fruits",      cat:"grocery", price:149, rating:"4.5 ⭐", badge:"Seasonal",   isVeg:true,  img:"https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=400", desc:"A vibrant mix of seasonal fruits packed with vitamins and natural sweetness.",active:true},
+  {id:8, name:"Mango Juice",       cat:"juice",   price:89,  rating:"4.4 ⭐", badge:"Summer Hit", isVeg:true,  img:"https://images.unsplash.com/photo-1546173159-315724a31696?w=400", desc:"100% natural mango juice, no added sugar, served chilled.",active:true},
+  {id:9, name:"Grilled Chicken",   cat:"chicken", price:299, rating:"4.7 ⭐", badge:"Chef's Pick",isVeg:false, img:"https://images.unsplash.com/photo-1598514983318-2f64f8f4796c?w=400", desc:"Herb-marinated grilled chicken breast with smoky charcoal flavour.",active:true},
+  {id:10,name:"Margherita Pizza",  cat:"pizza",   price:299, rating:"4.6 ⭐", badge:"",           isVeg:true,  img:"https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400", desc:"Classic pizza with fresh tomato sauce, buffalo mozzarella and fresh basil.",active:true},
+  {id:11,name:"Butter Chicken",    cat:"chicken", price:349, rating:"4.9 ⭐", badge:"🔥 Hot",     isVeg:false, img:"https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400", desc:"Rich, creamy tomato-based curry with tender chicken — a timeless classic.",active:true},
+  {id:12,name:"Ice Cream Sundae",  cat:"dessert", price:129, rating:"4.4 ⭐", badge:"",           isVeg:true,  img:"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400", desc:"Three scoops of premium vanilla ice cream smothered in hot fudge and nuts.",active:true},
 ];
 
 const RESTAURANTS=[
@@ -3511,6 +3613,8 @@ function enterApp(){
   loadWallet();
   loadAdminNotifications();
   loadOffers();
+  loadDeliveryArea();
+  loadOrderAgainSection();
 }
 async function doLogout(){
   try { if(window._auth) await window._fbSignOut(window._auth); } catch(e){}
@@ -3605,9 +3709,9 @@ function renderHomeRestaurants(){
       </div>
       <div class="home-rest-mini-body">
         <div class="home-rest-mini-name">${r.name}</div>
-        <div class="home-rest-mini-meta">
-          <span class="home-rest-mini-rating">⭐ ${r.rating}</span>
-          <span>🕐 ${r.time.split('-')[0].trim()}m</span>
+        <div class="rest-badge-row">
+          <span class="rb rb-rating">⭐ ${r.rating}</span>
+          <span class="rb rb-time">🕐 ${r.time}</span>
         </div>
       </div>
     </div>`).join('');
@@ -3616,7 +3720,18 @@ function renderRestaurants(){
   const grid=document.getElementById('restGrid');grid.innerHTML='';
   RESTAURANTS.forEach(r=>{
     const d=document.createElement('div');d.className='rest-card';
-    d.innerHTML=`<div class="rest-img" style="background-image:url('${r.img}')"><div class="rest-tag">${r.tag}</div></div><div class="rest-body"><div class="rest-name">${r.name}</div><div class="rest-meta"><span class="rest-rating">⭐ ${r.rating}</span><span>🕐 ${r.time}</span><span>${r.cuisine}</span></div></div>`;
+    d.innerHTML=`
+      <div class="rest-img" style="background-image:url('${r.img}')">
+        <div class="rest-tag">${r.tag}</div>
+      </div>
+      <div class="rest-body">
+        <div class="rest-name">${r.name}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">${r.cuisine}</div>
+        <div class="rest-badge-row">
+          <span class="rb rb-rating">⭐ ${r.rating}</span>
+          <span class="rb rb-time">🕐 ${r.time}</span>
+        </div>
+      </div>`;
     d.onclick=()=>openRestDetail(r.id);
     grid.appendChild(d);
   });
@@ -3627,20 +3742,27 @@ function filter(type,el){
   document.querySelectorAll('.cat').forEach(c=>c.classList.remove('active'));
   if(el)el.classList.add('active');
   document.getElementById('searchInput').value='';
-  const filtered=type==='all'?ITEMS.filter(i=>i.active):ITEMS.filter(i=>i.cat===type&&i.active);
-  document.getElementById('sectionTitle').textContent=type==='all'?'🔥 Popular Items':`🍽️ ${el?el.textContent:type}`;
+  let filtered=type==='all'?ITEMS.filter(i=>i.active):ITEMS.filter(i=>i.cat===type&&i.active);
+  filtered=applyVeg(filtered);
+  const label=type==='all'?'🔥 Popular Items':`🍽️ ${el?el.textContent:type}`;
+  document.getElementById('sectionTitle').textContent=label+(vegOnly?' 🌿':'');
   const restSec=document.getElementById('homeRestSection');
   if(restSec)restSec.style.display=type==='all'?'block':'none';
+  const oaSec=document.getElementById('orderAgainSection');
+  if(oaSec)oaSec.style.display=(type==='all'&&oaSec.dataset.hasItems==='true')?'block':'none';
   renderGrid(filtered);
 }
 function handleSearch(){
   const q=document.getElementById('searchInput').value.toLowerCase().trim();
   document.querySelectorAll('.cat').forEach(c=>c.classList.remove('active'));
   const restSec=document.getElementById('homeRestSection');
+  const oaSec=document.getElementById('orderAgainSection');
   if(!q){filter('all');return;}
   if(restSec)restSec.style.display='none';
-  const results=ITEMS.filter(i=>i.active&&(i.name.toLowerCase().includes(q)||i.cat.includes(q)));
-  document.getElementById('sectionTitle').textContent=`🔍 Results for "${q}"`;
+  if(oaSec)oaSec.style.display='none';
+  let results=ITEMS.filter(i=>i.active&&(i.name.toLowerCase().includes(q)||i.cat.includes(q)));
+  results=applyVeg(results);
+  document.getElementById('sectionTitle').textContent=`🔍 Results for "${q}"${vegOnly?' 🌿':''}`;
   renderGrid(results);
 }
 
@@ -3949,6 +4071,7 @@ async function confirmOrder(payMethod,total,pointsUsed=0){
   cart=[]; updateCartUI();
   btn.textContent = '🎉 Confirm & Place Order'; btn.disabled = false;
   showPage('orders'); renderOrders();
+  loadOrderAgainSection();
   showToast('🎉 Order placed!');
   pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'✅');
   setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider Rajan Kumar is on the way!','🛵'),8000);
@@ -4036,6 +4159,92 @@ async function loadOffers(){
       <div class="offer-card-title">${o.title||''}</div>
       <div class="offer-card-desc">${o.description||''}</div>
       ${o.tag?`<div class="offer-card-tag">${o.tag}</div>`:''}
+    </div>`).join('');
+}
+
+// ── DELIVERY AREA ─────────────────────────────────
+// Edit this array to update serviceable areas — easy to maintain
+const DELIVERY_AREAS = [
+  'Tolichowki','Mehdipatnam','Banjara Hills','Jubilee Hills',
+  'Hitech City','Gachibowli','Madhapur','Film Nagar',
+  'Kukatpally','KPHB Colony','Secunderabad','Ameerpet',
+  'SR Nagar','Begumpet','Somajiguda','Masab Tank'
+];
+function loadDeliveryArea(){
+  const saved = localStorage.getItem('lu_area') || DELIVERY_AREAS[0];
+  const el = document.getElementById('areaLabel');
+  if(el) el.textContent = saved;
+}
+function openAreaSheet(){
+  const current = localStorage.getItem('lu_area') || DELIVERY_AREAS[0];
+  const list = document.getElementById('areaSheetList');
+  if(list){
+    list.innerHTML = DELIVERY_AREAS.map(a => `
+      <div class="area-sheet-opt${a===current?' area-active':''}" onclick="setArea('${a}')">${a}</div>
+    `).join('');
+  }
+  const ov = document.getElementById('areaOverlay');
+  if(ov){ ov.classList.add('open'); document.body.style.overflow='hidden'; }
+}
+function closeAreaSheet(){
+  const ov = document.getElementById('areaOverlay');
+  if(ov){ ov.classList.remove('open'); document.body.style.overflow=''; }
+}
+function setArea(area){
+  localStorage.setItem('lu_area', area);
+  const el = document.getElementById('areaLabel');
+  if(el) el.textContent = area;
+  closeAreaSheet();
+  showToast(`📍 Delivering to ${area}`);
+}
+
+// ── VEG FILTER ────────────────────────────────────
+let vegOnly = false;
+function toggleVeg(){
+  vegOnly = !vegOnly;
+  const btn = document.getElementById('vegToggleBtn');
+  if(btn) btn.classList.toggle('veg-active', vegOnly);
+  // Re-run active filter
+  const activeCat = document.querySelector('.cat.active');
+  const catText = activeCat?.getAttribute('data-cat') || 'all';
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  if(q){ handleSearch(); }
+  else { filter(catText, activeCat); }
+}
+function applyVeg(items){ return vegOnly ? items.filter(i => i.isVeg) : items; }
+
+// ── ORDER AGAIN ───────────────────────────────────
+function loadOrderAgainSection(){
+  const sec = document.getElementById('orderAgainSection');
+  const strip = document.getElementById('oaStrip');
+  if(!sec || !strip) return;
+  // Collect all item names from order history; deduplicate; take last 3 unique items
+  const seen = new Set();
+  const unique = [];
+  for(const ord of orderHistory){
+    if(!Array.isArray(ord.items)) continue;
+    for(const raw of ord.items){
+      const name = raw.split(' ×')[0].trim();
+      if(!seen.has(name)){
+        seen.add(name);
+        const itemData = ITEMS.find(i => i.name === name);
+        if(itemData) unique.push(itemData);
+      }
+      if(unique.length >= 6) break;
+    }
+    if(unique.length >= 6) break;
+  }
+  if(!unique.length){ sec.style.display='none'; sec.dataset.hasItems='false'; return; }
+  sec.style.display = 'block';
+  sec.dataset.hasItems = 'true';
+  strip.innerHTML = unique.map(it => `
+    <div class="oa-card">
+      <div class="oa-card-img" style="background-image:url('${it.img}')"></div>
+      <div class="oa-card-body">
+        <div class="oa-card-name">${it.name}</div>
+        <div class="oa-card-price">₹${it.price}</div>
+        <button class="oa-add-btn" onclick="addToCart(${it.id})">+ Add</button>
+      </div>
     </div>`).join('');
 }
 
@@ -5556,6 +5765,17 @@ function reverseGeocode(lat, lng) {
   </div>
   <button class="install-btn" onclick="triggerInstall()">Install</button>
   <button class="install-banner-close" onclick="hideInstallBanner()">✕</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     DELIVERY AREA SHEET
+══════════════════════════════════════ -->
+<div class="psheet-overlay" id="areaOverlay" onclick="closeAreaSheet()">
+  <div class="psheet" onclick="event.stopPropagation()" style="max-height:75vh;overflow-y:auto;">
+    <div class="psheet-handle"></div>
+    <div class="psheet-title" style="padding:0 20px 14px;">📍 Choose Delivery Area</div>
+    <div class="area-sheet-list" id="areaSheetList" style="padding:0 12px 20px;"></div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════
