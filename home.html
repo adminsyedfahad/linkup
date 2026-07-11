@@ -4214,26 +4214,53 @@ function toggleVeg(){
 function applyVeg(items){ return vegOnly ? items.filter(i => i.isVeg) : items; }
 
 // ── ORDER AGAIN ───────────────────────────────────
-function loadOrderAgainSection(){
+// Source of truth: deliveredItems/{walletToken} — written by admin on delivery
+// Security: path-based (allow get:true, list:false, write:admin) — same as wallets/
+// Fallback: localStorage orderHistory (no delivery filter, used when Firestore unavailable)
+// Rule to add in console: match /deliveredItems/{token} { allow get:if true; allow list:if false;
+//   allow write: if request.auth!=null && request.auth.token.email=='adminlinkup@gmail.com'; }
+async function loadOrderAgainSection(){
   const sec = document.getElementById('orderAgainSection');
   const strip = document.getElementById('oaStrip');
   if(!sec || !strip) return;
-  // Collect all item names from order history; deduplicate; take last 3 unique items
+
+  let rawItems = [];  // [{name, price, qty, orderId, deliveredAt}]
+
+  // Primary source: deliveredItems/{walletToken} — only items from confirmed delivered orders
+  if(window._fbReady && window._db){
+    try{
+      const snap = await window._fbGetDoc(window._fbDoc(window._db,'deliveredItems',walletToken));
+      if(snap.exists()) rawItems = snap.data().items || [];
+    } catch(e){ /* offline or rule not yet added — fall through to localStorage */ }
+  }
+
+  // Fallback: localStorage order history (any ordered items, no delivery status filter)
+  if(!rawItems.length){
+    const lsSeen = new Set();
+    for(const ord of orderHistory){
+      if(!Array.isArray(ord.items)) continue;
+      for(const raw of ord.items){
+        const name = raw.split(' ×')[0].trim();
+        if(!lsSeen.has(name)){ lsSeen.add(name); rawItems.push({name, price:0}); }
+        if(rawItems.length >= 12) break;
+      }
+      if(rawItems.length >= 12) break;
+    }
+  }
+
+  if(!rawItems.length){ sec.style.display='none'; sec.dataset.hasItems='false'; return; }
+
+  // Deduplicate by name, most-recent-first (arrayUnion appends → reverse = newest first)
   const seen = new Set();
   const unique = [];
-  for(const ord of orderHistory){
-    if(!Array.isArray(ord.items)) continue;
-    for(const raw of ord.items){
-      const name = raw.split(' ×')[0].trim();
-      if(!seen.has(name)){
-        seen.add(name);
-        const itemData = ITEMS.find(i => i.name === name);
-        if(itemData) unique.push(itemData);
-      }
-      if(unique.length >= 6) break;
-    }
+  for(const entry of [...rawItems].reverse()){
+    if(seen.has(entry.name)) continue;
+    seen.add(entry.name);
+    const itemData = ITEMS.find(i => i.name === entry.name && i.active);
+    if(itemData){ unique.push(itemData); }
     if(unique.length >= 6) break;
   }
+
   if(!unique.length){ sec.style.display='none'; sec.dataset.hasItems='false'; return; }
   sec.style.display = 'block';
   sec.dataset.hasItems = 'true';

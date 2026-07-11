@@ -922,6 +922,17 @@ async function updSt(id,status,extra={}){
           const ptxn={type:'earned',amount:5,orderId:id,date:now,note:'Delivered order reward'};
           window._fbSetDoc(wref,{balance:cur+5,transactions:window._fbArrUnion(ptxn)},{merge:true}).catch(()=>{});
         }).catch(()=>{});
+
+        // Write delivered item names to deliveredItems/{walletToken} for "Order Again" section
+        // Security model: path-based (same as wallets/ and notifications/)
+        // Rule needed: allow get:true; allow list:false; allow write:if admin
+        const diItems=(delOrder.itemDetails||[]).map(i=>({
+          name:i.name, price:i.price, qty:i.qty, orderId:id, deliveredAt:now
+        }));
+        if(diItems.length){
+          const diRef=window._fbDoc(window._db,'deliveredItems',delOrder.walletToken);
+          window._fbSetDoc(diRef,{items:window._fbArrUnion(...diItems)},{merge:true}).catch(()=>{});
+        }
       }
     }
 
