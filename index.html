@@ -815,7 +815,32 @@ body{
   background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);
   color:#fff;padding:8px 14px;border-radius:12px;
   font-size:13px;font-weight:700;border:1px solid rgba(255,140,0,0.3);
+  max-width:calc(100% - 72px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+/* ── ACTIVE ORDER CARD (home page) ── */
+.aoc-wrap{padding:10px 14px 2px;}
+.aoc{background:linear-gradient(135deg,rgba(255,140,0,0.08) 0%,rgba(255,60,60,0.05) 100%);border:1px solid rgba(255,140,0,0.38);border-radius:16px;padding:14px 16px 12px;cursor:pointer;transition:transform 0.18s,box-shadow 0.18s;animation:aoc-in 0.42s cubic-bezier(0.34,1.56,0.64,1) both;}
+.aoc:active{transform:scale(0.97);}
+.aoc:hover{box-shadow:0 4px 22px rgba(255,140,0,0.2);}
+@keyframes aoc-in{from{opacity:0;transform:translateY(-18px) scale(0.95);}to{opacity:1;transform:none;}}
+.aoc-inner{display:flex;align-items:center;gap:12px;}
+.aoc-status-icon{font-size:28px;flex-shrink:0;line-height:1;}
+.aoc-pulse{animation:aoc-pulse-icon 1.4s ease-in-out infinite;}
+@keyframes aoc-pulse-icon{0%,100%{transform:scale(1);}50%{transform:scale(1.18);}}
+.aoc-center{flex:1;min-width:0;}
+.aoc-order-id{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:2px;}
+.aoc-status-line{font-size:13px;font-weight:700;color:var(--text);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.aoc-progress{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;}
+.aoc-progress-fill{height:100%;background:linear-gradient(90deg,#ff8c00,#ff4500);border-radius:2px;transition:width 1.4s cubic-bezier(0.4,0,0.2,1);}
+.aoc-right{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:1px;}
+.aoc-eta-label{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.aoc-eta-value{font-size:24px;font-weight:800;color:#ff8c00;line-height:1.1;}
+.aoc-eta-unit{font-size:9px;color:var(--muted);}
+.aoc-map-hint{font-size:9px;color:rgba(255,140,0,0.75);font-weight:700;margin-top:4px;}
+/* Map tile toggle */
+.map-tile-btns{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:6px;background:rgba(0,0,0,0.72);padding:5px 8px;border-radius:20px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.08);}
+.mtt-btn{padding:5px 14px;border-radius:14px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,0.55);transition:all 0.2s;}
+.mtt-btn.mtt-active{background:#ff8c00;color:#fff;}
 .track-steps{display:flex;flex-direction:column;gap:0;}
 .track-step{display:flex;gap:14px;align-items:flex-start;padding-bottom:20px;position:relative;}
 .track-step:last-child{padding-bottom:0;}
@@ -2213,6 +2238,25 @@ img[alt="LinkUp"]{
 
 <!-- HOME PAGE -->
 <div id="page-home" class="page active">
+  <!-- ACTIVE ORDER CARD — auto-shown when user has a live order -->
+  <div id="aocWrap" class="aoc-wrap" style="display:none;">
+    <div class="aoc" id="activeOrderCard" onclick="openHomeCardMap()">
+      <div class="aoc-inner">
+        <div class="aoc-status-icon" id="aocIcon">🛵</div>
+        <div class="aoc-center">
+          <div class="aoc-order-id" id="aocOrderId"></div>
+          <div class="aoc-status-line" id="aocStatusLine">Your order is on its way!</div>
+          <div class="aoc-progress"><div class="aoc-progress-fill" id="aocProgressFill" style="width:0%"></div></div>
+        </div>
+        <div class="aoc-right">
+          <div class="aoc-eta-label">ETA</div>
+          <div class="aoc-eta-value" id="aocEtaValue">—</div>
+          <div class="aoc-eta-unit">min</div>
+          <div class="aoc-map-hint">🗺️ Tap to track</div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="ads-track-wrapper">
     <div class="ads-track">
       <div class="ad-card"><img src="https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=120" alt=""><div><h3>50% OFF First Order</h3><p>Fast delivery + fresh meals</p></div></div>
@@ -3034,12 +3078,12 @@ let ITEMS = [
 ];
 
 const RESTAURANTS=[
-  {id:1,name:"The Burger Lab",cuisine:"Burgers & Shakes",rating:"4.8",time:"20-30 min",img:"https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400",tag:"20% OFF",cats:["burger"]},
-  {id:2,name:"Pizza Planet",cuisine:"Pizza & Pasta",rating:"4.7",time:"25-35 min",img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400",tag:"Free Delivery",cats:["pizza"]},
-  {id:3,name:"Biryani House",cuisine:"Biryani & Curries",rating:"4.9",time:"30-40 min",img:"https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400",tag:"#1 Rated",cats:["biryani","chicken"]},
-  {id:4,name:"Green Bowl",cuisine:"Healthy & Salads",rating:"4.5",time:"15-25 min",img:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400",tag:"Vegan",cats:["grocery","juice"]},
-  {id:5,name:"Dessert Dreams",cuisine:"Desserts & Beverages",rating:"4.6",time:"20-30 min",img:"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400",tag:"New",cats:["dessert","juice"]},
-  {id:6,name:"Spice Garden",cuisine:"Indian & Chinese",rating:"4.7",time:"25-35 min",img:"https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400",tag:"Popular",cats:["chicken","biryani"]},
+  {id:1,name:"The Burger Lab",cuisine:"Burgers & Shakes",rating:"4.8",time:"20-30 min",img:"https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400",tag:"20% OFF",cats:["burger"],lat:17.4156,lng:78.4347},
+  {id:2,name:"Pizza Planet",cuisine:"Pizza & Pasta",rating:"4.7",time:"25-35 min",img:"https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400",tag:"Free Delivery",cats:["pizza"],lat:17.4307,lng:78.4071},
+  {id:3,name:"Biryani House",cuisine:"Biryani & Curries",rating:"4.9",time:"30-40 min",img:"https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400",tag:"#1 Rated",cats:["biryani","chicken"],lat:17.3937,lng:78.4432},
+  {id:4,name:"Green Bowl",cuisine:"Healthy & Salads",rating:"4.5",time:"15-25 min",img:"https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400",tag:"Vegan",cats:["grocery","juice"],lat:17.4474,lng:78.3762},
+  {id:5,name:"Dessert Dreams",cuisine:"Desserts & Beverages",rating:"4.6",time:"20-30 min",img:"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400",tag:"New",cats:["dessert","juice"],lat:17.3978,lng:78.4156},
+  {id:6,name:"Spice Garden",cuisine:"Indian & Chinese",rating:"4.7",time:"25-35 min",img:"https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400",tag:"Popular",cats:["chicken","biryani"],lat:17.4399,lng:78.3910},
 ];
 
 const TRACK_STATUS_ORDER=['placed','accepted','preparing','picked_up','on_the_way','delivered'];
@@ -3615,6 +3659,7 @@ function enterApp(){
   loadOffers();
   loadDeliveryArea();
   loadOrderAgainSection();
+  startActiveOrderTracking();
 }
 async function doLogout(){
   try { if(window._auth) await window._fbSignOut(window._auth); } catch(e){}
@@ -3622,6 +3667,7 @@ async function doLogout(){
   localStorage.removeItem('lu_session');
   if(_adminOrdersUnsub){ _adminOrdersUnsub(); _adminOrdersUnsub = null; }
   if(_adminNotifsUnsub){ _adminNotifsUnsub(); _adminNotifsUnsub = null; }
+  stopActiveOrderTracking();
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('authPage').classList.add('active');
   showToast('👋 Signed out!');
@@ -4170,6 +4216,24 @@ const DELIVERY_AREAS = [
   'Kukatpally','KPHB Colony','Secunderabad','Ameerpet',
   'SR Nagar','Begumpet','Somajiguda','Masab Tank'
 ];
+const AREA_COORDS = {
+  'Tolichowki':    {lat:17.3933,lng:78.4376},
+  'Mehdipatnam':   {lat:17.3937,lng:78.4432},
+  'Banjara Hills': {lat:17.4156,lng:78.4347},
+  'Jubilee Hills': {lat:17.4307,lng:78.4071},
+  'Hitech City':   {lat:17.4474,lng:78.3762},
+  'Gachibowli':    {lat:17.4401,lng:78.3489},
+  'Madhapur':      {lat:17.4399,lng:78.3910},
+  'Film Nagar':    {lat:17.4108,lng:78.4071},
+  'Kukatpally':    {lat:17.4849,lng:78.3959},
+  'KPHB Colony':   {lat:17.4942,lng:78.3862},
+  'Secunderabad':  {lat:17.4441,lng:78.5010},
+  'Ameerpet':      {lat:17.4375,lng:78.4481},
+  'SR Nagar':      {lat:17.4315,lng:78.4411},
+  'Begumpet':      {lat:17.4434,lng:78.4655},
+  'Somajiguda':    {lat:17.4271,lng:78.4624},
+  'Masab Tank':    {lat:17.4001,lng:78.4525}
+};
 function loadDeliveryArea(){
   const saved = localStorage.getItem('lu_area') || DELIVERY_AREAS[0];
   const el = document.getElementById('areaLabel');
@@ -4273,6 +4337,94 @@ async function loadOrderAgainSection(){
         <button class="oa-add-btn" onclick="addToCart(${it.id})">+ Add</button>
       </div>
     </div>`).join('');
+}
+
+// ── ACTIVE ORDER CARD (home page) ─────────────────
+// Subscribes to the most-recent order's orderTracking doc; shows/hides a live
+// card on the home page. Tapping the card opens the full map modal.
+const AOC_STATUS_META = {
+  placed:    {icon:'📝',line:'Order received! Confirming with restaurant'},
+  accepted:  {icon:'✅',line:'Restaurant accepted — getting started!'},
+  preparing: {icon:'👨‍🍳',line:'Your food is being freshly prepared',pulse:true},
+  picked_up: {icon:'📦',line:'Rider has your order!',pulse:true},
+  on_the_way:{icon:'🛵',line:'Almost there — hot and fresh!',pulse:true},
+  delivered: {icon:'🎉',line:'Delivered! Enjoy your meal 😋'},
+  cancelled: {icon:'❌',line:'Order cancelled'}
+};
+const AOC_PROGRESS_MAP = {placed:0.03,accepted:0.08,preparing:0.16,picked_up:0.28,on_the_way:null,delivered:1,cancelled:0};
+
+let _aocUnsub   = null;
+let _aocData    = null;
+let _aocEtaTimer = null;
+
+function _calcEtaMins(d) {
+  if(!d) return null;
+  if(d.estimatedDeliveryTime){
+    const ts=d.estimatedDeliveryTime?.toDate?.()?.getTime()||new Date(d.estimatedDeliveryTime).getTime();
+    return Math.max(0,Math.ceil((ts-Date.now())/60000));
+  }
+  return d.etaMinutes||d.eta||null;
+}
+
+function startActiveOrderTracking() {
+  if(_aocUnsub){_aocUnsub();_aocUnsub=null;}
+  if(_aocEtaTimer){clearInterval(_aocEtaTimer);_aocEtaTimer=null;}
+  const order=orderHistory.find(o=>o.trackingToken&&o.status!=='delivered'&&o.status!=='cancelled');
+  if(!order||!window._fbReady||!window._db){hideAOC();return;}
+  const ref=window._fbDoc(window._db,'orderTracking',order.trackingToken);
+  _aocUnsub=window._fbSnap(ref,snap=>{
+    if(!snap.exists()){hideAOC();return;}
+    _aocData={orderId:order.id,trackingToken:order.trackingToken,...snap.data()};
+    const st=_aocData.status||'placed';
+    if(st==='delivered'){hideAOC();loadOrderAgainSection();return;}
+    if(st==='cancelled'){hideAOC();return;}
+    showAOC(_aocData);
+  });
+}
+
+function stopActiveOrderTracking() {
+  if(_aocUnsub){_aocUnsub();_aocUnsub=null;}
+  if(_aocEtaTimer){clearInterval(_aocEtaTimer);_aocEtaTimer=null;}
+  _aocData=null; hideAOC(); _stopRiderAnim();
+}
+
+function hideAOC() {
+  const el=document.getElementById('aocWrap');
+  if(el) el.style.display='none';
+}
+
+function showAOC(d) {
+  const wrap=document.getElementById('aocWrap');
+  if(!wrap) return;
+  const st=d.status||'placed';
+  const meta=AOC_STATUS_META[st]||AOC_STATUS_META.placed;
+  const wasHidden=wrap.style.display==='none'||wrap.style.display==='';
+  wrap.style.display='block';
+  if(wasHidden){
+    const card=document.getElementById('activeOrderCard');
+    if(card){card.style.animation='none';void card.offsetWidth;card.style.animation='';}
+  }
+  const oidEl=document.getElementById('aocOrderId');
+  if(oidEl) oidEl.textContent=d.orderId||'';
+  const iconEl=document.getElementById('aocIcon');
+  if(iconEl){iconEl.textContent=meta.icon;iconEl.className='aoc-status-icon'+(meta.pulse?' aoc-pulse':'');}
+  const lineEl=document.getElementById('aocStatusLine');
+  if(lineEl) lineEl.textContent=meta.line;
+  const rawProg=AOC_PROGRESS_MAP[st];
+  const prog=rawProg!==null?(rawProg??0):getProgressForStatus(d);
+  const fillEl=document.getElementById('aocProgressFill');
+  if(fillEl) fillEl.style.width=Math.round(prog*100)+'%';
+  // Update rider target for animation
+  _riderTargetProgress=getProgressForStatus(d);
+  _updateAocEta(d);
+  if(_aocEtaTimer) clearInterval(_aocEtaTimer);
+  _aocEtaTimer=setInterval(()=>_updateAocEta(_aocData),30000);
+}
+
+function _updateAocEta(d) {
+  const mins=_calcEtaMins(d);
+  const el=document.getElementById('aocEtaValue');
+  if(el) el.textContent=mins!==null?String(mins):'—';
 }
 
 // ── ADMIN NOTIFICATIONS ───────────────────────────
@@ -5548,136 +5700,273 @@ function sendChatMessage() {
   }
 }
 
-// ══════════════════════════════════════════════════
-// REAL MAPS — Leaflet + OpenStreetMap (no API key)
-// Hyderabad, India as default location
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
+// REAL MAPS — Leaflet + OSM tiles + OSRM road routing (no API key)
+// Hyderabad, India. Satellite tiles via Esri World Imagery (free).
+// ══════════════════════════════════════════════════════════════════════
 
-// ── TRACKING MAP ─────────────────────────────────
+// ── STATE ─────────────────────────────────────────
 let _trackMap = null, _trackModalMap = null;
 let _trackRiderMarker = null, _trackModalRiderMarker = null;
-let _trackAnimInterval = null;
-let _trackCoords = { rLat:0, rLng:0, destLat:0, destLng:0, eta:20 };
+let _trackAnimInterval = null; // kept for compatibility — unused
+let _trackCoords = { rLat:17.4156, rLng:78.4347, destLat:17.3933, destLng:78.4376, eta:20 };
 
-// Premium tile: CartoDB Dark Matter (no API key needed)
-const _TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const _TILE_ATTR = '© CartoDB';
+// Tile sources — Classic (CartoDB Dark) + Satellite (Esri)
+const MAP_TILES = {
+  classic:   {url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',   attr:'© CartoDB',     sub:'abcd'},
+  satellite: {url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri', sub:'abc'}
+};
+let _curMapTile = localStorage.getItem('lu_map_tile') || 'classic';
+let _modalTileLayer = null;
 
+// OSRM road route cache
+let _osrmRouteCoords = null;  // L.LatLng[] or null
+let _osrmRouteKey = '';
+let _routeSegDists = null;    // cached segment distances
+let _routeTotalDist = 0;
+
+// Rider animation — requestAnimationFrame based (replaces setInterval)
+let _riderAnimReqId = null;
+let _riderProgress = 0;         // 0=restaurant, 1=customer door
+let _riderTargetProgress = 0;
+let _riderAnimLastTs = 0;
+
+// ── ICONS ─────────────────────────────────────────
 function _makeRiderIcon() {
   return L.divIcon({
-    html: `<div style="
-      width:42px;height:42px;
-      background:linear-gradient(135deg,#ff8c00,#ff3c3c);
-      border-radius:50%;
-      border:3px solid #fff;
-      box-shadow:0 3px 12px rgba(255,140,0,0.8);
-      display:flex;align-items:center;justify-content:center;
-      font-size:20px;
-    ">🏍</div>`,
-    iconSize:[42,42], iconAnchor:[21,21], className:''
+    html:`<div style="width:42px;height:42px;background:linear-gradient(135deg,#ff8c00,#ff3c3c);border-radius:50%;border:3px solid #fff;box-shadow:0 3px 12px rgba(255,140,0,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">🏍</div>`,
+    iconSize:[42,42],iconAnchor:[21,21],className:''
   });
 }
-
 function _makeDestIcon() {
   return L.divIcon({
-    html: `<div style="
-      display:flex;flex-direction:column;align-items:center;
-    ">
-      <div style="
-        width:36px;height:36px;
-        background:#ff3c3c;
-        border:3px solid #fff;
-        border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);
-        box-shadow:0 3px 10px rgba(255,60,60,0.6);
-      "></div>
-    </div>`,
-    iconSize:[36,46], iconAnchor:[18,44], className:''
+    html:`<div style="display:flex;flex-direction:column;align-items:center;"><div style="width:36px;height:36px;background:#ff3c3c;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(255,60,60,0.6);"></div></div>`,
+    iconSize:[36,46],iconAnchor:[18,44],className:''
+  });
+}
+function _makeRestIcon() {
+  return L.divIcon({
+    html:`<div style="width:38px;height:38px;background:linear-gradient(135deg,#ff8c00,#ff5500);border-radius:50%;border:3px solid #fff;box-shadow:0 3px 10px rgba(255,140,0,0.6);display:flex;align-items:center;justify-content:center;font-size:18px;">🍴</div>`,
+    iconSize:[38,38],iconAnchor:[19,19],className:''
   });
 }
 
-function _buildTrackMap(elId, rLat, rLng, destLat, destLng, zoom) {
-  const el = document.getElementById(elId);
-  if (!el) return null;
-  const map = L.map(elId, { zoomControl: false, attributionControl: false, dragging: elId==='trackMapEl' ? false : true })
-    .setView([(rLat + destLat) / 2, (rLng + destLng) / 2], zoom);
-  L.tileLayer(_TILE_URL, { attribution: _TILE_ATTR, subdomains: 'abcd' }).addTo(map);
-  if (elId === 'trackMapModal') L.control.zoom({ position: 'bottomright' }).addTo(map);
-  const riderM = L.marker([rLat, rLng], { icon: _makeRiderIcon() }).addTo(map)
-    .bindTooltip('🏍 Rajan Kumar • Your Rider', { permanent: false, direction: 'top' });
-  L.marker([destLat, destLng], { icon: _makeDestIcon() }).addTo(map)
-    .bindTooltip('📦 Your Delivery Location', { permanent: false, direction: 'top' });
-  L.polyline([[rLat, rLng], [destLat, destLng]], {
-    color:'#ff8c00', weight:4, opacity:0.85, dashArray:'10,7', lineCap:'round'
-  }).addTo(map);
-  setTimeout(() => map.invalidateSize(), 200);
-  return { map, riderM };
+// ── ROUTE INTERPOLATION ───────────────────────────
+function _getProgressLatLng(p) {
+  if(_osrmRouteCoords && _osrmRouteCoords.length >= 2) return _interpolateRoute(p);
+  const {rLat,rLng,destLat,destLng} = _trackCoords;
+  return L.latLng(rLat+(destLat-rLat)*p, rLng+(destLng-rLng)*p);
 }
 
-function initTrackMap(etaMinutes) {
-  if (typeof L === 'undefined') return;
-  if (_trackMap) { _trackMap.remove(); _trackMap = null; }
-  if (_trackAnimInterval) clearInterval(_trackAnimInterval);
-
-  const HYD = [17.3850, 78.4867];
-  const spread = 0.016;
-  _trackCoords.eta = etaMinutes;
-  _trackCoords.destLat = HYD[0] + (Math.random()-0.5)*spread;
-  _trackCoords.destLng = HYD[1] + (Math.random()-0.5)*spread;
-  _trackCoords.rLat = _trackCoords.destLat - 0.011 + (Math.random()-0.5)*0.007;
-  _trackCoords.rLng = _trackCoords.destLng - 0.009 + (Math.random()-0.5)*0.007;
-
-  const { map, riderM } = _buildTrackMap(
-    'trackMapEl',
-    _trackCoords.rLat, _trackCoords.rLng,
-    _trackCoords.destLat, _trackCoords.destLng, 15
-  );
-  _trackMap = map;
-  _trackRiderMarker = riderM;
-  // Disable drag on small map (premium look — just tap to expand)
-  _trackMap.dragging.disable();
-  _trackMap.scrollWheelZoom.disable();
-
-  // Animate rider
-  _trackAnimInterval = setInterval(() => {
-    const dlat = _trackCoords.destLat - _trackCoords.rLat;
-    const dlng = _trackCoords.destLng - _trackCoords.rLng;
-    if (Math.abs(dlat) < 0.0002 && Math.abs(dlng) < 0.0002) {
-      clearInterval(_trackAnimInterval); return;
+function _interpolateRoute(p) {
+  const coords = _osrmRouteCoords;
+  if(!_routeSegDists || _routeSegDists.length !== coords.length-1){
+    _routeSegDists=[]; _routeTotalDist=0;
+    for(let i=0;i<coords.length-1;i++){
+      const d=coords[i].distanceTo(coords[i+1]);
+      _routeSegDists.push(d); _routeTotalDist+=d;
     }
-    _trackCoords.rLat += dlat * 0.1;
-    _trackCoords.rLng += dlng * 0.1;
-    _trackRiderMarker.setLatLng([_trackCoords.rLat, _trackCoords.rLng]);
-    if (_trackModalRiderMarker) _trackModalRiderMarker.setLatLng([_trackCoords.rLat, _trackCoords.rLng]);
-  }, 4000);
+  }
+  const target=Math.max(0,Math.min(1,p))*_routeTotalDist;
+  let acc=0;
+  for(let i=0;i<_routeSegDists.length;i++){
+    if(acc+_routeSegDists[i]>=target){
+      const frac=_routeSegDists[i]>0?(target-acc)/_routeSegDists[i]:0;
+      return L.latLng(coords[i].lat+frac*(coords[i+1].lat-coords[i].lat), coords[i].lng+frac*(coords[i+1].lng-coords[i].lng));
+    }
+    acc+=_routeSegDists[i];
+  }
+  return coords[coords.length-1];
+}
+
+// ── BUILD MAP ─────────────────────────────────────
+function _buildTrackMap(elId, rLat, rLng, destLat, destLng, zoom) {
+  const el = document.getElementById(elId);
+  if(!el) return {map:null,riderM:null};
+  const isModal = elId !== 'trackMapEl';
+  const map = L.map(elId,{zoomControl:false,attributionControl:false,dragging:isModal,scrollWheelZoom:isModal})
+    .setView([(rLat+destLat)/2,(rLng+destLng)/2],zoom);
+  const ti = MAP_TILES[_curMapTile]||MAP_TILES.classic;
+  const tl = L.tileLayer(ti.url,{attribution:ti.attr,subdomains:ti.sub,maxZoom:19}).addTo(map);
+  if(isModal){ _modalTileLayer=tl; L.control.zoom({position:'bottomright'}).addTo(map); }
+  // Restaurant + destination markers
+  L.marker([rLat,rLng],{icon:_makeRestIcon(),zIndexOffset:50}).addTo(map).bindTooltip('🍴 Restaurant',{permanent:false,direction:'top'});
+  L.marker([destLat,destLng],{icon:_makeDestIcon(),zIndexOffset:50}).addTo(map).bindTooltip('📦 Your Location',{permanent:false,direction:'top'});
+  // Fallback dashed line — replaced by OSRM result async
+  L.polyline([[rLat,rLng],[destLat,destLng]],{color:'#ff8c00',weight:2,opacity:0.4,dashArray:'8 6',lineCap:'round'}).addTo(map);
+  // Rider at current progress
+  const initPos=_getProgressLatLng(_riderProgress);
+  const riderM=L.marker(initPos,{icon:_makeRiderIcon(),zIndexOffset:200}).addTo(map)
+    .bindTooltip((_aocData?.riderName)||'Your Rider',{permanent:false,direction:'top'});
+  map.fitBounds([[rLat,rLng],[destLat,destLng]],{padding:[40,40],maxZoom:15});
+  setTimeout(()=>map.invalidateSize(),200);
+  return {map,riderM};
+}
+
+// ── OSRM ROAD ROUTE ───────────────────────────────
+async function _fetchAndDrawRoute(map, rLat, rLng, dLat, dLng) {
+  const key=`${rLat.toFixed(4)},${rLng.toFixed(4)}-${dLat.toFixed(4)},${dLng.toFixed(4)}`;
+  if(_osrmRouteKey===key && _osrmRouteCoords){
+    _drawRouteOnMap(map); return;
+  }
+  const url=`https://router.project-osrm.org/route/v1/driving/${rLng},${rLat};${dLng},${dLat}?overview=full&geometries=geojson`;
+  try{
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),9000);
+    const res=await fetch(url,{signal:ctrl.signal});
+    clearTimeout(tid);
+    const data=await res.json();
+    if(data.code==='Ok' && data.routes?.[0]?.geometry?.coordinates?.length>1){
+      _osrmRouteCoords=data.routes[0].geometry.coordinates.map(c=>L.latLng(c[1],c[0]));
+      _osrmRouteKey=key; _routeSegDists=null;
+    }
+  }catch(e){ /* timeout / offline — keep fallback dashed line */ }
+  _drawRouteOnMap(map);
+}
+
+function _drawRouteOnMap(map) {
+  if(!map||!_osrmRouteCoords) return;
+  // Remove existing polylines (fallback line)
+  map.eachLayer(l=>{if(l instanceof L.Polyline&&!(l instanceof L.Polygon))l.remove();});
+  L.polyline(_osrmRouteCoords,{color:'#ff8c00',weight:10,opacity:0.15,lineCap:'round'}).addTo(map);
+  L.polyline(_osrmRouteCoords,{color:'#ff8c00',weight:4,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(map);
+}
+
+// ── RIDER ANIMATION (rAF) ─────────────────────────
+function _startRiderAnim() {
+  if(_riderAnimReqId) return;
+  _riderAnimLastTs=0;
+  function frame(ts){
+    if(!_riderAnimLastTs) _riderAnimLastTs=ts;
+    const dt=Math.min((ts-_riderAnimLastTs)/1000,0.1);
+    _riderAnimLastTs=ts;
+    const diff=_riderTargetProgress-_riderProgress;
+    if(Math.abs(diff)>0.00005){
+      const spd=Math.max(Math.abs(diff)*0.45,0.0004);
+      _riderProgress+=Math.sign(diff)*Math.min(Math.abs(diff),spd*dt);
+      const pos=_getProgressLatLng(_riderProgress);
+      if(_trackRiderMarker) _trackRiderMarker.setLatLng(pos);
+      if(_trackModalRiderMarker) _trackModalRiderMarker.setLatLng(pos);
+    }
+    _riderAnimReqId=requestAnimationFrame(frame);
+  }
+  _riderAnimReqId=requestAnimationFrame(frame);
+}
+
+function _stopRiderAnim() {
+  if(_riderAnimReqId){cancelAnimationFrame(_riderAnimReqId);_riderAnimReqId=null;}
+}
+
+// ── COORDINATE HELPERS ────────────────────────────
+function getProgressForStatus(d) {
+  const st=d?.status||'placed';
+  if(st==='on_the_way'){
+    if(d?.estimatedDeliveryTime){
+      const etaTs=d.estimatedDeliveryTime?.toDate?.()?.getTime()||new Date(d.estimatedDeliveryTime).getTime();
+      const origMs=(d.etaMinutes||20)*60000;
+      const remaining=etaTs-Date.now();
+      const elapsed=origMs-remaining;
+      return Math.max(0.25,Math.min(0.95,0.25+(elapsed/origMs)*0.7));
+    }
+    return 0.55;
+  }
+  return {placed:0.02,accepted:0.06,preparing:0.14,picked_up:0.22,delivered:1,cancelled:0}[st]??0.02;
+}
+
+function getHomeCoords() {
+  const area=localStorage.getItem('lu_area')||DELIVERY_AREAS[0];
+  return AREA_COORDS[area]||{lat:17.3933,lng:78.4376};
+}
+
+function getRestCoordsForOrder() {
+  if(_aocData?.itemsSummary){
+    const s=_aocData.itemsSummary.toLowerCase();
+    for(const r of RESTAURANTS){if(r.lat&&r.cats?.some(c=>s.includes(c)))return{lat:r.lat,lng:r.lng};}
+  }
+  const r=RESTAURANTS.find(r=>r.lat)||RESTAURANTS[0];
+  return{lat:r.lat||17.4156,lng:r.lng||78.4347};
+}
+
+// ── INIT / OPEN / CLOSE ───────────────────────────
+function initTrackMap(etaMinutes) {
+  if(typeof L==='undefined') return;
+  if(_trackMap){_trackMap.remove();_trackMap=null;}
+  _stopRiderAnim();
+  const rc=getRestCoordsForOrder();
+  const hc=getHomeCoords();
+  _trackCoords.rLat=rc.lat; _trackCoords.rLng=rc.lng;
+  _trackCoords.destLat=hc.lat; _trackCoords.destLng=hc.lng;
+  _trackCoords.eta=etaMinutes;
+  _riderTargetProgress=getProgressForStatus(_aocData);
+  _riderProgress=_riderTargetProgress; // snap to position on load
+  const {map,riderM}=_buildTrackMap('trackMapEl',rc.lat,rc.lng,hc.lat,hc.lng,13);
+  _trackMap=map; _trackRiderMarker=riderM;
+  if(_trackMap){
+    _trackMap.dragging.disable(); _trackMap.scrollWheelZoom.disable();
+    _fetchAndDrawRoute(_trackMap,rc.lat,rc.lng,hc.lat,hc.lng);
+    if(_aocData?.status==='on_the_way'||_aocData?.status==='picked_up') _startRiderAnim();
+  }
 }
 
 function openMapModal() {
-  const ov = document.getElementById('mapModalOverlay');
+  const ov=document.getElementById('mapModalOverlay');
+  if(!ov) return;
   ov.classList.add('open');
-  document.body.style.overflow = 'hidden';
-  const eta = document.getElementById('trackEta')?.textContent || '';
-  const etaEl = document.getElementById('mapModalEta');
-  if (etaEl) etaEl.textContent = `🏍 Rider • ETA: ${eta}`;
-  // Init modal map
-  if (_trackModalMap) { _trackModalMap.remove(); _trackModalMap = null; }
-  setTimeout(() => {
-    const { map, riderM } = _buildTrackMap(
-      'trackMapModal',
-      _trackCoords.rLat, _trackCoords.rLng,
-      _trackCoords.destLat, _trackCoords.destLng, 15
-    );
-    _trackModalMap = map;
-    _trackModalRiderMarker = riderM;
-  }, 150);
+  document.body.style.overflow='hidden';
+  // Header label
+  const etaEl=document.getElementById('mapModalEta');
+  if(etaEl){
+    const st=_aocData?.status||'placed';
+    const meta=AOC_STATUS_META[st]||AOC_STATUS_META.placed;
+    const mins=_calcEtaMins(_aocData);
+    const label=_aocData?.orderId?`${meta.icon} ${_aocData.orderId}`:'🛵 Live Tracking';
+    etaEl.textContent=mins!==null?`${label} • ETA ${mins} min`:label;
+  }
+  // Sync tile toggle UI
+  document.getElementById('mttClassic')?.classList.toggle('mtt-active',_curMapTile==='classic');
+  document.getElementById('mttSatellite')?.classList.toggle('mtt-active',_curMapTile==='satellite');
+  // Rebuild modal map
+  if(_trackModalMap){_trackModalMap.remove();_trackModalMap=null;_trackModalRiderMarker=null;_modalTileLayer=null;}
+  setTimeout(()=>{
+    const rc=_trackCoords;
+    const {map,riderM}=_buildTrackMap('trackMapModal',rc.rLat,rc.rLng,rc.destLat,rc.destLng,14);
+    _trackModalMap=map; _trackModalRiderMarker=riderM;
+    if(map){
+      _fetchAndDrawRoute(map,rc.rLat,rc.rLng,rc.destLat,rc.destLng);
+      if(_aocData?.status==='on_the_way'||_aocData?.status==='picked_up') _startRiderAnim();
+    }
+  },150);
 }
 
 function closeMapModal() {
-  document.getElementById('mapModalOverlay').classList.remove('open');
-  document.body.style.overflow = '';
+  document.getElementById('mapModalOverlay')?.classList.remove('open');
+  document.body.style.overflow='';
+  _stopRiderAnim();
 }
+
 function handleMapModalClick(e) {
-  if (e.target === document.getElementById('mapModalOverlay')) closeMapModal();
+  if(e.target===document.getElementById('mapModalOverlay')) closeMapModal();
+}
+
+function setMapTile(type) {
+  _curMapTile=type;
+  localStorage.setItem('lu_map_tile',type);
+  const ti=MAP_TILES[type]||MAP_TILES.classic;
+  if(_trackModalMap&&_modalTileLayer){
+    _modalTileLayer.remove();
+    _modalTileLayer=L.tileLayer(ti.url,{attribution:ti.attr,subdomains:ti.sub,maxZoom:19}).addTo(_trackModalMap);
+    _modalTileLayer.bringToBack();
+  }
+  document.getElementById('mttClassic')?.classList.toggle('mtt-active',type==='classic');
+  document.getElementById('mttSatellite')?.classList.toggle('mtt-active',type==='satellite');
+}
+
+function openHomeCardMap() {
+  if(!_aocData) return;
+  const rc=getRestCoordsForOrder(); const hc=getHomeCoords();
+  _trackCoords.rLat=rc.lat; _trackCoords.rLng=rc.lng;
+  _trackCoords.destLat=hc.lat; _trackCoords.destLng=hc.lng;
+  openMapModal();
 }
 
 // ── ADDRESS MAP ───────────────────────────────────
@@ -5876,6 +6165,10 @@ function reverseGeocode(lat, lng) {
     <button class="map-modal-close" onclick="closeMapModal()">✕</button>
     <div class="map-modal-eta" id="mapModalEta">🛵 Live Tracking</div>
     <div id="trackMapModal" style="width:100%;height:100%;"></div>
+    <div class="map-tile-btns">
+      <button class="mtt-btn mtt-active" id="mttClassic" onclick="setMapTile('classic')">🗺 Classic</button>
+      <button class="mtt-btn" id="mttSatellite" onclick="setMapTile('satellite')">🛰 Satellite</button>
+    </div>
   </div>
 </div>
 
