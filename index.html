@@ -3062,7 +3062,11 @@ rzp.open();</div>
         splash.classList.add('fade-out');
         setTimeout(()=>{
           splash.style.display='none';
-          showLanding();
+          // Only show landing if app hasn't already been entered
+          // (Firebase auth can resolve before the splash timer fires)
+          if(document.getElementById('mainApp').style.display !== 'block'){
+            showLanding();
+          }
         }, 650);
       }, 400);
     }
@@ -3752,6 +3756,7 @@ async function fpResetPassword() {
   _fpSetStep(4);
 }
 function enterApp(){
+  document.getElementById('landingPage').classList.remove('active');
   document.getElementById('authPage').classList.remove('active');
   document.getElementById('mainApp').style.display='block';
   // Status bar matches app surface color
