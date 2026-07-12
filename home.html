@@ -4789,14 +4789,21 @@ async function submitRating(){
   if(!_ratingValue){ showToast('⭐ Please select a rating first'); return; }
   const comment=(document.getElementById('rateComment')?.value||'').trim();
   const oid=_ratingOrderId||localStorage.getItem('lu_del_current_oid')||'';
+  if(!oid){ showToast('❌ Could not identify order — please try again'); return; }
   const order=orderHistory.find(o=>o.id===oid)||{};
+  // tracking token: needed for Firestore rule verification
+  const token=order.trackingToken||_aocData?.trackingToken||'';
   const phone=localStorage.getItem('lu_phone')||'';
   const customerName=localStorage.getItem('lu_name')||phone||'Customer';
-  // Save to Firestore ratings/{orderId}
-  if(window._fbReady && window._db && oid){
+  // Disable submit button while saving
+  const submitBtn=document.querySelector('.rate-submit');
+  if(submitBtn){ submitBtn.disabled=true; submitBtn.textContent='Sending…'; }
+  let saved=false;
+  if(window._fbReady && window._db){
     try{
       await window._fbSetDoc(window._fbDoc(window._db,'ratings',oid),{
         orderId:oid,
+        token,           // 24-char tracking token — used by Firestore rule to verify delivered status
         rating:_ratingValue,
         comment,
         customerName,
@@ -4808,15 +4815,25 @@ async function submitRating(){
         orderDate:order.date?`${order.date} ${order.time}`:'',
         ratedAt:new Date().toISOString(),
       });
-    } catch(e){ console.warn('Rating save failed:',e); }
+      saved=true;
+    } catch(e){
+      console.warn('Rating save failed:',e);
+      if(submitBtn){ submitBtn.disabled=false; submitBtn.textContent='Send Feedback ✈'; }
+      showToast('❌ Rating failed — please try again');
+      return;
+    }
+  } else {
+    // Firestore unavailable — save locally only
+    saved=true;
   }
-  if(oid) localStorage.setItem(`lu_rated_${oid}`,String(_ratingValue));
-  // Show thank-you screen inside modal, then close after 2.5s
-  const form=document.getElementById('rateForm');
-  const ty=document.getElementById('rateThankyou');
-  if(form) form.style.display='none';
-  if(ty) ty.style.display='block';
-  setTimeout(()=>{ closeRateModal(); renderOrders(); },2500);
+  if(saved){
+    localStorage.setItem(`lu_rated_${oid}`,String(_ratingValue));
+    const form=document.getElementById('rateForm');
+    const ty=document.getElementById('rateThankyou');
+    if(form) form.style.display='none';
+    if(ty) ty.style.display='block';
+    setTimeout(()=>{ closeRateModal(); renderOrders(); },2500);
+  }
 }
 
 // ── ADMIN NOTIFICATIONS ───────────────────────────
