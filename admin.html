@@ -1218,11 +1218,17 @@ let _reviewsUnsub=null;
 function loadReviews(){
   if(!db) return;
   if(_reviewsUnsub){_reviewsUnsub();_reviewsUnsub=null;}
-  const q=query(collection(db,'ratings'),orderBy('ratedAt','desc'));
-  _reviewsUnsub=onSnapshot(q,snap=>{
-    const all=snap.docs.map(d=>({id:d.id,...d.data()}));
+  // No orderBy — avoids Firestore index requirement; sort client-side instead
+  _reviewsUnsub=onSnapshot(collection(db,'ratings'),snap=>{
+    const all=snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||''));
     _cxReviewsCache=all;
     renderReviews(all);
+  },err=>{
+    console.error('Reviews listener error:',err.code, err.message);
+    const el=document.getElementById('revList');
+    if(el) el.innerHTML=`<p style="color:#ef4444;text-align:center;padding:30px 0;">⚠️ Could not load reviews: ${err.message}</p>`;
   });
 }
 function renderReviews(all){
