@@ -886,8 +886,16 @@ body{
 .rate-star{font-size:34px;cursor:pointer;transition:transform .15s;opacity:.35;}
 .rate-star.lit{opacity:1;}
 .rate-star:hover{transform:scale(1.2);}
-.rate-submit{width:100%;padding:12px;background:var(--orange);color:#000;font-weight:800;font-size:14px;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;}
+.rate-submit{width:100%;padding:12px;background:var(--orange);color:#fff;font-weight:800;font-size:14px;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;}
+.rate-submit:active{opacity:.85;}
 .rate-skip{display:block;margin-top:10px;font-size:12px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'Poppins',sans-serif;width:100%;}
+.rate-comment{width:100%;box-sizing:border-box;padding:11px 13px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;resize:none;min-height:78px;transition:border-color .2s;margin-bottom:6px;}
+.rate-comment:focus{border-color:var(--orange);}
+.rate-comment-hint{font-size:10px;color:var(--muted);text-align:right;margin-bottom:14px;}
+.rate-thankyou{display:none;text-align:center;padding:16px 0 4px;}
+.rate-ty-emoji{font-size:48px;margin-bottom:10px;}
+.rate-ty-title{font-size:18px;font-weight:800;margin-bottom:6px;}
+.rate-ty-msg{font-size:13px;color:var(--muted);line-height:1.5;}
 /* Map tile toggle */
 .map-tile-btns{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:6px;background:rgba(0,0,0,0.72);padding:5px 8px;border-radius:20px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.08);}
 .mtt-btn{padding:5px 14px;border-radius:14px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,0.55);transition:all 0.2s;}
@@ -4265,7 +4273,7 @@ function renderOrders(){
       const orderTs=o.timestamp||(o.date&&o.time?new Date(`${o.date} ${o.time}`).getTime():0);
       const alreadyRated=localStorage.getItem(`lu_rated_${o.id}`);
       if(!alreadyRated && orderTs && now-orderTs<_12H){
-        rateBtn=`<button class="track-order-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);margin-left:8px;" onclick="rateOrder('${o.id}')">⭐ Rate</button>`;
+        rateBtn=`<button class="track-order-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:700;" onclick="rateOrder('${o.id}')">⭐ Rate</button>`;
       } else if(alreadyRated){
         const stars='⭐'.repeat(parseInt(alreadyRated));
         rateBtn=`<span style="font-size:12px;color:var(--muted);margin-left:8px;">${stars} Rated</span>`;
@@ -4753,6 +4761,13 @@ function rateOrder(orderId, fromDeliveredCard=false){
   _updateStars(0);
   const sub=document.getElementById('rateSubText');
   if(sub) sub.textContent=_ratingOrderId?`Order ${_ratingOrderId}`:'Tell us about your experience';
+  const cm=document.getElementById('rateComment');
+  if(cm){cm.value=''; document.getElementById('rateCommentCount').textContent='0';}
+  // Reset to form view (in case previous session showed thank-you)
+  const form=document.getElementById('rateForm');
+  const ty=document.getElementById('rateThankyou');
+  if(form) form.style.display='block';
+  if(ty) ty.style.display='none';
   document.getElementById('rateOverlay')?.classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -4770,9 +4785,8 @@ function _updateStars(n){
 }
 async function submitRating(){
   if(!_ratingValue){ showToast('⭐ Please select a rating first'); return; }
-  const msgs=['','😞 Sorry to hear that — we\'ll do better!','😕 Thanks for the feedback, we\'re improving!','😊 Good to know! We\'ll keep it up.','😄 Great! Thanks for your feedback!','🤩 Amazing! That made our day!'];
+  const comment=(document.getElementById('rateComment')?.value||'').trim();
   const oid=_ratingOrderId;
-  // Find order details from history
   const order=orderHistory.find(o=>o.id===oid)||{};
   const phone=localStorage.getItem('lu_phone')||'';
   const customerName=localStorage.getItem('lu_name')||phone||'Customer';
@@ -4782,6 +4796,7 @@ async function submitRating(){
       await window._fbSetDoc(window._fbDoc(window._db,'ratings',oid),{
         orderId:oid,
         rating:_ratingValue,
+        comment,
         customerName,
         phone,
         walletToken,
@@ -4793,11 +4808,13 @@ async function submitRating(){
       });
     } catch(e){ console.warn('Rating save failed:',e); }
   }
-  // Mark locally so Rate button shows stars
   if(oid) localStorage.setItem(`lu_rated_${oid}`,String(_ratingValue));
-  closeRateModal();
-  showToast(msgs[_ratingValue]);
-  renderOrders(); // refresh to show stars
+  // Show thank-you screen inside modal, then close after 2.5s
+  const form=document.getElementById('rateForm');
+  const ty=document.getElementById('rateThankyou');
+  if(form) form.style.display='none';
+  if(ty) ty.style.display='block';
+  setTimeout(()=>{ closeRateModal(); renderOrders(); },2500);
 }
 
 // ── ADMIN NOTIFICATIONS ───────────────────────────
@@ -6546,17 +6563,28 @@ function reverseGeocode(lat, lng) {
 ══════════════════════════════════════ -->
 <div class="rate-overlay" id="rateOverlay" onclick="if(event.target===this)closeRateModal()">
   <div class="rate-box">
-    <div class="rate-title">How was your order? 😊</div>
-    <div class="rate-sub" id="rateSubText">Tell us about your experience</div>
-    <div class="rate-stars" id="rateStars">
-      <span class="rate-star" onclick="setRating(1)" onmouseover="hoverRating(1)" onmouseout="resetStarHover()">★</span>
-      <span class="rate-star" onclick="setRating(2)" onmouseover="hoverRating(2)" onmouseout="resetStarHover()">★</span>
-      <span class="rate-star" onclick="setRating(3)" onmouseover="hoverRating(3)" onmouseout="resetStarHover()">★</span>
-      <span class="rate-star" onclick="setRating(4)" onmouseover="hoverRating(4)" onmouseout="resetStarHover()">★</span>
-      <span class="rate-star" onclick="setRating(5)" onmouseover="hoverRating(5)" onmouseout="resetStarHover()">★</span>
+    <!-- Rating form -->
+    <div id="rateForm">
+      <div class="rate-title">How was your order? 😊</div>
+      <div class="rate-sub" id="rateSubText">Tell us about your experience</div>
+      <div class="rate-stars" id="rateStars">
+        <span class="rate-star" onclick="setRating(1)" onmouseover="hoverRating(1)" onmouseout="resetStarHover()">★</span>
+        <span class="rate-star" onclick="setRating(2)" onmouseover="hoverRating(2)" onmouseout="resetStarHover()">★</span>
+        <span class="rate-star" onclick="setRating(3)" onmouseover="hoverRating(3)" onmouseout="resetStarHover()">★</span>
+        <span class="rate-star" onclick="setRating(4)" onmouseover="hoverRating(4)" onmouseout="resetStarHover()">★</span>
+        <span class="rate-star" onclick="setRating(5)" onmouseover="hoverRating(5)" onmouseout="resetStarHover()">★</span>
+      </div>
+      <textarea class="rate-comment" id="rateComment" placeholder="Share your experience… (optional)" maxlength="300" oninput="document.getElementById('rateCommentCount').textContent=this.value.length"></textarea>
+      <div class="rate-comment-hint"><span id="rateCommentCount">0</span>/300</div>
+      <button class="rate-submit" onclick="submitRating()">Send Feedback ✈</button>
+      <button class="rate-skip" onclick="closeRateModal()">Maybe later</button>
     </div>
-    <button class="rate-submit" onclick="submitRating()">Submit Rating</button>
-    <button class="rate-skip" onclick="closeRateModal()">Maybe later</button>
+    <!-- Thank-you screen (shown after submit) -->
+    <div class="rate-thankyou" id="rateThankyou">
+      <div class="rate-ty-emoji">🎉</div>
+      <div class="rate-ty-title">Thank you for your feedback!</div>
+      <div class="rate-ty-msg">Thank you for choosing LinkUp.<br>We hope to see you again soon! 💛</div>
+    </div>
   </div>
 </div>
 

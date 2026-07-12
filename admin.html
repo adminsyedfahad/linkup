@@ -319,6 +319,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .rev-customer{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
 .rev-name{font-weight:700;font-size:14px;}
 .rev-phone{font-size:12px;color:var(--muted);}
+.rev-comment{font-size:13px;color:var(--text);background:var(--bg);border-left:3px solid var(--orange);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;line-height:1.5;font-style:italic;}
 .rev-items{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.4;}
 .rev-footer{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .rev-amount{font-size:13px;font-weight:700;color:var(--green);}
@@ -1215,6 +1216,7 @@ function renderReviews(all){
         <span class="rev-name">${r.customerName||'Customer'}</span>
         ${r.phone?`<span class="rev-phone">📞 ${r.phone}</span>`:''}
       </div>
+      ${r.comment?`<div class="rev-comment">💬 "${r.comment}"</div>`:''}
       ${r.items?`<div class="rev-items">🍽️ ${r.items}</div>`:''}
       <div class="rev-footer">
         ${r.amount?`<span class="rev-amount">₹${r.amount}</span>`:''}
