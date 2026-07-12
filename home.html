@@ -4720,6 +4720,8 @@ function showDeliveredCard(d){
     localStorage.setItem(dismissedKey,'1'); hideAOC(); return;
   }
   if(!firstShown) localStorage.setItem(shownKey,String(now));
+  // Store current delivered order ID so rateOrder can find it even after reload
+  if(oid) localStorage.setItem('lu_del_current_oid', oid);
 
   const wrap=document.getElementById('aocWrap');
   const trackCard=document.getElementById('activeOrderCard');
@@ -4756,7 +4758,7 @@ let _ratingValue=0;
 let _ratingOrderId='';
 
 function rateOrder(orderId, fromDeliveredCard=false){
-  _ratingValue=0; _ratingOrderId=orderId||_aocData?.orderId||'';
+  _ratingValue=0; _ratingOrderId=orderId||_aocData?.orderId||localStorage.getItem('lu_del_current_oid')||'';
   _rateFromDeliveredCard=fromDeliveredCard;
   _updateStars(0);
   const sub=document.getElementById('rateSubText');
@@ -4786,7 +4788,7 @@ function _updateStars(n){
 async function submitRating(){
   if(!_ratingValue){ showToast('⭐ Please select a rating first'); return; }
   const comment=(document.getElementById('rateComment')?.value||'').trim();
-  const oid=_ratingOrderId;
+  const oid=_ratingOrderId||localStorage.getItem('lu_del_current_oid')||'';
   const order=orderHistory.find(o=>o.id===oid)||{};
   const phone=localStorage.getItem('lu_phone')||'';
   const customerName=localStorage.getItem('lu_name')||phone||'Customer';
