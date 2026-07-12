@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, arrayUnion, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 const cfg = {
   apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
@@ -24,7 +24,7 @@ window._fbSignOut=signOut; window._fbOnAuth=onAuthStateChanged;
 window._fbSnap=onSnapshot; window._fbQuery=query;
 window._fbOrderBy=orderBy; window._fbCol=collection;
 window._fbDoc=doc; window._fbUpdate=updateDoc; window._fbArrUnion=arrayUnion;
-window._fbSetDoc=setDoc; window._fbGetDoc=getDoc;
+window._fbSetDoc=setDoc; window._fbGetDoc=getDoc; window._fbGetDocs=getDocs;
 window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
 </script>
 <style>
@@ -1216,15 +1216,14 @@ function showSec(name){
 // ── CUSTOMER REVIEWS ──────────────────────────
 let _reviewsUnsub=null;
 async function loadReviews(){
-  if(!db) return;
+  if(!window._db) return;
   if(_reviewsUnsub){_reviewsUnsub();_reviewsUnsub=null;}
   const el=document.getElementById('revList');
   if(el) el.innerHTML='<p style="color:var(--muted);text-align:center;padding:30px 0;">⏳ Loading reviews…</p>';
 
   // Step 1: one-time fetch to confirm read access before setting up live listener
   try{
-    const {getDocs}=await import('https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js');
-    const snap=await getDocs(collection(db,'ratings'));
+    const snap=await window._fbGetDocs(window._fbCol(window._db,'ratings'));
     const initial=snap.docs
       .map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||''));
@@ -1245,7 +1244,7 @@ async function loadReviews(){
   }
 
   // Step 2: live listener for real-time updates
-  _reviewsUnsub=onSnapshot(collection(db,'ratings'),snap=>{
+  _reviewsUnsub=window._fbSnap(window._fbCol(window._db,'ratings'),snap=>{
     const all=snap.docs
       .map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||''));
