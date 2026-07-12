@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#ff8c00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wheels">
+<title>LinkUp Wheels</title>
+<link rel="manifest" href="/rider-manifest.json">
+<link rel="apple-touch-icon" href="/rider-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import{getFirestore,doc,getDoc,onSnapshot,updateDoc,collection,where,query,arrayUnion}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import{getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+const cfg={apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",authDomain:"food-app-linkup.firebaseapp.com",projectId:"food-app-linkup",storageBucket:"food-app-linkup.firebasestorage.app",messagingSenderId:"957073867036",appId:"1:957073867036:web:9ae4e4f2fd728d71777ad9"};
+const app=initializeApp(cfg),db=getFirestore(app),auth=getAuth(app);
+window._rdb=db; window._rauth=auth;
+window._rfDoc=doc; window._rfGetDoc=getDoc; window._rfSnap=onSnapshot;
+window._rfUpdate=updateDoc; window._rfCol=collection;
+window._rfWhere=where; window._rfQuery=query; window._rfArrUnion=arrayUnion;
+window._rfSignIn=signInWithEmailAndPassword; window._rfSignOut=signOut; window._rfOnAuth=onAuthStateChanged;
+window._rfReady=true; window.dispatchEvent(new Event('rfReady'));
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0b0b0f;--surface:#13131a;--card:#1a1a26;--border:#222235;
+  --text:#e8e8f0;--muted:#888899;
+  --orange:#ff8c00;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;font-size:14px;overflow:hidden;}
+
+/* ── SPLASH ── */
+#rSplash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s;}
+#rSplash.fade{opacity:0;pointer-events:none;}
+.spl-icon{font-size:60px;margin-bottom:16px;animation:splBounce 1s ease;}
+@keyframes splBounce{0%{transform:translateY(-10px);opacity:0;}100%{transform:translateY(0);opacity:1;}}
+.spl-title{font-size:26px;font-weight:800;color:var(--orange);letter-spacing:3px;}
+.spl-sub{font-size:11px;color:var(--muted);letter-spacing:4px;margin-top:5px;text-transform:uppercase;}
+.spl-bar{width:120px;height:3px;background:var(--border);border-radius:2px;margin-top:40px;overflow:hidden;}
+.spl-bar-fill{height:100%;background:var(--orange);border-radius:2px;animation:splLoad 1.1s ease forwards;}
+@keyframes splLoad{from{width:0%;}to{width:100%;}}
+
+/* ── SCREENS ── */
+#rLogin{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:var(--bg);}
+#rApp{position:fixed;inset:0;display:none;flex-direction:column;}
+
+/* ── LOGIN ── */
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 24px;width:100%;max-width:360px;}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .li{font-size:48px;margin-bottom:10px;}
+.login-logo .lt{font-size:22px;font-weight:800;color:var(--orange);letter-spacing:2px;}
+.login-logo .ls{font-size:10px;color:var(--muted);letter-spacing:4px;text-transform:uppercase;margin-top:3px;}
+.l-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px;}
+.l-inp{width:100%;padding:13px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-size:15px;font-family:inherit;outline:none;margin-bottom:14px;transition:border-color .2s;}
+.l-inp:focus{border-color:var(--orange);}
+.l-btn{width:100%;padding:15px;background:var(--orange);color:#000;font-weight:800;font-size:15px;border:none;border-radius:12px;cursor:pointer;font-family:inherit;margin-top:4px;transition:opacity .15s;}
+.l-btn:active{opacity:.8;}
+.l-btn:disabled{opacity:.5;cursor:not-allowed;}
+.l-err{color:var(--red);font-size:12px;text-align:center;margin-top:12px;min-height:16px;line-height:1.4;}
+
+/* ── GPS BAR ── */
+#gpsBar{display:flex;align-items:center;gap:8px;padding:7px 16px;background:#080810;border-bottom:1px solid var(--border);font-size:11px;flex-shrink:0;min-height:32px;}
+.gps-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;}
+.gps-dot.on{background:var(--green);box-shadow:0 0 7px var(--green);animation:gpsPulse 1.8s ease-in-out infinite;}
+@keyframes gpsPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+#gpsLabel{font-weight:700;color:var(--muted);transition:color .3s;}
+#gpsLabel.on{color:var(--green);}
+#gpsTime{margin-left:auto;color:var(--muted);font-size:10px;}
+
+/* ── HEADER ── */
+#rHeader{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.rh-brand{display:flex;align-items:center;gap:8px;flex:1;}
+.rh-icon{font-size:20px;}
+.rh-title{font-size:16px;font-weight:800;color:var(--orange);letter-spacing:.5px;}
+.rh-name{font-size:12px;color:var(--muted);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rh-out{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;}
+.rh-out:active{opacity:.7;}
+
+/* ── CONTENT AREA ── */
+#rContent{flex:1;position:relative;overflow:hidden;}
+.r-screen{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;transition:opacity .2s;}
+.r-screen.hidden{opacity:0;pointer-events:none;}
+
+/* ── ORDERS SCREEN ── */
+#ordersScreen{padding:12px;gap:10px;}
+.empty-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;}
+.empty-icon{font-size:52px;margin-bottom:14px;}
+.empty-title{font-size:16px;font-weight:700;margin-bottom:6px;}
+.empty-sub{font-size:13px;color:var(--muted);line-height:1.5;}
+
+/* ── ORDER CARD ── */
+.o-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:15px;cursor:pointer;transition:border-color .15s,transform .1s;}
+.o-card:active{border-color:var(--orange);transform:scale(.99);}
+.o-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.o-id{font-size:16px;font-weight:800;color:var(--orange);}
+.o-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;text-transform:uppercase;letter-spacing:.3px;}
+.o-badge.accepted,.o-badge.preparing{background:rgba(255,255,255,.07);color:var(--muted);}
+.o-badge.picked_up{background:rgba(59,130,246,.15);color:#60a5fa;}
+.o-badge.on_the_way{background:rgba(255,140,0,.15);color:var(--orange);}
+.o-addr{font-size:12px;color:var(--muted);margin-bottom:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.o-items{font-size:12px;color:var(--text);line-height:1.5;margin-bottom:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.o-foot{display:flex;align-items:center;gap:8px;}
+.o-amt{font-size:16px;font-weight:800;}
+.o-amt.cod{color:var(--orange);}
+.o-amt.paid{color:var(--green);}
+.o-pay{font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;}
+.o-pay.cod{background:rgba(255,140,0,.12);color:var(--orange);border:1px solid rgba(255,140,0,.2);}
+.o-pay.paid{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2);}
+
+/* ── DETAIL SCREEN ── */
+#detailScreen{display:none;}
+.det-nav{display:flex;align-items:center;gap:12px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.det-back{background:none;border:1.5px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:10px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.det-id{font-size:16px;font-weight:800;flex:1;}
+.det-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;}
+.d-sec{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.d-sec-title{font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.d-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:7px;}
+.d-row:last-child{margin-bottom:0;}
+.d-lbl{font-size:11px;color:var(--muted);flex-shrink:0;padding-top:1px;}
+.d-val{font-size:13px;color:var(--text);text-align:right;font-weight:500;word-break:break-word;}
+.d-val.big{font-size:20px;font-weight:800;}
+.d-val.cod{color:var(--orange);}
+.d-val.paid{color:var(--green);}
+.cod-warn{background:rgba(255,140,0,.1);border:1px solid rgba(255,140,0,.25);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;color:var(--orange);text-align:center;margin-top:4px;}
+.item-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+.item-row:last-child{border-bottom:none;}
+.item-name{font-size:13px;font-weight:600;flex:1;}
+.item-qty{font-size:11px;color:var(--muted);margin:0 8px;}
+.item-price{font-size:13px;color:var(--orange);font-weight:700;}
+.gps-row{display:flex;align-items:center;gap:8px;padding:4px 0;}
+.gps-live-txt{color:var(--green);font-weight:700;font-size:12px;}
+.gps-off-txt{color:var(--muted);font-size:12px;}
+.action-bar{position:absolute;bottom:0;left:0;right:0;padding:14px 16px;background:var(--surface);border-top:1px solid var(--border);}
+.act-btn{width:100%;padding:17px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity .15s;}
+.act-btn:active{opacity:.8;}
+.act-btn:disabled{opacity:.5;cursor:not-allowed;}
+.act-btn.pick{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;}
+.act-btn.way{background:linear-gradient(135deg,var(--orange),#c06000);color:#000;}
+.act-btn.done{background:linear-gradient(135deg,var(--green),#15803d);color:#fff;}
+.act-btn.complete{background:var(--card);color:var(--muted);cursor:default;border:1px solid var(--border);}
+.toast-r{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e1e2e;color:var(--text);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:9998;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.toast-r.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="rSplash">
+  <div class="spl-icon">🛵</div>
+  <div class="spl-title">LINKUP WHEELS</div>
+  <div class="spl-sub">Rider App</div>
+  <div class="spl-bar"><div class="spl-bar-fill"></div></div>
+</div>
+
+<!-- LOGIN -->
+<div id="rLogin">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="li">🛵</div>
+      <div class="lt">LINKUP WHEELS</div>
+      <div class="ls">Rider App</div>
+    </div>
+    <label class="l-lbl">Email</label>
+    <input class="l-inp" id="rEmail" type="email" placeholder="rider@example.com" autocomplete="username">
+    <label class="l-lbl">Password</label>
+    <input class="l-inp" id="rPass" type="password" placeholder="••••••••" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')rDoLogin()">
+    <button class="l-btn" id="rLoginBtn" onclick="rDoLogin()">Sign In →</button>
+    <div class="l-err" id="rErr"></div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="rApp">
+  <div id="gpsBar">
+    <span class="gps-dot" id="gpsDot"></span>
+    <span id="gpsLabel">GPS: OFF</span>
+    <span id="gpsTime"></span>
+  </div>
+  <div id="rHeader">
+    <div class="rh-brand">
+      <span class="rh-icon">🛵</span>
+      <span class="rh-title">LinkUp Wheels</span>
+    </div>
+    <span class="rh-name" id="riderNameLbl"></span>
+    <button class="rh-out" onclick="rDoLogout()">Sign Out</button>
+  </div>
+  <div id="rContent">
+    <!-- ORDERS LIST -->
+    <div id="ordersScreen" class="r-screen">
+      <div class="empty-wrap" id="emptyOrders" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No Active Orders</div>
+        <div class="empty-sub">Assigned orders will appear here automatically</div>
+      </div>
+      <div id="ordersList"></div>
+    </div>
+    <!-- ORDER DETAIL -->
+    <div id="detailScreen" class="r-screen" style="display:none;flex-direction:column;">
+      <div class="det-nav">
+        <button class="det-back" onclick="showOrders()">‹</button>
+        <div class="det-id" id="detOid">—</div>
+        <span class="o-badge" id="detBadge"></span>
+      </div>
+      <div class="det-body" id="detBody"></div>
+      <div class="action-bar" id="actionBar"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-r" id="rToast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────
+let riderProfile = null;
+let myOrders = [];
+let currentOrder = null;
+let _ordersUnsub = null;
+
+// ── GPS STATE ──────────────────────────────────
+let _gpsWatchId = null;
+let _wakeLock = null;
+let _lastGpsWriteAt = 0;
+let _lastGpsUpdateAt = 0;
+let _gpsTickInterval = null;
+let _currentToken = null;
+const GPS_THROTTLE_MS = 4000;
+
+// ── TOAST ──────────────────────────────────────
+let _toastTimer = null;
+function rToast(msg, dur = 2500) {
+  const el = document.getElementById('rToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+// ── BOOT ───────────────────────────────────────
+function init() {
+  let splashOk = false, authOk = false;
+  const maybeDismiss = () => {
+    if (!splashOk || !authOk) return;
+    const s = document.getElementById('rSplash');
+    s.classList.add('fade');
+    setTimeout(() => s.style.display = 'none', 420);
+  };
+  setTimeout(() => { splashOk = true; maybeDismiss(); }, 1300);
+
+  function setupAuth() {
+    window._rfOnAuth(window._rauth, async fbUser => {
+      authOk = true;
+      maybeDismiss();
+      if (fbUser) {
+        try {
+          const snap = await window._rfGetDoc(window._rfDoc(window._rdb, 'riders', fbUser.uid));
+          if (!snap.exists() || snap.data().active === false) {
+            await window._rfSignOut(window._rauth);
+            showLogin('❌ Not registered as a rider. Contact admin.');
+            return;
+          }
+          riderProfile = { uid: fbUser.uid, ...snap.data() };
+          showApp();
+          startOrdersListener();
+        } catch (e) {
+          showLogin('⚠️ Could not verify rider profile. Check connection.');
+        }
+      } else {
+        cleanupOnLogout();
+        showLogin();
+      }
+    });
+  }
+  if (window._rfOnAuth) setupAuth();
+  else window.addEventListener('rfReady', setupAuth);
+
+  // Re-acquire wake lock when screen wakes
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && _gpsWatchId !== null && 'wakeLock' in navigator) {
+      navigator.wakeLock.request('screen').then(wl => { _wakeLock = wl; }).catch(() => {});
+    }
+  });
+
+  // PWA service worker
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/rider-sw.js').catch(() => {});
+}
+
+// ── AUTH SCREENS ───────────────────────────────
+function showLogin(errMsg = '') {
+  document.getElementById('rApp').style.display = 'none';
+  const login = document.getElementById('rLogin');
+  login.style.display = 'flex';
+  document.getElementById('rErr').textContent = errMsg;
+  const btn = document.getElementById('rLoginBtn');
+  btn.disabled = false; btn.textContent = 'Sign In →';
+}
+function showApp() {
+  document.getElementById('rLogin').style.display = 'none';
+  const app = document.getElementById('rApp');
+  app.style.display = 'flex';
+  document.getElementById('riderNameLbl').textContent = riderProfile?.name || '';
+}
+function cleanupOnLogout() {
+  if (_ordersUnsub) { _ordersUnsub(); _ordersUnsub = null; }
+  stopGPS();
+  myOrders = []; currentOrder = null; riderProfile = null;
+}
+
+async function rDoLogin() {
+  const email = document.getElementById('rEmail').value.trim();
+  const pass  = document.getElementById('rPass').value;
+  const btn   = document.getElementById('rLoginBtn');
+  const err   = document.getElementById('rErr');
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = '⚠️ Enter email and password.'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    await window._rfSignIn(window._rauth, email, pass);
+  } catch (e) {
+    const c = e.code || '';
+    err.textContent = (c.includes('invalid') || c.includes('password') || c.includes('user-not-found'))
+      ? '❌ Invalid email or password.'
+      : c.includes('too-many') ? '⚠️ Too many attempts. Try later.' : '⚠️ Sign in failed.';
+    btn.disabled = false; btn.textContent = 'Sign In →';
+  }
+}
+async function rDoLogout() {
+  cleanupOnLogout();
+  try { await window._rfSignOut(window._rauth); } catch (e) {}
+}
+
+// ── ORDERS LISTENER ────────────────────────────
+function startOrdersListener() {
+  if (!riderProfile?.uid || !window._rdb) return;
+  if (_ordersUnsub) { _ordersUnsub(); _ordersUnsub = null; }
+  const q = window._rfQuery(
+    window._rfCol(window._rdb, 'orders'),
+    window._rfWhere('assignedRiderUid', '==', riderProfile.uid)
+  );
+  _ordersUnsub = window._rfSnap(q, snap => {
+    myOrders = snap.docs
+      .map(d => ({ _id: d.id, ...d.data() }))
+      .filter(o => !['delivered', 'cancelled'].includes(o.status || ''));
+    renderOrders();
+    if (currentOrder) {
+      const updated = myOrders.find(o => o._id === currentOrder._id);
+      if (updated) { currentOrder = updated; renderDetail(); }
+    }
+  }, err => console.error('[Wheels] orders:', err.code, err.message));
+}
+
+// ── RENDER ORDERS ──────────────────────────────
+function renderOrders() {
+  const list  = document.getElementById('ordersList');
+  const empty = document.getElementById('emptyOrders');
+  if (!myOrders.length) {
+    list.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = myOrders.map(o => {
+    const cod   = isCOD(o);
+    const items = itemsLabel(o);
+    return `<div class="o-card" onclick="openDetail('${o._id}')">
+      <div class="o-top">
+        <span class="o-id">${o.orderId || o._id}</span>
+        <span class="o-badge ${o.status || ''}">${fmtSt(o.status)}</span>
+      </div>
+      <div class="o-addr">📍 ${o.address || '—'}</div>
+      <div class="o-items">${items}</div>
+      <div class="o-foot">
+        <span class="o-amt ${cod ? 'cod' : 'paid'}">₹${(o.amount || 0).toLocaleString('en-IN')}</span>
+        <span class="o-pay ${cod ? 'cod' : 'paid'}">${cod ? '💵 COD' : '✅ Paid'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── OPEN DETAIL ────────────────────────────────
+function openDetail(id) {
+  currentOrder = myOrders.find(o => o._id === id);
+  if (!currentOrder) return;
+  document.getElementById('ordersScreen').style.display = 'none';
+  const det = document.getElementById('detailScreen');
+  det.style.display = 'flex';
+  renderDetail();
+}
+function showOrders() {
+  document.getElementById('detailScreen').style.display = 'none';
+  document.getElementById('ordersScreen').style.display = 'flex';
+  currentOrder = null;
+}
+
+function renderDetail() {
+  const o = currentOrder;
+  if (!o) return;
+  document.getElementById('detOid').textContent = o.orderId || o._id;
+  const badge = document.getElementById('detBadge');
+  badge.textContent = fmtSt(o.status);
+  badge.className = `o-badge ${o.status || ''}`;
+
+  const cod   = isCOD(o);
+  const items = (o.itemDetails || []).map(i =>
+    `<div class="item-row">
+      <span class="item-name">${i.name}</span>
+      <span class="item-qty">×${i.qty}</span>
+      <span class="item-price">₹${((i.price || 0) * (i.qty || 1)).toLocaleString('en-IN')}</span>
+    </div>`
+  ).join('') || (o.items || []).map(i => `<div class="item-row"><span class="item-name">${i}</span></div>`).join('');
+
+  const gpsOn = _gpsWatchId !== null;
+  const gpsAgo = _lastGpsUpdateAt ? Math.round((Date.now() - _lastGpsUpdateAt) / 1000) : null;
+
+  document.getElementById('detBody').innerHTML = `
+    <div class="d-sec">
+      <div class="d-sec-title">💰 Payment</div>
+      <div class="d-row">
+        <span class="d-lbl">Amount</span>
+        <span class="d-val big ${cod ? 'cod' : 'paid'}">₹${(o.amount || 0).toLocaleString('en-IN')}</span>
+      </div>
+      <div class="d-row">
+        <span class="d-lbl">Method</span>
+        <span class="d-val" style="font-weight:700;">${cod ? '💵 Cash on Delivery' : '✅ Paid Online'}</span>
+      </div>
+      ${cod ? `<div class="cod-warn">⚠️ COLLECT CASH FROM CUSTOMER</div>` : ''}
+    </div>
+    <div class="d-sec">
+      <div class="d-sec-title">📦 Items</div>
+      ${items || '<div style="color:var(--muted);font-size:12px;">No item details</div>'}
+    </div>
+    <div class="d-sec">
+      <div class="d-sec-title">👤 Customer</div>
+      <div class="d-row"><span class="d-lbl">Name</span><span class="d-val">${o.customerName || '—'}</span></div>
+      <div class="d-row"><span class="d-lbl">Phone</span><span class="d-val"><a href="tel:${o.phone || ''}" style="color:var(--orange);text-decoration:none;font-weight:700;">${o.phone || '—'}</a></span></div>
+      <div class="d-row"><span class="d-lbl">Address</span><span class="d-val">${o.address || '—'}</span></div>
+    </div>
+    <div class="d-sec">
+      <div class="d-sec-title">📍 GPS Sharing</div>
+      <div class="gps-row" id="detGpsRow">
+        <span class="gps-dot ${gpsOn ? 'on' : ''}"></span>
+        <span class="${gpsOn ? 'gps-live-txt' : 'gps-off-txt'}">${gpsOn ? `Sharing live · ${gpsAgo !== null ? gpsAgo + 's ago' : 'starting…'}` : 'Not sharing'}</span>
+      </div>
+    </div>`;
+
+  renderActionBtn(o.status);
+
+  // Auto-start GPS for active delivery
+  if (['picked_up', 'on_the_way'].includes(o.status || '') && _gpsWatchId === null) {
+    startGPS(o.trackingToken);
+  }
+}
+
+// ── ACTION BUTTON ──────────────────────────────
+function renderActionBtn(status) {
+  const bar = document.getElementById('actionBar');
+  const ACTIONS = {
+    accepted:   { label: '📦 Mark Picked Up', cls: 'pick', next: 'picked_up' },
+    preparing:  { label: '📦 Mark Picked Up', cls: 'pick', next: 'picked_up' },
+    picked_up:  { label: '🛵 On the Way',     cls: 'way',  next: 'on_the_way' },
+    on_the_way: { label: '✅ Mark Delivered', cls: 'done', next: 'delivered' },
+  };
+  const a = ACTIONS[status];
+  if (!a) {
+    bar.innerHTML = `<button class="act-btn complete">Order Complete ✓</button>`;
+    return;
+  }
+  bar.innerHTML = `<button class="act-btn ${a.cls}" id="mainActBtn" onclick="doStatusUpdate('${a.next}')">${a.label}</button>`;
+}
+
+// ── STATUS UPDATE ──────────────────────────────
+async function doStatusUpdate(newStatus) {
+  const o = currentOrder;
+  if (!o || !window._rdb) return;
+  const btn = document.getElementById('mainActBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
+
+  const now = new Date();
+  const orderRef = window._rfDoc(window._rdb, 'orders', o._id);
+  const trackRef = o.trackingToken ? window._rfDoc(window._rdb, 'orderTracking', o.trackingToken) : null;
+
+  const orderData = {
+    status: newStatus,
+    statusHistory: window._rfArrUnion({ status: newStatus, time: now })
+  };
+  const trackData = { status: newStatus };
+
+  if (newStatus === 'picked_up') {
+    orderData.dispatchedAt = now.toISOString();
+    orderData.dispatchTime = now.toISOString();
+    trackData.dispatchedAt = now.toISOString();
+    trackData.dispatchTime = now.toISOString();
+  }
+  if (newStatus === 'delivered') {
+    orderData.deliveredAt   = now.toISOString();
+    orderData.deliveryTime  = now.toISOString();
+    trackData.deliveredAt   = now.toISOString();
+    trackData.deliveryTime  = now.toISOString();
+  }
+
+  try {
+    await window._rfUpdate(orderRef, orderData);
+    if (trackRef) await window._rfUpdate(trackRef, trackData);
+
+    if (newStatus === 'picked_up' || newStatus === 'on_the_way') {
+      startGPS(o.trackingToken);
+    }
+    if (newStatus === 'delivered') {
+      stopGPS();
+      rToast('✅ Order delivered! Great job 🎉', 3000);
+      setTimeout(showOrders, 2000);
+    }
+  } catch (e) {
+    console.error('Status update error:', e);
+    if (btn) { btn.disabled = false; btn.textContent = 'Retry'; }
+    rToast('❌ Update failed — check connection');
+  }
+}
+
+// ── GPS ────────────────────────────────────────
+async function startGPS(trackingToken) {
+  if (_gpsWatchId !== null) return;
+  _currentToken = trackingToken;
+
+  if ('wakeLock' in navigator) {
+    try { _wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+  }
+
+  if (!navigator.geolocation) {
+    updateGpsBar(false, 'GPS not available');
+    return;
+  }
+
+  _gpsWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      const now = Date.now();
+      _lastGpsUpdateAt = now;
+      updateGpsBar(true);
+      if (now - _lastGpsWriteAt >= GPS_THROTTLE_MS) {
+        _lastGpsWriteAt = now;
+        writeGPS(_currentToken, pos.coords.latitude, pos.coords.longitude);
+      }
+    },
+    err => {
+      const msg = err.code === 1 ? 'Permission denied' : err.code === 2 ? 'Position unavailable' : 'GPS timeout';
+      updateGpsBar(false, msg);
+    },
+    { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 }
+  );
+
+  updateGpsBar(true);
+
+  if (_gpsTickInterval) clearInterval(_gpsTickInterval);
+  _gpsTickInterval = setInterval(() => {
+    updateGpsBar(_gpsWatchId !== null);
+    refreshGpsRow();
+  }, 1000);
+}
+
+function stopGPS() {
+  if (_gpsWatchId !== null) {
+    navigator.geolocation.clearWatch(_gpsWatchId);
+    _gpsWatchId = null;
+  }
+  if (_wakeLock) { try { _wakeLock.release(); } catch (e) {} _wakeLock = null; }
+  if (_gpsTickInterval) { clearInterval(_gpsTickInterval); _gpsTickInterval = null; }
+  _currentToken = null;
+  updateGpsBar(false);
+}
+
+async function writeGPS(token, lat, lng) {
+  if (!token || !window._rdb) return;
+  try {
+    await window._rfUpdate(window._rfDoc(window._rdb, 'orderTracking', token), {
+      riderLocation: { lat, lng, updatedAt: new Date().toISOString() }
+    });
+  } catch (e) { /* throttled writes may fail occasionally — safe to ignore */ }
+}
+
+function updateGpsBar(on, msg) {
+  const dot   = document.getElementById('gpsDot');
+  const label = document.getElementById('gpsLabel');
+  const time  = document.getElementById('gpsTime');
+  if (!dot) return;
+  dot.className = 'gps-dot' + (on ? ' on' : '');
+  label.className = on ? 'on' : '';
+  label.textContent = 'GPS: ' + (on ? 'ON' : 'OFF');
+  if (on && _lastGpsUpdateAt) {
+    const s = Math.round((Date.now() - _lastGpsUpdateAt) / 1000);
+    time.textContent = `Last: ${s}s ago`;
+  } else {
+    time.textContent = msg || '';
+  }
+}
+
+function refreshGpsRow() {
+  const row = document.getElementById('detGpsRow');
+  if (!row) return;
+  const on  = _gpsWatchId !== null;
+  const ago = _lastGpsUpdateAt ? Math.round((Date.now() - _lastGpsUpdateAt) / 1000) : null;
+  row.innerHTML = `<span class="gps-dot ${on ? 'on' : ''}"></span>
+    <span class="${on ? 'gps-live-txt' : 'gps-off-txt'}">${on ? `Sharing live · ${ago !== null ? ago + 's ago' : 'starting…'}` : 'Not sharing'}</span>`;
+}
+
+// ── HELPERS ────────────────────────────────────
+function isCOD(o) { return (o.paymentMethod || '').toLowerCase().includes('cod'); }
+function itemsLabel(o) {
+  return (o.itemDetails || []).map(i => `${i.name} ×${i.qty}`).join(', ')
+    || (o.items || []).join(', ')
+    || '—';
+}
+function fmtSt(s) {
+  return { placed:'Placed', accepted:'Accepted', preparing:'Preparing',
+    picked_up:'Picked Up', on_the_way:'On the Way',
+    delivered:'Delivered', cancelled:'Cancelled' }[s] || s || '—';
+}
+
+// ── START ──────────────────────────────────────
+init();
+</script>
+</body>
+</html>

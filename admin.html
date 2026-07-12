@@ -694,6 +694,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 <script>
 // ── STATE ──────────────────────────────────────
 let allOrders=[], isInit=true, unsub=null, dispatchOrderId=null, newCnt=0;
+let allRiders=[], _ridersUnsub=null;
 const ADMIN='adminlinkup@gmail.com';
 let theme=localStorage.getItem('lu_adm_theme')||'dark';
 let soundOn=localStorage.getItem('lu_adm_sound')!=='off';
@@ -831,6 +832,7 @@ function showApp(email){
   const tb=document.getElementById('tone-'+activeTone);
   if(tb){document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('active'));tb.classList.add('active');}
   startListener();
+  loadRiders();
 }
 
 async function doLogin(){
@@ -861,8 +863,9 @@ async function doLogin(){
 
 async function doLogout(){
   if(unsub){unsub();unsub=null;}
+  if(_ridersUnsub){_ridersUnsub();_ridersUnsub=null;}
   try{await window._fbSignOut(window._auth);}catch(e){}
-  allOrders=[];isInit=true;newCnt=0;showLogin();
+  allOrders=[];allRiders=[];isInit=true;newCnt=0;showLogin();
 }
 
 function setupAuth(){
@@ -874,6 +877,40 @@ function setupAuth(){
 }
 window.addEventListener('firebaseReady',setupAuth);
 if(window._fbReady) setupAuth();
+
+// ── RIDERS ─────────────────────────────────────
+function loadRiders(){
+  if(_ridersUnsub){_ridersUnsub();_ridersUnsub=null;}
+  if(!window._db) return;
+  _ridersUnsub=window._fbSnap(window._fbCol(window._db,'riders'),snap=>{
+    allRiders=snap.docs.map(d=>({uid:d.id,...d.data()})).filter(r=>r.active!==false);
+    afr();
+  },err=>console.warn('[Admin] riders:',err));
+}
+
+async function assignRider(orderId,trackingToken){
+  const sel=document.getElementById('riderSelect');
+  if(!sel||!sel.value){toast('Select a rider first.','#f59e0b');return;}
+  const uid=sel.value;
+  const opt=sel.options[sel.selectedIndex];
+  const name=(opt.dataset.name||opt.textContent).split(' · ')[0].trim();
+  const phone=opt.dataset.phone||'';
+  if(!window._db){toast('Not connected.','#ef4444');return;}
+  try{
+    await window._fbUpdate(window._fbDoc(window._db,'orders',orderId),{
+      assignedRiderUid:uid,riderName:name,riderPhone:phone
+    });
+    if(trackingToken){
+      await window._fbUpdate(window._fbDoc(window._db,'orderTracking',trackingToken),{
+        assignedRiderUid:uid,riderName:name
+      });
+    }
+    toast('✅ '+name+' assigned!','#22c55e');
+    closeOrderDetail();
+  }catch(e){
+    toast('❌ '+e.message,'#ef4444');
+  }
+}
 
 // ── LISTENER ───────────────────────────────────
 function startListener(){
@@ -990,7 +1027,7 @@ function renderTable(orders){
       <td><div class="cname">${o.customerName||'—'}</div><div class="cphone">${o.phone||''}</div></td>
       <td><div class="iline" title="${its}">${sh}</div>${totalQty?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">${totalQty} item${totalQty>1?'s':''}</div>`:''}</td>
       <td class="amt">₹${(o.amount||0).toLocaleString('en-IN')}</td>
-      <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span></td>
+      <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span>${o.riderName?`<div style="font-size:9px;color:var(--muted);margin-top:3px;">🛵 ${o.riderName}</div>`:''}</td>
       <td class="tcol">${fmtTime12(dispAt)}</td>
       <td class="tcol">${fmtTime12(delAt)}${dur?`<div class="tdur">${dur}</div>`:''}</td>
       <td class="ac" onclick="event.stopPropagation()">${actBtns(o._id,st)}</td>
@@ -1202,16 +1239,41 @@ function openOrderDetail(id){
       <div class="odp-row"><span class="odp-lbl">Delivered</span><span class="odp-val">${delAt?fmtTime12(delAt)+(dur?` <span style="color:var(--muted);font-size:10px;">(${dur})</span>`:''):'—'}</span></div>
       ${o.deliveredAt&&o.estimatedDeliveryTime&&td(o.deliveredAt)>td(o.estimatedDeliveryTime)?`<div style="font-size:11px;color:#ef4444;margin-top:4px;">⚠️ ${Math.round((td(o.deliveredAt)-td(o.estimatedDeliveryTime))/60000)}m late</div>`:''}
     </div>
-    ${o.riderName?`<div class="odp-sec">
-      <h4>🛵 Rider</h4>
-      <div class="odp-row"><span class="odp-lbl">Name</span><span class="odp-val">${o.riderName}</span></div>
-      <div class="odp-row"><span class="odp-lbl">Phone</span><span class="odp-val">${o.riderPhone||'—'}</span></div>
-      ${o.etaMinutes?`<div class="odp-row"><span class="odp-lbl">ETA set</span><span class="odp-val">${o.etaMinutes} min</span></div>`:''}
-    </div>`:''}
+    <div class="odp-sec" id="riderAssignSec">
+      <h4>🛵 Assign Rider</h4>
+      ${o.riderName?`
+      <div class="odp-row"><span class="odp-lbl">Assigned</span><span class="odp-val" style="color:var(--orange);font-weight:700;">${o.riderName}</span></div>
+      ${o.riderPhone?`<div class="odp-row"><span class="odp-lbl">Phone</span><span class="odp-val">${o.riderPhone}</span></div>`:''}
+      ${['picked_up','on_the_way'].includes(st)?`<div class="odp-row" id="gpsStatusRow"><span class="odp-lbl">📍 GPS</span><span class="odp-val" style="color:var(--muted);font-style:italic;">Checking…</span></div>`:''}
+      `:`<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">No rider assigned yet</div>`}
+      ${!['delivered','cancelled'].includes(st)?`<div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <select id="riderSelect" style="flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;">
+          <option value="">— ${o.riderName?'Re-assign':'Select'} Rider —</option>
+          ${allRiders.map(r=>`<option value="${r.uid}" data-name="${r.name||''}" data-phone="${r.phone||''}">${r.name||r.uid}${r.phone?' · '+r.phone:''}</option>`).join('')}
+        </select>
+        <button onclick="assignRider('${o._id}','${o.trackingToken||''}')" style="padding:7px 14px;background:var(--orange);color:#000;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;">Assign</button>
+      </div>`:''}
+    </div>
     <div class="odp-acts">${actBtns(o._id,st)}</div>`;
 
   document.getElementById('odp').classList.add('open');
   document.getElementById('odp-ov').classList.add('on');
+  // Check live GPS status for active deliveries
+  if(o.riderName&&['picked_up','on_the_way'].includes(st)&&o.trackingToken&&window._db){
+    window._fbGetDoc(window._fbDoc(window._db,'orderTracking',o.trackingToken)).then(ts=>{
+      const row=document.getElementById('gpsStatusRow');
+      if(!row||!ts.exists())return;
+      const rl=ts.data().riderLocation;
+      if(rl&&rl.updatedAt){
+        const age=Math.round((Date.now()-new Date(rl.updatedAt).getTime())/1000);
+        row.querySelector('.odp-val').innerHTML=age<30
+          ?`<span style="color:var(--green);font-weight:700;">📍 LIVE · ${age}s ago</span>`
+          :`<span style="color:#f59e0b;">⚠️ Stale · ${age>60?Math.round(age/60)+'m':age+'s'} ago</span>`;
+      }else{
+        row.querySelector('.odp-val').textContent='No GPS data yet';
+      }
+    }).catch(()=>{});
+  }
 }
 function closeOrderDetail(){
   document.getElementById('odp').classList.remove('open');

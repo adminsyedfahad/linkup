@@ -6167,6 +6167,12 @@ function _makeRestIcon() {
 
 // ── ROUTE INTERPOLATION ───────────────────────────
 function _getProgressLatLng(p) {
+  // Prefer real rider GPS if fresh (< 60s)
+  const rl=_aocData?.riderLocation;
+  if(rl&&rl.lat&&rl.lng&&rl.updatedAt){
+    const age=Date.now()-new Date(rl.updatedAt).getTime();
+    if(age<60000) return L.latLng(rl.lat,rl.lng);
+  }
   if(_osrmRouteCoords && _osrmRouteCoords.length >= 2) return _interpolateRoute(p);
   const {rLat,rLng,destLat,destLng} = _trackCoords;
   return L.latLng(rLat+(destLat-rLat)*p, rLng+(destLng-rLng)*p);
