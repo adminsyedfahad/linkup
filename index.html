@@ -863,6 +863,31 @@ body{
 .aoc-eta-value{font-size:24px;font-weight:800;color:#ff8c00;line-height:1.1;}
 .aoc-eta-unit{font-size:9px;color:var(--muted);}
 .aoc-map-hint{font-size:9px;color:rgba(255,140,0,0.75);font-weight:700;margin-top:4px;}
+/* Delivered card */
+.aoc-delivered-card{cursor:default;}
+.aoc-delivered-card:hover{box-shadow:none;}
+.aoc-del-inner{display:flex;align-items:center;gap:14px;}
+.aoc-del-emoji{font-size:34px;flex-shrink:0;animation:aoc-pulse-icon 1.6s ease-in-out infinite;}
+.aoc-del-body{flex:1;min-width:0;}
+.aoc-del-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:3px;}
+.aoc-del-msg{font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:10px;}
+.aoc-del-actions{display:flex;gap:8px;}
+.aoc-rate-btn{padding:7px 16px;background:var(--orange);color:#000;font-weight:700;font-size:12px;border:none;border-radius:10px;cursor:pointer;font-family:'Poppins',sans-serif;transition:opacity .2s;}
+.aoc-rate-btn:active{opacity:.8;}
+.aoc-skip-btn{padding:7px 14px;background:rgba(255,255,255,0.06);color:var(--muted);font-weight:600;font-size:12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:'Poppins',sans-serif;transition:background .2s;}
+.aoc-skip-btn:hover{background:rgba(255,255,255,0.1);}
+/* Rate stars modal */
+.rate-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:9200;align-items:flex-end;justify-content:center;padding:0 0 24px;}
+.rate-overlay.open{display:flex;}
+.rate-box{background:var(--surface);border-radius:20px 20px 14px 14px;padding:24px 28px 20px;width:min(400px,94vw);text-align:center;box-shadow:0 -4px 40px rgba(0,0,0,0.4);border:1px solid var(--border);}
+.rate-title{font-size:17px;font-weight:800;margin-bottom:4px;}
+.rate-sub{font-size:13px;color:var(--muted);margin-bottom:18px;}
+.rate-stars{display:flex;justify-content:center;gap:8px;margin-bottom:18px;}
+.rate-star{font-size:34px;cursor:pointer;transition:transform .15s;opacity:.35;}
+.rate-star.lit{opacity:1;}
+.rate-star:hover{transform:scale(1.2);}
+.rate-submit{width:100%;padding:12px;background:var(--orange);color:#000;font-weight:800;font-size:14px;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;}
+.rate-skip{display:block;margin-top:10px;font-size:12px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'Poppins',sans-serif;width:100%;}
 /* Map tile toggle */
 .map-tile-btns{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:6px;background:rgba(0,0,0,0.72);padding:5px 8px;border-radius:20px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.08);}
 .mtt-btn{padding:5px 14px;border-radius:14px;border:none;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,0.55);transition:all 0.2s;}
@@ -2267,9 +2292,24 @@ img[alt="LinkUp"]{
 <div id="page-home" class="page active">
   <!-- ACTIVE ORDER CARD — auto-shown when user has a live order -->
   <div id="aocWrap" class="aoc-wrap" style="display:none;">
+    <!-- delivered thank-you card (replaces tracking card after delivery) -->
+    <div class="aoc aoc-delivered-card" id="aocDeliveredCard" style="display:none;">
+      <div class="aoc-del-inner">
+        <div class="aoc-del-emoji" id="aocDelEmoji">🎉</div>
+        <div class="aoc-del-body">
+          <div class="aoc-del-title">Order Delivered!</div>
+          <div class="aoc-del-msg" id="aocDelMsg">Thank you for ordering with LinkUp!</div>
+          <div class="aoc-del-actions">
+            <button class="aoc-rate-btn" id="aocRateBtn" onclick="rateOrder()">⭐ Rate</button>
+            <button class="aoc-skip-btn" onclick="dismissDeliveredCard()">✕ Skip</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- live tracking card -->
     <div class="aoc" id="activeOrderCard" onclick="openHomeCardMap()">
       <div class="aoc-inner">
-        <div class="aoc-status-icon" id="aocIcon">🛵</div>
+        <div class="aoc-status-icon" id="aocIcon">📍</div>
         <div class="aoc-center">
           <div class="aoc-order-id" id="aocOrderId"></div>
           <div class="aoc-status-line" id="aocStatusLine">Your order is on its way!</div>
@@ -4528,7 +4568,7 @@ const AOC_STATUS_META = {
   accepted:  {icon:'✅', prompts:['Restaurant accepted — getting started!','Kitchen has your order, firing up the stove! 🔥','Great news! Your order is confirmed and cooking']},
   preparing: {icon:'👨‍🍳', prompts:['Your food is being freshly prepared','Chef is cooking your meal with love ❤️','Sizzle sizzle… your meal is almost ready!'], pulse:true},
   picked_up: {icon:'📦', prompts:['Rider has your order! Heading your way','Package collected — on the way to you! 🏍','Your meal is in safe hands, rider is rolling'], pulse:true},
-  on_the_way:{icon:'🛵', prompts:['Almost there — hot and fresh!','Your rider is speeding to you 🏎💨','Hang tight, delivery imminent!','The countdown begins — almost at your door 🚪'], pulse:true},
+  on_the_way:{icon:'📍', prompts:['Almost there — hot and fresh!','Your rider is speeding to you 🏎💨','Hang tight, delivery imminent!','The countdown begins — almost at your door 🚪'], pulse:true},
   delivered: {icon:'🎉', prompts:['Delivered! Enjoy your meal 😋']},
   cancelled: {icon:'❌', prompts:['Order cancelled']}
 };
@@ -4558,7 +4598,7 @@ function startActiveOrderTracking() {
     if(!snap.exists()){hideAOC();return;}
     _aocData={orderId:order.id,trackingToken:order.trackingToken,...snap.data()};
     const st=_aocData.status||'placed';
-    if(st==='delivered'){hideAOC();loadOrderAgainSection();return;}
+    if(st==='delivered'){showDeliveredCard(_aocData);loadOrderAgainSection();return;}
     if(st==='cancelled'){hideAOC();return;}
     showAOC(_aocData);
   });
@@ -4567,12 +4607,17 @@ function startActiveOrderTracking() {
 function stopActiveOrderTracking() {
   if(_aocUnsub){_aocUnsub();_aocUnsub=null;}
   if(_aocEtaTimer){clearInterval(_aocEtaTimer);_aocEtaTimer=null;}
+  if(_delDismissTimer){clearTimeout(_delDismissTimer);_delDismissTimer=null;}
   _aocData=null; hideAOC(); _stopRiderAnim();
 }
 
 function hideAOC() {
   const el=document.getElementById('aocWrap');
   if(el) el.style.display='none';
+  const delCard=document.getElementById('aocDeliveredCard');
+  if(delCard) delCard.style.display='none';
+  const trackCard=document.getElementById('activeOrderCard');
+  if(trackCard) trackCard.style.display='';
 }
 
 function showAOC(d) {
@@ -4611,6 +4656,75 @@ function _updateAocEta(d) {
   const mins=_calcEtaMins(d);
   const el=document.getElementById('aocEtaValue');
   if(el) el.textContent=mins!==null?String(mins):'—';
+  // ETA expired and Firestore hasn't updated yet — show delivered state optimistically
+  if(mins!==null && mins<=0 && d?.status==='on_the_way') showDeliveredCard(d);
+}
+
+let _delDismissTimer=null;
+const _DEL_MESSAGES=[
+  {emoji:'🎉',msg:'Thank you for ordering with LinkUp! Hope you enjoyed your meal 😋'},
+  {emoji:'🙌',msg:'Hot & fresh delivered right to you! See you next time 🍔'},
+  {emoji:'💛',msg:'Hope to see you soon — your next craving is just a tap away!'},
+  {emoji:'⭐',msg:'Great choice! Rate your experience and help us serve you better.'},
+];
+
+function showDeliveredCard(d){
+  if(_delDismissTimer){clearTimeout(_delDismissTimer);_delDismissTimer=null;}
+  const wrap=document.getElementById('aocWrap');
+  const trackCard=document.getElementById('activeOrderCard');
+  const delCard=document.getElementById('aocDeliveredCard');
+  if(!wrap||!trackCard||!delCard) return;
+  if(_aocEtaTimer){clearInterval(_aocEtaTimer);_aocEtaTimer=null;}
+  trackCard.style.display='none';
+  const pick=_DEL_MESSAGES[Math.floor(Math.random()*_DEL_MESSAGES.length)];
+  document.getElementById('aocDelEmoji').textContent=pick.emoji;
+  document.getElementById('aocDelMsg').textContent=pick.msg;
+  delCard.style.display='block';
+  wrap.style.display='block';
+  // Restore slide-in animation
+  delCard.style.animation='none'; void delCard.offsetWidth; delCard.style.animation='';
+  // Auto-dismiss after 12 seconds
+  _delDismissTimer=setTimeout(()=>dismissDeliveredCard(),12000);
+}
+
+function dismissDeliveredCard(){
+  if(_delDismissTimer){clearTimeout(_delDismissTimer);_delDismissTimer=null;}
+  const wrap=document.getElementById('aocWrap');
+  const delCard=document.getElementById('aocDeliveredCard');
+  const trackCard=document.getElementById('activeOrderCard');
+  if(delCard) delCard.style.display='none';
+  if(trackCard) trackCard.style.display=''; // restore for future orders
+  if(wrap) wrap.style.display='none';
+}
+
+// ── RATING ────────────────────────────────────────
+let _ratingValue=0;
+let _ratingOrderId='';
+
+function rateOrder(orderId){
+  _ratingValue=0; _ratingOrderId=orderId||_aocData?.orderId||'';
+  _updateStars(0);
+  const sub=document.getElementById('rateSubText');
+  if(sub) sub.textContent=_ratingOrderId?`Order ${_ratingOrderId}`:'Tell us about your experience';
+  document.getElementById('rateOverlay')?.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeRateModal(){
+  document.getElementById('rateOverlay')?.classList.remove('open');
+  document.body.style.overflow='';
+  dismissDeliveredCard();
+}
+function setRating(n){ _ratingValue=n; _updateStars(n); }
+function hoverRating(n){ _updateStars(n); }
+function resetStarHover(){ _updateStars(_ratingValue); }
+function _updateStars(n){
+  document.querySelectorAll('.rate-star').forEach((s,i)=>s.classList.toggle('lit',i<n));
+}
+function submitRating(){
+  if(!_ratingValue){ showToast('⭐ Please select a rating first'); return; }
+  const msgs=['','😞 Sorry to hear that — we\'ll do better!','😕 Thanks for the feedback, we\'re improving!','😊 Good to know! We\'ll keep it up.','😄 Great! Thanks for your feedback!','🤩 Amazing! That made our day!'];
+  closeRateModal();
+  showToast(msgs[_ratingValue]);
 }
 
 // ── ADMIN NOTIFICATIONS ───────────────────────────
@@ -6354,11 +6468,30 @@ function reverseGeocode(lat, lng) {
   </div>
 </div>
 
+<!-- ══════════════════════════════════════
+     RATE ORDER MODAL
+══════════════════════════════════════ -->
+<div class="rate-overlay" id="rateOverlay" onclick="if(event.target===this)closeRateModal()">
+  <div class="rate-box">
+    <div class="rate-title">How was your order? 😊</div>
+    <div class="rate-sub" id="rateSubText">Tell us about your experience</div>
+    <div class="rate-stars" id="rateStars">
+      <span class="rate-star" onclick="setRating(1)" onmouseover="hoverRating(1)" onmouseout="resetStarHover()">★</span>
+      <span class="rate-star" onclick="setRating(2)" onmouseover="hoverRating(2)" onmouseout="resetStarHover()">★</span>
+      <span class="rate-star" onclick="setRating(3)" onmouseover="hoverRating(3)" onmouseout="resetStarHover()">★</span>
+      <span class="rate-star" onclick="setRating(4)" onmouseover="hoverRating(4)" onmouseout="resetStarHover()">★</span>
+      <span class="rate-star" onclick="setRating(5)" onmouseover="hoverRating(5)" onmouseout="resetStarHover()">★</span>
+    </div>
+    <button class="rate-submit" onclick="submitRating()">Submit Rating</button>
+    <button class="rate-skip" onclick="closeRateModal()">Maybe later</button>
+  </div>
+</div>
+
 <!-- MAP EXPAND MODAL -->
 <div class="map-modal-overlay" id="mapModalOverlay" onclick="handleMapModalClick(event)">
   <div class="map-modal-box" onclick="event.stopPropagation()">
     <button class="map-modal-close" onclick="closeMapModal()">✕</button>
-    <div class="map-modal-eta" id="mapModalEta">🛵 Live Tracking</div>
+    <div class="map-modal-eta" id="mapModalEta">📍 Live Tracking</div>
     <div id="trackMapModal" style="width:100%;height:100%;"></div>
     <div class="map-tile-btns">
       <button class="mtt-btn mtt-active" id="mttClassic" onclick="setMapTile('classic')">🗺 Classic</button>
