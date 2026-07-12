@@ -232,6 +232,7 @@ let _lastGpsUpdateAt = 0;
 let _gpsTickInterval = null;
 let _currentToken = null;
 const GPS_THROTTLE_MS = 4000;
+const ADMIN_EMAIL = 'adminlinkup@gmail.com';
 
 // ── TOAST ──────────────────────────────────────
 let _toastTimer = null;
@@ -260,6 +261,13 @@ function init() {
       authOk = true;
       maybeDismiss();
       if (fbUser) {
+        // Admin account bypasses riders doc check (test mode)
+        if (fbUser.email?.toLowerCase() === ADMIN_EMAIL) {
+          riderProfile = { uid: fbUser.uid, name: 'Admin', isAdmin: true };
+          showApp();
+          startOrdersListener();
+          return;
+        }
         try {
           const snap = await window._rfGetDoc(window._rfDoc(window._rdb, 'riders', fbUser.uid));
           if (!snap.exists() || snap.data().active === false) {
@@ -304,9 +312,13 @@ function showLogin(errMsg = '') {
 }
 function showApp() {
   document.getElementById('rLogin').style.display = 'none';
-  const app = document.getElementById('rApp');
-  app.style.display = 'flex';
-  document.getElementById('riderNameLbl').textContent = riderProfile?.name || '';
+  document.getElementById('rApp').style.display = 'flex';
+  const lbl = document.getElementById('riderNameLbl');
+  if (riderProfile?.isAdmin) {
+    lbl.innerHTML = '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);">🔧 Test Mode</span>';
+  } else {
+    lbl.textContent = riderProfile?.name || '';
+  }
 }
 function cleanupOnLogout() {
   if (_ordersUnsub) { _ordersUnsub(); _ordersUnsub = null; }
@@ -341,10 +353,16 @@ async function rDoLogout() {
 function startOrdersListener() {
   if (!riderProfile?.uid || !window._rdb) return;
   if (_ordersUnsub) { _ordersUnsub(); _ordersUnsub = null; }
-  const q = window._rfQuery(
-    window._rfCol(window._rdb, 'orders'),
-    window._rfWhere('assignedRiderUid', '==', riderProfile.uid)
-  );
+  // Admin sees all active orders for testing; riders see only their assigned ones
+  const q = riderProfile.isAdmin
+    ? window._rfQuery(
+        window._rfCol(window._rdb, 'orders'),
+        window._rfWhere('status', 'in', ['placed','accepted','preparing','picked_up','on_the_way'])
+      )
+    : window._rfQuery(
+        window._rfCol(window._rdb, 'orders'),
+        window._rfWhere('assignedRiderUid', '==', riderProfile.uid)
+      );
   _ordersUnsub = window._rfSnap(q, snap => {
     myOrders = snap.docs
       .map(d => ({ _id: d.id, ...d.data() }))
