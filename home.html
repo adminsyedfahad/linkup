@@ -2300,7 +2300,7 @@ img[alt="LinkUp"]{
           <div class="aoc-del-title">Order Delivered!</div>
           <div class="aoc-del-msg" id="aocDelMsg">Thank you for ordering with LinkUp!</div>
           <div class="aoc-del-actions">
-            <button class="aoc-rate-btn" id="aocRateBtn" onclick="rateOrder()">⭐ Rate</button>
+            <button class="aoc-rate-btn" id="aocRateBtn" onclick="rateOrder('',true)">⭐ Rate</button>
             <button class="aoc-skip-btn" onclick="dismissDeliveredCard()">✕ Skip</button>
           </div>
         </div>
@@ -4135,6 +4135,9 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   const addrB = document.getElementById('delivCity').value.trim();
   const address = [addrA, addrB].filter(Boolean).join(', ') || savedAddresses[0]?.full || '';
 
+  if(name) localStorage.setItem('lu_name', name);
+  if(phone) localStorage.setItem('lu_phone', phone);
+
   const btn = document.getElementById('confirmOrderBtn');
   btn.textContent = 'Placing Order...'; btn.disabled = true;
 
@@ -4205,6 +4208,7 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
     statusLabel:  payMethod.includes('COD') ? 'Order Placed — Pay on Delivery 🧾' : 'Paid Online ✅',
     time:         now.toLocaleTimeString(),
     date:         now.toLocaleDateString(),
+    timestamp:    now.getTime(),
     eta,
     customerName: name, phone, email, address
   };
@@ -4252,7 +4256,22 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
 function renderOrders(){
   const el=document.getElementById('ordersList');
   if(!orderHistory.length){el.innerHTML='<p style="color:var(--muted);text-align:center;padding:40px 0;">No orders yet. Start eating! 🍕</p>';return;}
-  el.innerHTML=orderHistory.map(o=>`
+  const now=Date.now();
+  const _12H=12*60*60*1000;
+  el.innerHTML=orderHistory.map(o=>{
+    // Rate button: only for delivered orders within 12h of order time
+    let rateBtn='';
+    if(o.status==='delivered'||o.statusLabel==='Delivered'){
+      const orderTs=o.timestamp||(o.date&&o.time?new Date(`${o.date} ${o.time}`).getTime():0);
+      const alreadyRated=localStorage.getItem(`lu_rated_${o.id}`);
+      if(!alreadyRated && orderTs && now-orderTs<_12H){
+        rateBtn=`<button class="track-order-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);margin-left:8px;" onclick="rateOrder('${o.id}')">⭐ Rate</button>`;
+      } else if(alreadyRated){
+        const stars='⭐'.repeat(parseInt(alreadyRated));
+        rateBtn=`<span style="font-size:12px;color:var(--muted);margin-left:8px;">${stars} Rated</span>`;
+      }
+    }
+    return `
     <div class="order-card">
       <div class="order-header">
         <div class="order-id">Order ${o.id}</div>
@@ -4262,8 +4281,12 @@ function renderOrders(){
       <div class="order-total">Total: ₹${o.total}</div>
       <span class="order-pay-badge ${o.payMethod&&o.payMethod.includes('COD')?'cod':'online'}">${o.payMethod||'COD'}</span>
       <div style="font-size:11px;color:var(--muted);margin-top:4px;">${o.date||''} ${o.time}</div>
-      <button class="track-order-btn" onclick="openTracking('${o.id}',${o.eta||24},'${o.trackingToken||''}')">🗺️ Track Order</button>
-    </div>`).join('');
+      <div style="margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+        <button class="track-order-btn" onclick="openTracking('${o.id}',${o.eta||24},'${o.trackingToken||''}')">🗺️ Track Order</button>
+        ${rateBtn}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── WALLET ────────────────────────────────────────
@@ -4598,6 +4621,11 @@ function startActiveOrderTracking() {
     if(!snap.exists()){hideAOC();return;}
     _aocData={orderId:order.id,trackingToken:order.trackingToken,...snap.data()};
     const st=_aocData.status||'placed';
+    if(st==='delivered'||st==='cancelled'){
+      // Sync status to localStorage so Orders page shows Rate button
+      const lo=orderHistory.find(o=>o.id===order.id);
+      if(lo&&lo.status!==st){lo.status=st;lo.statusLabel=st==='delivered'?'Delivered ✅':'Cancelled ❌';localStorage.setItem('lu_orders',JSON.stringify(orderHistory));}
+    }
     if(st==='delivered'){showDeliveredCard(_aocData);loadOrderAgainSection();return;}
     if(st==='cancelled'){hideAOC();return;}
     showAOC(_aocData);
@@ -4667,9 +4695,24 @@ const _DEL_MESSAGES=[
   {emoji:'💛',msg:'Hope to see you soon — your next craving is just a tap away!'},
   {emoji:'⭐',msg:'Great choice! Rate your experience and help us serve you better.'},
 ];
+const _DEL_CARD_TTL = 5*60*60*1000; // 5 hours in ms
 
 function showDeliveredCard(d){
   if(_delDismissTimer){clearTimeout(_delDismissTimer);_delDismissTimer=null;}
+  const oid=d?.orderId||'';
+  // Check if user already dismissed this card and whether TTL has passed
+  const dismissedKey=`lu_del_dismissed_${oid}`;
+  const shownKey=`lu_del_shown_${oid}`;
+  const dismissed=localStorage.getItem(dismissedKey);
+  if(dismissed){hideAOC();return;}
+  // Track first-shown time for the 5-hour timer
+  const firstShown=parseInt(localStorage.getItem(shownKey)||'0');
+  const now=Date.now();
+  if(firstShown && now-firstShown>_DEL_CARD_TTL){
+    localStorage.setItem(dismissedKey,'1'); hideAOC(); return;
+  }
+  if(!firstShown) localStorage.setItem(shownKey,String(now));
+
   const wrap=document.getElementById('aocWrap');
   const trackCard=document.getElementById('activeOrderCard');
   const delCard=document.getElementById('aocDeliveredCard');
@@ -4681,19 +4724,22 @@ function showDeliveredCard(d){
   document.getElementById('aocDelMsg').textContent=pick.msg;
   delCard.style.display='block';
   wrap.style.display='block';
-  // Restore slide-in animation
   delCard.style.animation='none'; void delCard.offsetWidth; delCard.style.animation='';
-  // Auto-dismiss after 12 seconds
-  _delDismissTimer=setTimeout(()=>dismissDeliveredCard(),12000);
+  // Auto-dismiss after remaining TTL (or 5h if freshly shown)
+  const elapsed=firstShown?now-(parseInt(localStorage.getItem(shownKey))):0;
+  const remaining=Math.max(0,_DEL_CARD_TTL-elapsed);
+  _delDismissTimer=setTimeout(()=>dismissDeliveredCard(),remaining);
 }
 
 function dismissDeliveredCard(){
   if(_delDismissTimer){clearTimeout(_delDismissTimer);_delDismissTimer=null;}
+  const oid=_aocData?.orderId||'';
+  if(oid) localStorage.setItem(`lu_del_dismissed_${oid}`,'1');
   const wrap=document.getElementById('aocWrap');
   const delCard=document.getElementById('aocDeliveredCard');
   const trackCard=document.getElementById('activeOrderCard');
   if(delCard) delCard.style.display='none';
-  if(trackCard) trackCard.style.display=''; // restore for future orders
+  if(trackCard) trackCard.style.display='';
   if(wrap) wrap.style.display='none';
 }
 
@@ -4701,18 +4747,20 @@ function dismissDeliveredCard(){
 let _ratingValue=0;
 let _ratingOrderId='';
 
-function rateOrder(orderId){
+function rateOrder(orderId, fromDeliveredCard=false){
   _ratingValue=0; _ratingOrderId=orderId||_aocData?.orderId||'';
+  _rateFromDeliveredCard=fromDeliveredCard;
   _updateStars(0);
   const sub=document.getElementById('rateSubText');
   if(sub) sub.textContent=_ratingOrderId?`Order ${_ratingOrderId}`:'Tell us about your experience';
   document.getElementById('rateOverlay')?.classList.add('open');
   document.body.style.overflow='hidden';
 }
+let _rateFromDeliveredCard=false;
 function closeRateModal(){
   document.getElementById('rateOverlay')?.classList.remove('open');
   document.body.style.overflow='';
-  dismissDeliveredCard();
+  if(_rateFromDeliveredCard){ _rateFromDeliveredCard=false; dismissDeliveredCard(); }
 }
 function setRating(n){ _ratingValue=n; _updateStars(n); }
 function hoverRating(n){ _updateStars(n); }
@@ -4720,11 +4768,36 @@ function resetStarHover(){ _updateStars(_ratingValue); }
 function _updateStars(n){
   document.querySelectorAll('.rate-star').forEach((s,i)=>s.classList.toggle('lit',i<n));
 }
-function submitRating(){
+async function submitRating(){
   if(!_ratingValue){ showToast('⭐ Please select a rating first'); return; }
   const msgs=['','😞 Sorry to hear that — we\'ll do better!','😕 Thanks for the feedback, we\'re improving!','😊 Good to know! We\'ll keep it up.','😄 Great! Thanks for your feedback!','🤩 Amazing! That made our day!'];
+  const oid=_ratingOrderId;
+  // Find order details from history
+  const order=orderHistory.find(o=>o.id===oid)||{};
+  const phone=localStorage.getItem('lu_phone')||'';
+  const customerName=localStorage.getItem('lu_name')||phone||'Customer';
+  // Save to Firestore ratings/{orderId}
+  if(window._fbReady && window._db && oid){
+    try{
+      await window._fbSetDoc(window._fbDoc(window._db,'ratings',oid),{
+        orderId:oid,
+        rating:_ratingValue,
+        customerName,
+        phone,
+        walletToken,
+        items:(order.items||[]).join(', '),
+        amount:order.total||0,
+        paymentMethod:order.payMethod||'COD',
+        orderDate:order.date?`${order.date} ${order.time}`:'',
+        ratedAt:new Date().toISOString(),
+      });
+    } catch(e){ console.warn('Rating save failed:',e); }
+  }
+  // Mark locally so Rate button shows stars
+  if(oid) localStorage.setItem(`lu_rated_${oid}`,String(_ratingValue));
   closeRateModal();
   showToast(msgs[_ratingValue]);
+  renderOrders(); // refresh to show stars
 }
 
 // ── ADMIN NOTIFICATIONS ───────────────────────────

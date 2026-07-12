@@ -304,6 +304,26 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .ref-order-preview{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:12px;}
 .ref-btn{width:100%;padding:12px;background:var(--orange);color:#000;font-weight:800;border:none;border-radius:10px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:14px;transition:opacity .15s;}
 .ref-btn:hover{opacity:.88;}
+
+/* CUSTOMER REVIEWS */
+.rev-header{margin-bottom:4px;}
+.rev-stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 14px;text-align:center;}
+.rev-stat-num{font-size:24px;font-weight:800;color:var(--orange);}
+.rev-stat-lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+.rev-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+.rev-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+.rev-stars{font-size:18px;letter-spacing:1px;}
+.rev-meta{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+.rev-oid{font-size:11px;font-weight:700;color:var(--orange);}
+.rev-date{font-size:10px;color:var(--muted);}
+.rev-customer{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.rev-name{font-weight:700;font-size:14px;}
+.rev-phone{font-size:12px;color:var(--muted);}
+.rev-items{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.4;}
+.rev-footer{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.rev-amount{font-size:13px;font-weight:700;color:var(--green);}
+.rev-pay{font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;}
+.rev-odate{font-size:11px;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -336,6 +356,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
     <button class="mnb active" id="mnd" onclick="showSec('dashboard')">📊 Orders</button>
     <button class="mnb" id="mns" onclick="showSec('search')">🔍 Search</button>
     <button class="mnb" id="mnw" onclick="showSec('wallet')">💰 Refunds</button>
+    <button class="mnb" id="mnr" onclick="showSec('reviews')">⭐ Reviews</button>
     <button class="mnb" id="mnst" onclick="showSec('settings')">⚙️ Settings</button>
     <button class="mnb" onclick="doLogout()">⏻</button>
   </div>
@@ -356,6 +377,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
       </div>
       <div class="ni" id="nw" onclick="showSec('wallet')">
         <span class="ico">💰</span> Wallet & Refunds
+      </div>
+      <div class="ni" id="nr" onclick="showSec('reviews')">
+        <span class="ico">⭐</span> Customer Reviews
       </div>
       <div class="ni" id="nst" onclick="showSec('settings')">
         <span class="ico">⚙️</span> Settings
@@ -487,6 +511,23 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         <button class="ref-btn" onclick="submitRefund()">💸 Process Refund</button>
       </div>
 
+    </div>
+
+    <!-- CUSTOMER REVIEWS -->
+    <div class="sec" id="sec-reviews">
+      <div class="rev-header">
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;">⭐ Customer Reviews</h2>
+        <p style="margin:0;color:var(--muted);font-size:13px;">Live ratings submitted by customers after delivery</p>
+      </div>
+      <div class="rev-stats" id="revStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:16px 0;">
+        <div class="rev-stat-card"><div class="rev-stat-num" id="revTotal">0</div><div class="rev-stat-lbl">Total Ratings</div></div>
+        <div class="rev-stat-card"><div class="rev-stat-num" id="revAvg">—</div><div class="rev-stat-lbl">Avg Rating</div></div>
+        <div class="rev-stat-card"><div class="rev-stat-num" id="rev5">0</div><div class="rev-stat-lbl">⭐⭐⭐⭐⭐</div></div>
+        <div class="rev-stat-card"><div class="rev-stat-num" id="rev4">0</div><div class="rev-stat-lbl">⭐⭐⭐⭐</div></div>
+        <div class="rev-stat-card"><div class="rev-stat-num" id="rev3">0</div><div class="rev-stat-lbl">⭐⭐⭐</div></div>
+        <div class="rev-stat-card"><div class="rev-stat-num" id="rev12">0</div><div class="rev-stat-lbl">⭐ / ⭐⭐</div></div>
+      </div>
+      <div id="revList" style="display:flex;flex-direction:column;gap:12px;"></div>
     </div>
 
     <!-- SETTINGS -->
@@ -1114,15 +1155,74 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
   document.getElementById('mnw').classList.toggle('active',name==='wallet');
+  document.getElementById('mnr').classList.toggle('active',name==='reviews');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
+  if(name==='reviews') loadReviews();
+}
+
+// ── CUSTOMER REVIEWS ──────────────────────────
+let _reviewsUnsub=null;
+function loadReviews(){
+  if(!db) return;
+  if(_reviewsUnsub){_reviewsUnsub();_reviewsUnsub=null;}
+  const q=query(collection(db,'ratings'),orderBy('ratedAt','desc'));
+  _reviewsUnsub=onSnapshot(q,snap=>{
+    const all=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderReviews(all);
+  });
+}
+function renderReviews(all){
+  // Stats
+  const total=all.length;
+  document.getElementById('revTotal').textContent=total;
+  if(total){
+    const avg=(all.reduce((s,r)=>s+(r.rating||0),0)/total).toFixed(1);
+    document.getElementById('revAvg').textContent=avg;
+    document.getElementById('rev5').textContent=all.filter(r=>r.rating===5).length;
+    document.getElementById('rev4').textContent=all.filter(r=>r.rating===4).length;
+    document.getElementById('rev3').textContent=all.filter(r=>r.rating===3).length;
+    document.getElementById('rev12').textContent=all.filter(r=>r.rating<=2).length;
+  } else {
+    ['revAvg','rev5','rev4','rev3','rev12'].forEach(id=>{document.getElementById(id).textContent='0';});
+    document.getElementById('revAvg').textContent='—';
+  }
+  // List
+  const el=document.getElementById('revList');
+  if(!all.length){
+    el.innerHTML='<p style="color:var(--muted);text-align:center;padding:40px 0;">No reviews yet.</p>';
+    return;
+  }
+  el.innerHTML=all.map(r=>{
+    const stars='⭐'.repeat(r.rating||0)+'☆'.repeat(5-(r.rating||0));
+    const date=r.ratedAt?new Date(r.ratedAt).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    return `<div class="rev-card">
+      <div class="rev-card-top">
+        <div class="rev-stars">${stars}</div>
+        <div class="rev-meta">
+          <span class="rev-oid">${r.orderId||r.id}</span>
+          <span class="rev-date">${date}</span>
+        </div>
+      </div>
+      <div class="rev-customer">
+        <span class="rev-name">${r.customerName||'Customer'}</span>
+        ${r.phone?`<span class="rev-phone">📞 ${r.phone}</span>`:''}
+      </div>
+      ${r.items?`<div class="rev-items">🍽️ ${r.items}</div>`:''}
+      <div class="rev-footer">
+        ${r.amount?`<span class="rev-amount">₹${r.amount}</span>`:''}
+        ${r.paymentMethod?`<span class="rev-pay">${r.paymentMethod}</span>`:''}
+        ${r.orderDate?`<span class="rev-odate">Order: ${r.orderDate}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── CSV EXPORT ─────────────────────────────────
