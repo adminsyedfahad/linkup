@@ -1215,10 +1215,36 @@ function showSec(name){
 
 // ── CUSTOMER REVIEWS ──────────────────────────
 let _reviewsUnsub=null;
-function loadReviews(){
+async function loadReviews(){
   if(!db) return;
   if(_reviewsUnsub){_reviewsUnsub();_reviewsUnsub=null;}
-  // No orderBy — avoids Firestore index requirement; sort client-side instead
+  const el=document.getElementById('revList');
+  if(el) el.innerHTML='<p style="color:var(--muted);text-align:center;padding:30px 0;">⏳ Loading reviews…</p>';
+
+  // Step 1: one-time fetch to confirm read access before setting up live listener
+  try{
+    const {getDocs}=await import('https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js');
+    const snap=await getDocs(collection(db,'ratings'));
+    const initial=snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||''));
+    _cxReviewsCache=initial;
+    renderReviews(initial);
+  }catch(e){
+    console.error('[Reviews] getDocs failed:',e.code, e.message);
+    if(el) el.innerHTML=`<div style="color:#ef4444;text-align:center;padding:30px 16px;">
+      <div style="font-size:22px;margin-bottom:8px;">⚠️</div>
+      <div style="font-weight:700;margin-bottom:4px;">Could not load reviews</div>
+      <div style="font-size:12px;opacity:.8;">${e.code}: ${e.message}</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);">Add this Firestore rule:<br>
+        <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-size:11px;">allow read: if request.auth != null;</code>
+      </div>
+      <button onclick="loadReviews()" style="margin-top:14px;padding:8px 20px;background:var(--orange);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Retry</button>
+    </div>`;
+    return;
+  }
+
+  // Step 2: live listener for real-time updates
   _reviewsUnsub=onSnapshot(collection(db,'ratings'),snap=>{
     const all=snap.docs
       .map(d=>({id:d.id,...d.data()}))
@@ -1226,9 +1252,7 @@ function loadReviews(){
     _cxReviewsCache=all;
     renderReviews(all);
   },err=>{
-    console.error('Reviews listener error:',err.code, err.message);
-    const el=document.getElementById('revList');
-    if(el) el.innerHTML=`<p style="color:#ef4444;text-align:center;padding:30px 0;">⚠️ Could not load reviews: ${err.message}</p>`;
+    console.error('[Reviews] onSnapshot error:',err.code, err.message);
   });
 }
 function renderReviews(all){
