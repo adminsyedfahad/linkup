@@ -319,10 +319,16 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .rev-customer{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
 .rev-name{font-weight:700;font-size:14px;}
 .rev-phone{font-size:12px;color:var(--muted);}
-.rev-comment{font-size:13px;color:var(--text);background:var(--bg);border-left:3px solid var(--orange);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;line-height:1.5;font-style:italic;}
-.rev-items{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.4;}
-.rev-name-btn{background:none;border:none;font-weight:700;font-size:14px;color:var(--orange);cursor:pointer;padding:0;font-family:'Poppins',sans-serif;text-decoration:underline;text-underline-offset:2px;}
-.rev-name-btn:hover{opacity:.8;}
+/* Compact review list rows */
+.rev-row{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;min-height:44px;}
+.rev-row:last-child{border-bottom:none;}
+.rev-row:hover{background:var(--odim);}
+.rev-dot{width:8px;height:8px;border-radius:50%;background:#fff;flex-shrink:0;opacity:0;transition:opacity .15s;}
+.rev-dot.unseen{opacity:1;}
+.rev-row-name{font-weight:600;font-size:13px;flex-shrink:0;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis;}
+.rev-row-oid{font-size:12px;color:var(--muted);flex-shrink:0;}
+.rev-row-stars{font-size:13px;color:#f59e0b;letter-spacing:1px;flex-shrink:0;margin-left:auto;}
+.rev-row-date{font-size:10px;color:var(--muted);flex-shrink:0;white-space:nowrap;margin-left:10px;}
 
 /* CUSTOMER PROFILE PANEL */
 .cxp-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3100;}
@@ -409,6 +415,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
       </div>
       <div class="ni" id="nr" onclick="showSec('reviews')">
         <span class="ico">⭐</span> Customer Reviews
+        <span class="ni-badge" id="nrb">0</span>
       </div>
       <div class="ni" id="nst" onclick="showSec('settings')">
         <span class="ico">⚙️</span> Settings
@@ -556,7 +563,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         <div class="rev-stat-card"><div class="rev-stat-num" id="rev3">0</div><div class="rev-stat-lbl">⭐⭐⭐</div></div>
         <div class="rev-stat-card"><div class="rev-stat-num" id="rev12">0</div><div class="rev-stat-lbl">⭐ / ⭐⭐</div></div>
       </div>
-      <div id="revList" style="display:flex;flex-direction:column;gap:12px;"></div>
+      <div id="revList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
     </div>
 
     <!-- SETTINGS -->
@@ -1210,7 +1217,7 @@ function showSec(name){
   const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
-  if(name==='reviews') loadReviews();
+  if(name==='reviews'){ loadReviews(); }
 }
 
 // ── CUSTOMER REVIEWS ──────────────────────────
@@ -1254,6 +1261,21 @@ async function loadReviews(){
     console.error('[Reviews] onSnapshot error:',err.code, err.message);
   });
 }
+// ── SEEN/UNSEEN tracking via localStorage ──────
+// Chosen over Firestore flag: zero extra writes, instant, single-admin browser
+const _SEEN_KEY='lu_admin_seen_reviews';
+function _getSeenIds(){ try{return new Set(JSON.parse(localStorage.getItem(_SEEN_KEY)||'[]'));}catch{return new Set();} }
+function _markSeen(id){ const s=_getSeenIds(); s.add(id); localStorage.setItem(_SEEN_KEY,JSON.stringify([...s])); }
+
+function updRevBadge(all){
+  const seen=_getSeenIds();
+  const unseen=all.filter(r=>!seen.has(r.id||r.orderId)).length;
+  const b=document.getElementById('nrb');
+  if(!b) return;
+  if(unseen>0){b.textContent=unseen;b.classList.add('on');}
+  else{b.classList.remove('on');}
+}
+
 function renderReviews(all){
   // Stats
   const total=all.length;
@@ -1269,40 +1291,41 @@ function renderReviews(all){
     ['revAvg','rev5','rev4','rev3','rev12'].forEach(id=>{document.getElementById(id).textContent='0';});
     document.getElementById('revAvg').textContent='—';
   }
-  // List
+  updRevBadge(all);
+  // Compact list
   const el=document.getElementById('revList');
   if(!all.length){
     el.innerHTML='<p style="color:var(--muted);text-align:center;padding:40px 0;">No reviews yet.</p>';
     return;
   }
+  const seen=_getSeenIds();
   el.innerHTML=all.map(r=>{
+    const rid=r.id||r.orderId;
+    const isUnseen=!seen.has(rid);
     const filled='★'.repeat(r.rating||0);
-    const empty='☆'.repeat(5-(r.rating||0));
-    const date=r.ratedAt?new Date(r.ratedAt).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const empty=`<span style="color:var(--border)">${'★'.repeat(5-(r.rating||0))}</span>`;
+    const date=r.ratedAt?new Date(r.ratedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
     const safePhone=encodeURIComponent(r.phone||'');
     const safeName=encodeURIComponent(r.customerName||'Customer');
-    const safeOid=encodeURIComponent(r.orderId||r.id||'');
-    return `<div class="rev-card">
-      <div class="rev-card-top">
-        <div class="rev-stars" style="font-size:20px;color:#f59e0b;letter-spacing:2px;">${filled}<span style="color:var(--border)">${empty}</span></div>
-        <div class="rev-meta">
-          <span class="rev-oid">${r.orderId||r.id}</span>
-          <span class="rev-date">${date}</span>
-        </div>
-      </div>
-      <div class="rev-customer" style="margin-bottom:8px;">
-        <button class="rev-name-btn" onclick="openCxProfile('${safePhone}','${safeName}','${safeOid}')">👤 ${r.customerName||'Customer'}</button>
-        ${r.phone?`<span class="rev-phone" style="margin-left:10px;">📞 ${r.phone}</span>`:''}
-      </div>
-      ${r.comment?`<div class="rev-comment">💬 "${r.comment}"</div>`:''}
-      ${r.items?`<div class="rev-items">🍽️ ${r.items}</div>`:''}
-      <div class="rev-footer">
-        ${r.amount?`<span class="rev-amount">₹${r.amount}</span>`:''}
-        ${r.paymentMethod?`<span class="rev-pay">${r.paymentMethod}</span>`:''}
-        ${r.orderDate?`<span class="rev-odate">Ordered: ${r.orderDate}</span>`:''}
-      </div>
+    const safeOid=encodeURIComponent(r.orderId||rid);
+    return `<div class="rev-row" id="revrow-${rid}" onclick="revRowClick('${rid}','${safePhone}','${safeName}','${safeOid}')">
+      <span class="rev-dot${isUnseen?' unseen':''}"></span>
+      <span class="rev-row-name">${r.customerName||'Customer'}</span>
+      <span class="rev-row-oid">– ${r.orderId||rid}</span>
+      <span class="rev-row-stars">${filled}${empty}</span>
+      <span class="rev-row-date">${date}</span>
     </div>`;
   }).join('');
+}
+
+function revRowClick(rid, safePhone, safeName, safeOid){
+  // Mark seen: remove dot immediately
+  _markSeen(rid);
+  const dot=document.querySelector(`#revrow-${rid} .rev-dot`);
+  if(dot) dot.classList.remove('unseen');
+  updRevBadge(_cxReviewsCache);
+  // Open existing customer profile panel
+  openCxProfile(safePhone, safeName, safeOid);
 }
 
 let _cxReviewsCache=[];
@@ -1327,7 +1350,16 @@ function openCxProfile(rawPhone, rawName, rawOid){
   document.getElementById('cxpStats').innerHTML=`
     <div class="cxp-stat"><div class="cxp-stat-num">${cxOrders.length}</div><div class="cxp-stat-lbl">Orders</div></div>
     <div class="cxp-stat"><div class="cxp-stat-num">₹${totalSpend.toLocaleString('en-IN')}</div><div class="cxp-stat-lbl">Total Spent</div></div>
-    <div class="cxp-stat"><div class="cxp-stat-num">${delivered}</div><div class="cxp-stat-lbl">Delivered</div></div>`;
+    <div class="cxp-stat"><div class="cxp-stat-num">${delivered}</div><div class="cxp-stat-lbl">Delivered</div></div>
+    <div class="cxp-stat" id="cxpPointsStat"><div class="cxp-stat-num" id="cxpPts">—</div><div class="cxp-stat-lbl">LinkUp Pts</div></div>`;
+  // Fetch wallet/points balance if walletToken available
+  const wt=review?.walletToken||cxOrders[0]?.walletToken||'';
+  if(wt && window._db){
+    window._fbGetDoc(window._fbDoc(window._db,'wallets',wt)).then(ws=>{
+      const pts=document.getElementById('cxpPts');
+      if(pts) pts.textContent=ws.exists()?(ws.data().balance!==undefined?`₹${ws.data().balance}`:'—'):'—';
+    }).catch(()=>{});
+  }
   // Body
   let html='';
   // Review block
