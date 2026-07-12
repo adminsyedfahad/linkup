@@ -712,6 +712,32 @@ body{
 .area-sheet-opt.area-active{
   background:rgba(255,140,0,0.08);border-color:var(--orange);color:var(--orange);font-weight:700;
 }
+.area-search-wrap{position:relative;}
+.area-search-wrap input{width:100%;padding:11px 14px 11px 38px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;font-family:'Poppins',sans-serif;outline:none;transition:border-color .2s;}
+.area-search-wrap input:focus{border-color:var(--orange);}
+.area-search-wrap::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+.area-sheet-empty{text-align:center;color:var(--muted);padding:24px 0;font-size:13px;}
+/* Header points badge */
+.pts-btn{background:rgba(255,140,0,0.12);color:var(--orange);font-weight:700;font-size:12px;padding:7px 11px;border-radius:20px;border:1.5px solid rgba(255,140,0,0.3);cursor:pointer;transition:background .2s;white-space:nowrap;font-family:'Poppins',sans-serif;}
+.pts-btn:hover,.pts-btn:active{background:rgba(255,140,0,0.22);}
+/* Wallet/Points sheet tabs */
+.wallet-tabs{display:flex;gap:6px;margin-bottom:18px;}
+.wallet-tab{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;font-family:'Poppins',sans-serif;}
+.wallet-tab.w-active{background:rgba(255,140,0,0.1);border-color:var(--orange);color:var(--orange);}
+/* Checkout savings section */
+.savings-section{background:linear-gradient(135deg,rgba(255,140,0,0.06),rgba(34,197,94,0.04));border:1px solid rgba(255,140,0,0.25);border-radius:12px;padding:14px 16px;margin-top:14px;}
+.savings-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;}
+.savings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+.savings-row:last-child{border-bottom:none;padding-bottom:0;}
+.savings-row-left{display:flex;align-items:center;gap:10px;}
+.savings-icon{font-size:18px;}
+.savings-name{font-size:13px;font-weight:700;color:var(--text);}
+.savings-sub{font-size:11px;color:var(--muted);}
+.savings-toggle{width:40px;height:22px;border-radius:11px;background:var(--border);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.savings-toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;}
+.savings-toggle.s-on{background:#22c55e;}
+.savings-toggle.s-on::after{transform:translateX(18px);}
+.discount-row{display:flex;justify-content:space-between;font-size:13px;color:var(--green);padding:4px 0;font-weight:600;}
 
 /* ══ ORDER AGAIN SECTION ══ */
 .oa-section{padding-bottom:4px;}
@@ -2215,6 +2241,7 @@ img[alt="LinkUp"]{
     <div class="logo-sub">Cravings delivered, instantly. 🔥</div>
   </div>
   <div class="header-right">
+    <button class="pts-btn" onclick="openWalletSheet()" title="LinkUp Points">⭐ <span id="headerPoints">0</span> pts</button>
     <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
       🔔<span class="notif-dot" id="notifDot"></span>
     </button>
@@ -2421,11 +2448,6 @@ img[alt="LinkUp"]{
         <div class="pay-method-info"><div class="pay-method-name">Debit / Credit Card</div><div class="pay-method-desc">Visa · Mastercard · RuPay</div></div>
         <input type="radio" class="pay-radio" name="pay">
       </div>
-      <div class="pay-method" id="pm-wallet" onclick="selectPay('wallet',this)">
-        <div class="pay-method-icon">⭐</div>
-        <div class="pay-method-info"><div class="pay-method-name">LinkUp Points</div><div class="pay-method-desc" id="walletPayDesc">Loading wallet...</div></div>
-        <input type="radio" class="pay-radio" name="pay">
-      </div>
     </div>
     <!-- COD info -->
     <div class="cod-box show" id="codBox">
@@ -2451,10 +2473,29 @@ img[alt="LinkUp"]{
       </label>
       <p style="font-size:11px;color:var(--muted);margin-top:8px;">🔒 Payments are processed securely · 256-bit SSL encryption</p>
     </div>
-    <!-- Wallet / Points box -->
-    <div class="wallet-pay-box" id="walletPayBox">
-      <div class="wallet-bal-line">⭐ <span id="walletPayBal">0</span> points = ₹<span id="walletPayRs">0</span></div>
-      <div class="wallet-apply-info" id="walletApplyInfo"></div>
+    <!-- Apply Savings (wallet refund + points) -->
+    <div class="savings-section" id="savingsSection" style="display:none;">
+      <div class="savings-title">💰 Apply Savings</div>
+      <div class="savings-row" id="walletSavingsRow" style="display:none;">
+        <div class="savings-row-left">
+          <div class="savings-icon">🏦</div>
+          <div>
+            <div class="savings-name">Wallet Balance</div>
+            <div class="savings-sub" id="walletSavingsSub">₹0 refund credit</div>
+          </div>
+        </div>
+        <button class="savings-toggle" id="applyWalletToggle" onclick="toggleSavings('wallet')"></button>
+      </div>
+      <div class="savings-row" id="pointsSavingsRow" style="display:none;">
+        <div class="savings-row-left">
+          <div class="savings-icon">⭐</div>
+          <div>
+            <div class="savings-name">LinkUp Points</div>
+            <div class="savings-sub" id="pointsSavingsSub">0 pts = ₹0</div>
+          </div>
+        </div>
+        <button class="savings-toggle" id="applyPointsToggle" onclick="toggleSavings('points')"></button>
+      </div>
     </div>
   </div>
   <div class="checkout-section">
@@ -2760,19 +2801,41 @@ rzp.open();</div>
     <div class="psheet-handle"></div>
     <div class="psheet-head">
       <button class="psheet-back-btn" onclick="closeWalletSheet()">‹</button>
-      <div class="psheet-title">⭐ My Wallet & Points</div>
+      <div class="psheet-title">💰 Wallet & Points</div>
     </div>
-    <div class="wallet-bal-hero">
-      <div class="wallet-bal-label">Available Balance</div>
-      <div class="wallet-bal-amount">₹<span id="sheetWalletBal">0</span></div>
-      <div class="wallet-bal-pts"><span id="sheetWalletPts">0</span> LinkUp Points</div>
+    <div class="wallet-tabs">
+      <button class="wallet-tab w-active" id="walletTabWallet" onclick="switchWalletTab('wallet')">🏦 Wallet</button>
+      <button class="wallet-tab" id="walletTabPoints" onclick="switchWalletTab('points')">⭐ Points</button>
     </div>
-    <div style="background:rgba(255,140,0,0.08);border:1px solid rgba(255,140,0,0.2);border-radius:12px;padding:12px 14px;margin-bottom:18px;font-size:12px;color:var(--muted);line-height:1.6;">
-      💡 Earn <strong style="color:var(--orange);">5 points (₹5)</strong> on every delivered order. Use points at checkout — up to 50% of order value.
+    <!-- WALLET PANEL -->
+    <div id="walletPanel">
+      <div class="wallet-bal-hero">
+        <div class="wallet-bal-label">Refund Balance</div>
+        <div class="wallet-bal-amount">₹<span id="sheetWalletBal">0</span></div>
+        <div class="wallet-bal-pts" style="font-size:12px;color:var(--muted);">Admin refunds are credited here</div>
+      </div>
+      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:11px 14px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6;">
+        🏦 Wallet balance is credited by support when a refund is approved. Use it at checkout.
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Refund History</div>
+      <div class="wallet-txn-list" id="walletTxnList">
+        <div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No refunds yet.</div>
+      </div>
     </div>
-    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Transaction History</div>
-    <div class="wallet-txn-list" id="walletTxnList">
-      <div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No transactions yet. Place your first order!</div>
+    <!-- POINTS PANEL -->
+    <div id="pointsPanel" style="display:none;">
+      <div class="wallet-bal-hero">
+        <div class="wallet-bal-label">LinkUp Points</div>
+        <div class="wallet-bal-amount"><span id="sheetPointsBal">0</span> pts</div>
+        <div class="wallet-bal-pts" style="color:var(--orange);">= ₹<span id="sheetPointsRs">0</span> redeemable</div>
+      </div>
+      <div style="background:rgba(255,140,0,0.08);border:1px solid rgba(255,140,0,0.2);border-radius:12px;padding:11px 14px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6;">
+        ⭐ Earn <strong style="color:var(--orange);">5 points (₹5)</strong> on every order you place. Redeem at checkout — 1 pt = ₹1.
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Points History</div>
+      <div class="wallet-txn-list" id="pointsTxnList">
+        <div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No points yet. Place your first order!</div>
+      </div>
     </div>
   </div>
 </div>
@@ -3112,8 +3175,10 @@ let orderHistory=JSON.parse(localStorage.getItem('lu_orders')||'[]');
 let notifications=[];
 let etaInterval=null;
 let nextItemId=20;
-let walletBalance=0;
-let walletTxns=[];
+let walletBalance=0;         // Firestore-backed: admin refunds only
+let walletTxns=[];           // [{type:'refund',amount,orderId,date,note}]
+let luPoints=parseInt(localStorage.getItem('lu_points')||'0');      // localStorage: 5 pts per order placed
+let luPointsTxns=JSON.parse(localStorage.getItem('lu_points_txns')||'[]'); // [{type,pts,orderId,date,note}]
 let _pendingPayMethod=null;
 let _pendingPayTotal=0;
 let _adminNotifsUnsub=null;
@@ -3862,16 +3927,14 @@ function goToCheckout(){
   document.querySelectorAll('.pay-method').forEach(m=>m.classList.remove('selected'));
   pmEl.classList.add('selected');
   pmEl.querySelector('.pay-radio').checked=true;
-  ['codBox','upiBox','cardFields','walletPayBox'].forEach(id=>document.getElementById(id).classList.remove('show'));
-  const boxMap={cod:'codBox',upi:'upiBox',card:'cardFields',wallet:'walletPayBox'};
+  ['codBox','upiBox','cardFields'].forEach(id=>document.getElementById(id)?.classList.remove('show'));
+  const boxMap={cod:'codBox',upi:'upiBox',card:'cardFields'};
   if(boxMap[selectedPayment]) document.getElementById(boxMap[selectedPayment]).classList.add('show');
   const btn=document.getElementById('confirmOrderBtn');
-  if(selectedPayment==='cod') btn.textContent='🎉 Confirm & Place Order';
-  else if(selectedPayment==='wallet') btn.textContent='⭐ Pay with LinkUp Points';
-  else btn.textContent='⚡ Pay & Place Order';
+  btn.textContent=selectedPayment==='cod'?'🎉 Confirm & Place Order':'⚡ Pay & Place Order';
 
-  // Load wallet and update wallet pay desc
-  loadWallet().then(()=>refreshWalletPayDesc(total));
+  // Load wallet then init savings section
+  loadWallet().then(()=>initSavingsSection());
 
   // Auto-fill customer details
   const savedPhone = localStorage.getItem('lu_phone') || '';
@@ -3901,44 +3964,59 @@ function selectPay(type,el){
   document.querySelectorAll('.pay-method').forEach(m=>m.classList.remove('selected'));
   el.classList.add('selected');
   el.querySelector('.pay-radio').checked=true;
-  ['codBox','upiBox','cardFields','walletPayBox'].forEach(id=>document.getElementById(id).classList.remove('show'));
-  const boxMap={cod:'codBox',upi:'upiBox',card:'cardFields',wallet:'walletPayBox'};
+  ['codBox','upiBox','cardFields'].forEach(id=>document.getElementById(id)?.classList.remove('show'));
+  const boxMap={cod:'codBox',upi:'upiBox',card:'cardFields'};
   if(boxMap[type]) document.getElementById(boxMap[type]).classList.add('show');
-  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
-  if(type==='wallet') refreshWalletPayDesc(total);
   updateCheckoutTotal();
   const btn=document.getElementById('confirmOrderBtn');
-  if(type==='cod') btn.textContent='🎉 Confirm & Place Order';
-  else if(type==='wallet') btn.textContent='⭐ Pay with LinkUp Points';
-  else btn.textContent='⚡ Pay & Place Order';
+  btn.textContent=type==='cod'?'🎉 Confirm & Place Order':'⚡ Pay & Place Order';
+}
+function _getSavingsApplied(){
+  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const wOn=document.getElementById('applyWalletToggle')?.classList.contains('s-on');
+  const pOn=document.getElementById('applyPointsToggle')?.classList.contains('s-on');
+  let wAmt=wOn?Math.min(walletBalance,total):0;
+  let pAmt=pOn?Math.min(luPoints,total):0;
+  const maxDiscount=Math.floor(total*0.9);
+  if(wAmt+pAmt>maxDiscount){const r=maxDiscount/(wAmt+pAmt);wAmt=Math.round(wAmt*r);pAmt=maxDiscount-wAmt;}
+  return{wAmt,pAmt,total};
 }
 function updateCheckoutTotal(){
-  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const{wAmt,pAmt,total}=_getSavingsApplied();
   const baseRows=cart.map(c=>`<div class="order-summary-item"><span>${c.name} ×${c.qty}</span><span>₹${c.price*c.qty}</span></div>`).join('')
     +`<div class="order-summary-item"><span>Delivery Fee</span><span style="color:var(--green);">FREE</span></div>`;
-  if(selectedPayment==='wallet'&&walletBalance>0){
-    const maxPts=Math.floor(total*0.5);
-    const usable=Math.min(walletBalance,maxPts);
-    document.getElementById('checkoutSummary').innerHTML=baseRows+`<div class="discount-row"><span>⭐ LinkUp Points</span><span>−₹${usable}</span></div>`;
-    document.getElementById('checkoutTotal').textContent=`₹${total-usable}`;
-  } else {
-    document.getElementById('checkoutSummary').innerHTML=baseRows;
-    document.getElementById('checkoutTotal').textContent=`₹${total}`;
-  }
+  let discountRows='';
+  if(wAmt>0) discountRows+=`<div class="discount-row"><span>🏦 Wallet Applied</span><span>−₹${wAmt}</span></div>`;
+  if(pAmt>0) discountRows+=`<div class="discount-row"><span>⭐ Points Applied</span><span>−₹${pAmt}</span></div>`;
+  document.getElementById('checkoutSummary').innerHTML=baseRows+discountRows;
+  document.getElementById('checkoutTotal').textContent=`₹${Math.max(0,total-wAmt-pAmt)}`;
 }
-function refreshWalletPayDesc(total){
-  const desc=document.getElementById('walletPayDesc');
-  const box=document.getElementById('walletApplyInfo');
-  if(!desc||!box) return;
-  if(walletBalance<=0){
-    desc.textContent='No points yet — earn 5 on every order!';
-    box.textContent='Place an order to start earning LinkUp Points.';
-    return;
-  }
-  const maxPts=Math.floor(total*0.5);
-  const usable=Math.min(walletBalance,maxPts);
-  desc.textContent=`${walletBalance} pts = ₹${walletBalance} available`;
-  box.textContent=`₹${usable} will be applied (max 50% of ₹${total}). Remaining ₹${total-usable} paid via COD.`;
+function toggleSavings(type){
+  const id=type==='wallet'?'applyWalletToggle':'applyPointsToggle';
+  document.getElementById(id)?.classList.toggle('s-on');
+  updateCheckoutTotal();
+}
+function initSavingsSection(){
+  document.getElementById('applyWalletToggle')?.classList.remove('s-on');
+  document.getElementById('applyPointsToggle')?.classList.remove('s-on');
+  const sec=document.getElementById('savingsSection');
+  const wRow=document.getElementById('walletSavingsRow');
+  const pRow=document.getElementById('pointsSavingsRow');
+  let show=false;
+  if(walletBalance>0){
+    if(wRow) wRow.style.display='flex';
+    const wSub=document.getElementById('walletSavingsSub');
+    if(wSub) wSub.textContent=`₹${walletBalance} refund credit`;
+    show=true;
+  } else { if(wRow) wRow.style.display='none'; }
+  if(luPoints>=5){
+    if(pRow) pRow.style.display='flex';
+    const pSub=document.getElementById('pointsSavingsSub');
+    if(pSub) pSub.textContent=`${luPoints} pts = ₹${luPoints}`;
+    show=true;
+  } else { if(pRow) pRow.style.display='none'; }
+  if(sec) sec.style.display=show?'block':'none';
+  updateCheckoutTotal();
 }
 function fmtCheckoutCard(el){
   let v=el.value.replace(/\D/g,'').slice(0,16);
@@ -3957,10 +4035,11 @@ function placeOrder(){
   localStorage.setItem('lu_phone',phone);
   const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
 
+  const {wAmt,pAmt}=_getSavingsApplied();
   if(selectedPayment==='upi'){
     const upiId=document.getElementById('checkoutUpiId').value.trim();
     if(!upiId||!upiId.includes('@')){ errEl.textContent='⚠️ Enter a valid UPI ID (e.g. name@upi)'; errEl.style.display='block'; return; }
-    simulatePayment('UPI',total,{upiId});
+    simulatePayment('UPI',total,{upiId},wAmt,pAmt);
     return;
   }
   if(selectedPayment==='card'){
@@ -3969,29 +4048,23 @@ function placeOrder(){
     const cvv=document.getElementById('checkoutCvv').value;
     const cname=document.getElementById('checkoutCardName').value.trim();
     if(num.length<16||!expiry||!cvv||!cname){ errEl.textContent='⚠️ Please fill in all card details'; errEl.style.display='block'; return; }
-    simulatePayment('Card',total,{last4:num.slice(-4),expiry,name:cname,save:document.getElementById('saveCardChk').checked});
+    simulatePayment('Card',total,{last4:num.slice(-4),expiry,name:cname,save:document.getElementById('saveCardChk').checked},wAmt,pAmt);
     return;
   }
-  if(selectedPayment==='wallet'){
-    const maxPts=Math.floor(total*0.5);
-    const usable=Math.min(walletBalance,maxPts);
-    confirmOrder(usable>0?`Wallet/Points (₹${usable})`:'COD',total,usable);
-    return;
-  }
-  confirmOrder('COD',total,0);
+  confirmOrder('COD',total,wAmt,pAmt);
 }
 
 // TODO: Replace with real Razorpay payment response
 // Razorpay integration: open Razorpay checkout here, handle razorpay.on('payment.success') and razorpay.on('payment.failed')
-function simulatePayment(method,total,info={}){
+function simulatePayment(method,total,info={},wAmt=0,pAmt=0){
   const btn=document.getElementById('confirmOrderBtn');
   btn.textContent='Processing...'; btn.disabled=true;
-  showToast(`⚡ Processing ${method} payment...`);
+  const payTotal=Math.max(0,total-wAmt-pAmt);
+  showToast(`⚡ Processing ${method} payment of ₹${payTotal}...`);
   setTimeout(()=>{
-    btn.textContent=method==='Card'?'⚡ Pay & Place Order':'⚡ Pay & Place Order'; btn.disabled=false;
-    const SIMULATE_FAILURE=false; // set true to test failure popup
+    btn.textContent='⚡ Pay & Place Order'; btn.disabled=false;
+    const SIMULATE_FAILURE=false;
     if(SIMULATE_FAILURE&&Math.random()<0.25){ _pendingPayMethod=method; _pendingPayTotal=total; showPayFailModal(); return; }
-    // Save payment method (last 4 digits only for card, never full number)
     if(method==='Card'&&info.last4&&info.save){
       savedPayments=savedPayments.filter(p=>!(p.type==='card'&&p.last4===info.last4));
       savedPayments.push({type:'card',last4:info.last4,expiry:info.expiry,name:info.name});
@@ -4003,8 +4076,8 @@ function simulatePayment(method,total,info={}){
         localStorage.setItem('lu_payments',JSON.stringify(savedPayments));
       }
     }
-    showToast(`✅ ${method} payment of ₹${total} successful!`);
-    setTimeout(()=>confirmOrder(`Online · ${method}`,total,0),400);
+    showToast(`✅ ${method} payment of ₹${payTotal} successful!`);
+    setTimeout(()=>confirmOrder(`Online · ${method}`,total,wAmt,pAmt),400);
   },1800);
 }
 function showPayFailModal(){
@@ -4013,7 +4086,7 @@ function showPayFailModal(){
 function closePayFailModal(){ document.getElementById('payFailOverlay').classList.remove('open'); }
 function retryPayment(){ closePayFailModal(); simulatePayment(_pendingPayMethod,_pendingPayTotal); }
 function switchToCOD(){ closePayFailModal(); selectPay('cod',document.getElementById('pm-cod')); showToast('💵 Switched to Cash on Delivery'); }
-async function confirmOrder(payMethod,total,pointsUsed=0){
+async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   const now   = new Date();
   const name  = document.getElementById('cdName').value.trim();
   const phone = document.getElementById('cdPhone').value.trim();
@@ -4099,28 +4172,42 @@ async function confirmOrder(payMethod,total,pointsUsed=0){
   orderHistory.unshift(order);
   localStorage.setItem('lu_orders', JSON.stringify(orderHistory));
 
-  // Spend wallet points if used — write to wallets/{walletToken} (path-based security)
-  if(pointsUsed>0){
-    const txn={type:'spent',amount:pointsUsed,orderId,date:now,note:'Used at checkout'};
-    walletBalance=Math.max(0,walletBalance-pointsUsed);
-    walletTxns.push(txn);
-    const badge=document.getElementById('walletBadge');
-    if(badge) badge.textContent=`₹${walletBalance}`;
+  // Deduct wallet balance if applied (Firestore)
+  if(wAmt>0){
+    const wTxn={type:'spent',amount:wAmt,orderId,date:now.toISOString(),note:'Applied at checkout'};
+    walletBalance=Math.max(0,walletBalance-wAmt);
+    walletTxns.push(wTxn);
     if(window._fbReady&&window._db){
       window._fbGetDoc(window._fbDoc(window._db,'wallets',walletToken)).then(ws=>{
         const cur=ws.exists()?(ws.data().balance||0):0;
-        window._fbSetDoc(window._fbDoc(window._db,'wallets',walletToken),{balance:Math.max(0,cur-pointsUsed),transactions:window._fbArrUnion(txn)},{merge:true}).catch(()=>{});
+        window._fbSetDoc(window._fbDoc(window._db,'wallets',walletToken),{balance:Math.max(0,cur-wAmt),transactions:window._fbArrUnion(wTxn)},{merge:true}).catch(()=>{});
       }).catch(()=>{});
     }
   }
+
+  // Deduct points if applied (localStorage)
+  if(pAmt>0){
+    luPoints=Math.max(0,luPoints-pAmt);
+    luPointsTxns.push({type:'spent',pts:pAmt,orderId,date:now.toISOString(),note:'Applied at checkout'});
+    localStorage.setItem('lu_points',String(luPoints));
+    localStorage.setItem('lu_points_txns',JSON.stringify(luPointsTxns));
+  }
+
+  // Earn 5 points for placing this order
+  luPoints+=5;
+  luPointsTxns.push({type:'earned',pts:5,orderId,date:now.toISOString(),note:'Order placed'});
+  localStorage.setItem('lu_points',String(luPoints));
+  localStorage.setItem('lu_points_txns',JSON.stringify(luPointsTxns));
+
+  updatePointsUI();
 
   cart=[]; updateCartUI();
   btn.textContent = '🎉 Confirm & Place Order'; btn.disabled = false;
   showPage('orders'); renderOrders();
   loadOrderAgainSection();
-  showToast('🎉 Order placed!');
+  showToast('🎉 Order placed! +5 ⭐ pts earned');
   pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'✅');
-  setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider Rajan Kumar is on the way!','🛵'),8000);
+  setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider is on the way!','🛵'),8000);
 }
 function renderOrders(){
   const el=document.getElementById('ordersList');
@@ -4148,38 +4235,72 @@ async function loadWallet(){
     if(snap.exists()){walletBalance=snap.data().balance||0; walletTxns=snap.data().transactions||[];}
     else{walletBalance=0; walletTxns=[];}
   } catch(e){ walletBalance=0; walletTxns=[]; }
-  const badge=document.getElementById('walletBadge');
-  if(badge) badge.textContent=`₹${walletBalance}`;
+  updatePointsUI();
 }
-function openWalletSheet(){
+function updatePointsUI(){
+  const badge=document.getElementById('walletBadge');
+  if(badge) badge.textContent=walletBalance>0?`₹${walletBalance} · ⭐${luPoints}pts`:`⭐ ${luPoints} pts`;
+  const hpts=document.getElementById('headerPoints');
+  if(hpts) hpts.textContent=luPoints;
+}
+function openWalletSheet(tab='wallet'){
   document.getElementById('sheetWalletBal').textContent=walletBalance;
-  document.getElementById('sheetWalletPts').textContent=walletBalance;
+  document.getElementById('sheetPointsBal').textContent=luPoints;
+  document.getElementById('sheetPointsRs').textContent=luPoints;
   renderWalletTxns();
+  renderPointsTxns();
+  switchWalletTab(tab);
   document.getElementById('walletOverlay').classList.add('open');
 }
 function closeWalletSheet(){ document.getElementById('walletOverlay').classList.remove('open'); }
+function switchWalletTab(tab){
+  const isWallet=tab==='wallet';
+  document.getElementById('walletPanel').style.display=isWallet?'block':'none';
+  document.getElementById('pointsPanel').style.display=isWallet?'none':'block';
+  document.getElementById('walletTabWallet').classList.toggle('w-active',isWallet);
+  document.getElementById('walletTabPoints').classList.toggle('w-active',!isWallet);
+}
+function _fmtTxnDate(d){
+  if(d&&d.toDate) d=d.toDate();
+  else if(d&&!(d instanceof Date)) d=new Date(d);
+  return d?d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'}):'';
+}
 function renderWalletTxns(){
   const el=document.getElementById('walletTxnList');
-  if(!walletTxns.length){
-    el.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No transactions yet. Place your first order!</div>';
-    return;
-  }
-  el.innerHTML=[...walletTxns].reverse().map(t=>{
-    const isE=t.type==='earned', isR=t.type==='refund';
-    const icon=isE?'⭐':isR?'↩️':'🛒';
-    const bg=isE?'rgba(34,197,94,0.12)':isR?'rgba(59,130,246,0.12)':'rgba(255,140,0,0.12)';
-    const cls=isE?'earned':isR?'refund':'spent';
-    const sign=isE||isR?'+':'−';
-    let d=t.date;
-    if(d&&d.toDate) d=d.toDate();
-    else if(d&&!(d instanceof Date)) d=new Date(d);
-    const ds=d?d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'}):'';
+  if(!el) return;
+  const txns=walletTxns.filter(t=>t.type==='refund'||t.type==='spent');
+  if(!txns.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No refunds yet.</div>';return;}
+  el.innerHTML=[...txns].reverse().map(t=>{
+    const isR=t.type==='refund';
+    const icon=isR?'↩️':'🛒';
+    const bg=isR?'rgba(59,130,246,0.12)':'rgba(255,140,0,0.12)';
+    const cls=isR?'refund':'spent';
+    const sign=isR?'+':'−';
     return `<div class="wallet-txn-item">
       <div class="wallet-txn-left">
         <div class="wallet-txn-icon" style="background:${bg};">${icon}</div>
-        <div><div class="wallet-txn-title">${t.note||t.type}</div><div class="wallet-txn-sub">${t.orderId?t.orderId+' · ':''}${ds}</div></div>
+        <div><div class="wallet-txn-title">${t.note||t.type}</div><div class="wallet-txn-sub">${t.orderId?t.orderId+' · ':''}${_fmtTxnDate(t.date)}</div></div>
       </div>
       <div class="wallet-txn-amount ${cls}">${sign}₹${t.amount||0}</div>
+    </div>`;
+  }).join('');
+}
+function renderPointsTxns(){
+  const el=document.getElementById('pointsTxnList');
+  if(!el) return;
+  if(!luPointsTxns.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No points yet. Place your first order!</div>';return;}
+  el.innerHTML=[...luPointsTxns].reverse().map(t=>{
+    const isE=t.type==='earned';
+    const icon=isE?'⭐':'🛒';
+    const bg=isE?'rgba(34,197,94,0.12)':'rgba(255,140,0,0.12)';
+    const cls=isE?'earned':'spent';
+    const sign=isE?'+':'−';
+    return `<div class="wallet-txn-item">
+      <div class="wallet-txn-left">
+        <div class="wallet-txn-icon" style="background:${bg};">${icon}</div>
+        <div><div class="wallet-txn-title">${t.note||t.type}</div><div class="wallet-txn-sub">${t.orderId?t.orderId+' · ':''}${_fmtTxnDate(t.date)}</div></div>
+      </div>
+      <div class="wallet-txn-amount ${cls}">${sign}${t.pts||0} pts</div>
     </div>`;
   }).join('');
 }
@@ -4214,25 +4335,75 @@ const DELIVERY_AREAS = [
   'Tolichowki','Mehdipatnam','Banjara Hills','Jubilee Hills',
   'Hitech City','Gachibowli','Madhapur','Film Nagar',
   'Kukatpally','KPHB Colony','Secunderabad','Ameerpet',
-  'SR Nagar','Begumpet','Somajiguda','Masab Tank'
+  'SR Nagar','Begumpet','Somajiguda','Masab Tank',
+  'Chandrayangutta','Barkas','Salala','Bandlaguda',
+  'Shahin Nagar','Errakunta','Balapur','Kuttapet',
+  'Attapur','Rajendra Nagar','Santosh Nagar','LB Nagar',
+  'Dilsukhnagar','Nagole','Uppal','Malakpet',
+  'Koti','Abids','Nampally','Falaknuma',
+  'Saidabad','Hayathnagar','Vanasthalipuram','Charminar',
+  'Tarnaka','Malkajgiri','Alwal','Kompally',
+  'Old City','Chaderghat','Ramkote','Lakdikapul',
+  'Khairatabad','Narayanguda','Himayatnagar','Musheerabad',
+  'Bowenpally','Trimulgherry','Marredpally','West Maredpally'
 ];
 const AREA_COORDS = {
-  'Tolichowki':    {lat:17.3933,lng:78.4376},
-  'Mehdipatnam':   {lat:17.3937,lng:78.4432},
-  'Banjara Hills': {lat:17.4156,lng:78.4347},
-  'Jubilee Hills': {lat:17.4307,lng:78.4071},
-  'Hitech City':   {lat:17.4474,lng:78.3762},
-  'Gachibowli':    {lat:17.4401,lng:78.3489},
-  'Madhapur':      {lat:17.4399,lng:78.3910},
-  'Film Nagar':    {lat:17.4108,lng:78.4071},
-  'Kukatpally':    {lat:17.4849,lng:78.3959},
-  'KPHB Colony':   {lat:17.4942,lng:78.3862},
-  'Secunderabad':  {lat:17.4441,lng:78.5010},
-  'Ameerpet':      {lat:17.4375,lng:78.4481},
-  'SR Nagar':      {lat:17.4315,lng:78.4411},
-  'Begumpet':      {lat:17.4434,lng:78.4655},
-  'Somajiguda':    {lat:17.4271,lng:78.4624},
-  'Masab Tank':    {lat:17.4001,lng:78.4525}
+  'Tolichowki':       {lat:17.3933,lng:78.4376},
+  'Mehdipatnam':      {lat:17.3937,lng:78.4432},
+  'Banjara Hills':    {lat:17.4156,lng:78.4347},
+  'Jubilee Hills':    {lat:17.4307,lng:78.4071},
+  'Hitech City':      {lat:17.4474,lng:78.3762},
+  'Gachibowli':       {lat:17.4401,lng:78.3489},
+  'Madhapur':         {lat:17.4399,lng:78.3910},
+  'Film Nagar':       {lat:17.4108,lng:78.4071},
+  'Kukatpally':       {lat:17.4849,lng:78.3959},
+  'KPHB Colony':      {lat:17.4942,lng:78.3862},
+  'Secunderabad':     {lat:17.4441,lng:78.5010},
+  'Ameerpet':         {lat:17.4375,lng:78.4481},
+  'SR Nagar':         {lat:17.4315,lng:78.4411},
+  'Begumpet':         {lat:17.4434,lng:78.4655},
+  'Somajiguda':       {lat:17.4271,lng:78.4624},
+  'Masab Tank':       {lat:17.4001,lng:78.4525},
+  'Chandrayangutta':  {lat:17.3380,lng:78.4610},
+  'Barkas':           {lat:17.3197,lng:78.5017},
+  'Salala':           {lat:17.3050,lng:78.5100},
+  'Bandlaguda':       {lat:17.3340,lng:78.4140},
+  'Shahin Nagar':     {lat:17.3340,lng:78.4560},
+  'Errakunta':        {lat:17.4481,lng:78.4217},
+  'Balapur':          {lat:17.3009,lng:78.5221},
+  'Kuttapet':         {lat:17.5020,lng:78.4990},
+  'Attapur':          {lat:17.3748,lng:78.4280},
+  'Rajendra Nagar':   {lat:17.3250,lng:78.4350},
+  'Santosh Nagar':    {lat:17.3600,lng:78.4750},
+  'LB Nagar':         {lat:17.3512,lng:78.5516},
+  'Dilsukhnagar':     {lat:17.3688,lng:78.5250},
+  'Nagole':           {lat:17.3777,lng:78.5580},
+  'Uppal':            {lat:17.4046,lng:78.5595},
+  'Malakpet':         {lat:17.3799,lng:78.5009},
+  'Koti':             {lat:17.3900,lng:78.4820},
+  'Abids':            {lat:17.3938,lng:78.4686},
+  'Nampally':         {lat:17.3865,lng:78.4735},
+  'Falaknuma':        {lat:17.3272,lng:78.4810},
+  'Saidabad':         {lat:17.3582,lng:78.5090},
+  'Hayathnagar':      {lat:17.3344,lng:78.5895},
+  'Vanasthalipuram':  {lat:17.3494,lng:78.5491},
+  'Charminar':        {lat:17.3616,lng:78.4747},
+  'Tarnaka':          {lat:17.4326,lng:78.5450},
+  'Malkajgiri':       {lat:17.4552,lng:78.5286},
+  'Alwal':            {lat:17.4924,lng:78.5157},
+  'Kompally':         {lat:17.5404,lng:78.4821},
+  'Old City':         {lat:17.3570,lng:78.4740},
+  'Chaderghat':       {lat:17.3787,lng:78.4906},
+  'Ramkote':          {lat:17.3879,lng:78.4787},
+  'Lakdikapul':       {lat:17.4024,lng:78.4627},
+  'Khairatabad':      {lat:17.4218,lng:78.4553},
+  'Narayanguda':      {lat:17.3930,lng:78.4930},
+  'Himayatnagar':     {lat:17.4073,lng:78.4766},
+  'Musheerabad':      {lat:17.4127,lng:78.4872},
+  'Bowenpally':       {lat:17.4659,lng:78.4942},
+  'Trimulgherry':     {lat:17.4541,lng:78.5183},
+  'Marredpally':      {lat:17.4450,lng:78.5108},
+  'West Maredpally':  {lat:17.4430,lng:78.5050}
 };
 function loadDeliveryArea(){
   const saved = localStorage.getItem('lu_area') || DELIVERY_AREAS[0];
@@ -4240,19 +4411,29 @@ function loadDeliveryArea(){
   if(el) el.textContent = saved;
 }
 function openAreaSheet(){
-  const current = localStorage.getItem('lu_area') || DELIVERY_AREAS[0];
-  const list = document.getElementById('areaSheetList');
-  if(list){
-    list.innerHTML = DELIVERY_AREAS.map(a => `
-      <div class="area-sheet-opt${a===current?' area-active':''}" onclick="setArea('${a}')">${a}</div>
-    `).join('');
-  }
+  const searchEl=document.getElementById('areaSearch');
+  if(searchEl) searchEl.value='';
+  _renderAreaList('');
   const ov = document.getElementById('areaOverlay');
   if(ov){ ov.classList.add('open'); document.body.style.overflow='hidden'; }
+  setTimeout(()=>searchEl?.focus(),200);
+}
+function _renderAreaList(q){
+  const current=localStorage.getItem('lu_area')||DELIVERY_AREAS[0];
+  const list=document.getElementById('areaSheetList');
+  if(!list) return;
+  const filtered=q?DELIVERY_AREAS.filter(a=>a.toLowerCase().includes(q.toLowerCase())):DELIVERY_AREAS;
+  if(!filtered.length){list.innerHTML=`<div class="area-sheet-empty">No areas found for "${q}"</div>`;return;}
+  list.innerHTML=filtered.map(a=>`<div class="area-sheet-opt${a===current?' area-active':''}" onclick="setArea('${a}')">${a}</div>`).join('');
+}
+function filterAreaList(){
+  _renderAreaList(document.getElementById('areaSearch')?.value||'');
 }
 function closeAreaSheet(){
   const ov = document.getElementById('areaOverlay');
   if(ov){ ov.classList.remove('open'); document.body.style.overflow=''; }
+  const searchEl=document.getElementById('areaSearch');
+  if(searchEl) searchEl.value='';
 }
 function setArea(area){
   localStorage.setItem('lu_area', area);
@@ -4343,14 +4524,15 @@ async function loadOrderAgainSection(){
 // Subscribes to the most-recent order's orderTracking doc; shows/hides a live
 // card on the home page. Tapping the card opens the full map modal.
 const AOC_STATUS_META = {
-  placed:    {icon:'📝',line:'Order received! Confirming with restaurant'},
-  accepted:  {icon:'✅',line:'Restaurant accepted — getting started!'},
-  preparing: {icon:'👨‍🍳',line:'Your food is being freshly prepared',pulse:true},
-  picked_up: {icon:'📦',line:'Rider has your order!',pulse:true},
-  on_the_way:{icon:'🛵',line:'Almost there — hot and fresh!',pulse:true},
-  delivered: {icon:'🎉',line:'Delivered! Enjoy your meal 😋'},
-  cancelled: {icon:'❌',line:'Order cancelled'}
+  placed:    {icon:'📝', prompts:['Order received! Confirming with restaurant','Sit tight — restaurant is checking your order 👀','Your order is in! Waiting for restaurant confirmation']},
+  accepted:  {icon:'✅', prompts:['Restaurant accepted — getting started!','Kitchen has your order, firing up the stove! 🔥','Great news! Your order is confirmed and cooking']},
+  preparing: {icon:'👨‍🍳', prompts:['Your food is being freshly prepared','Chef is cooking your meal with love ❤️','Sizzle sizzle… your meal is almost ready!'], pulse:true},
+  picked_up: {icon:'📦', prompts:['Rider has your order! Heading your way','Package collected — on the way to you! 🏍','Your meal is in safe hands, rider is rolling'], pulse:true},
+  on_the_way:{icon:'🛵', prompts:['Almost there — hot and fresh!','Your rider is speeding to you 🏎💨','Hang tight, delivery imminent!','The countdown begins — almost at your door 🚪'], pulse:true},
+  delivered: {icon:'🎉', prompts:['Delivered! Enjoy your meal 😋']},
+  cancelled: {icon:'❌', prompts:['Order cancelled']}
 };
+const AOC_STEP_IDX = {placed:0,accepted:1,preparing:2,picked_up:3,on_the_way:4,delivered:5,cancelled:6};
 const AOC_PROGRESS_MAP = {placed:0.03,accepted:0.08,preparing:0.16,picked_up:0.28,on_the_way:null,delivered:1,cancelled:0};
 
 let _aocUnsub   = null;
@@ -4409,7 +4591,11 @@ function showAOC(d) {
   const iconEl=document.getElementById('aocIcon');
   if(iconEl){iconEl.textContent=meta.icon;iconEl.className='aoc-status-icon'+(meta.pulse?' aoc-pulse':'');}
   const lineEl=document.getElementById('aocStatusLine');
-  if(lineEl) lineEl.textContent=meta.line;
+  if(lineEl){
+    const prompts=meta.prompts||[meta.line||st];
+    const idx=AOC_STEP_IDX[st]??0;
+    lineEl.textContent=prompts[idx%prompts.length];
+  }
   const rawProg=AOC_PROGRESS_MAP[st];
   const prog=rawProg!==null?(rawProg??0):getProgressForStatus(d);
   const fillEl=document.getElementById('aocProgressFill');
@@ -5919,7 +6105,8 @@ function openMapModal() {
     const st=_aocData?.status||'placed';
     const meta=AOC_STATUS_META[st]||AOC_STATUS_META.placed;
     const mins=_calcEtaMins(_aocData);
-    const label=_aocData?.orderId?`${meta.icon} ${_aocData.orderId}`:'🛵 Live Tracking';
+    const statusLine=(meta.prompts||[''])[0];
+    const label=_aocData?.orderId?`${meta.icon} ${_aocData.orderId} · ${statusLine}`:'🛵 Live Tracking';
     etaEl.textContent=mins!==null?`${label} • ETA ${mins} min`:label;
   }
   // Sync tile toggle UI
@@ -6087,10 +6274,18 @@ function reverseGeocode(lat, lng) {
      DELIVERY AREA SHEET
 ══════════════════════════════════════ -->
 <div class="psheet-overlay" id="areaOverlay" onclick="closeAreaSheet()">
-  <div class="psheet" onclick="event.stopPropagation()" style="max-height:75vh;overflow-y:auto;">
+  <div class="psheet" onclick="event.stopPropagation()" style="max-height:82vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="psheet-handle"></div>
-    <div class="psheet-title" style="padding:0 20px 14px;">📍 Choose Delivery Area</div>
-    <div class="area-sheet-list" id="areaSheetList" style="padding:0 12px 20px;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 10px;flex-shrink:0;">
+      <div class="psheet-title" style="padding:0;margin:0;">📍 Choose Delivery Area</div>
+      <button onclick="closeAreaSheet()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:4px;">✕</button>
+    </div>
+    <div style="padding:0 14px 10px;flex-shrink:0;">
+      <div class="area-search-wrap">
+        <input type="search" id="areaSearch" placeholder="Search area..." oninput="filterAreaList()" autocomplete="off">
+      </div>
+    </div>
+    <div class="area-sheet-list" id="areaSheetList" style="overflow-y:auto;flex:1;padding:0 12px 20px;"></div>
   </div>
 </div>
 
