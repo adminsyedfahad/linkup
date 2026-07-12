@@ -307,9 +307,19 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 
 /* CUSTOMER REVIEWS */
 .rev-header{margin-bottom:4px;}
-.rev-stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 14px;text-align:center;}
-.rev-stat-num{font-size:24px;font-weight:800;color:var(--orange);}
-.rev-stat-lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+/* Rating overview — App Store style */
+.rev-overview{display:flex;align-items:center;gap:28px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin:16px 0;}
+.rev-score-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:80px;}
+.rev-big-num{font-size:52px;font-weight:800;color:var(--text);line-height:1;}
+.rev-big-stars{font-size:16px;color:#f59e0b;letter-spacing:3px;margin:6px 0 4px;}
+.rev-big-count{font-size:11px;color:var(--muted);}
+.rev-bars{flex:1;display:flex;flex-direction:column;gap:6px;}
+.rev-bar-row{display:flex;align-items:center;gap:8px;}
+.rev-bar-lbl{font-size:11px;color:var(--muted);width:10px;text-align:right;flex-shrink:0;}
+.rev-bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.rev-bar-fill{height:100%;background:var(--orange);border-radius:3px;transition:width .4s ease;}
+.rev-bar-fill-low{background:#ef4444;}
+.rev-bar-cnt{font-size:11px;color:var(--muted);width:18px;text-align:right;flex-shrink:0;}
 .rev-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
 .rev-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
 .rev-stars{font-size:18px;letter-spacing:1px;}
@@ -555,13 +565,19 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;">⭐ Customer Reviews</h2>
         <p style="margin:0;color:var(--muted);font-size:13px;">Live ratings submitted by customers after delivery</p>
       </div>
-      <div class="rev-stats" id="revStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:16px 0;">
-        <div class="rev-stat-card"><div class="rev-stat-num" id="revTotal">0</div><div class="rev-stat-lbl">Total Ratings</div></div>
-        <div class="rev-stat-card"><div class="rev-stat-num" id="revAvg">—</div><div class="rev-stat-lbl">Avg Rating</div></div>
-        <div class="rev-stat-card"><div class="rev-stat-num" id="rev5">0</div><div class="rev-stat-lbl">⭐⭐⭐⭐⭐</div></div>
-        <div class="rev-stat-card"><div class="rev-stat-num" id="rev4">0</div><div class="rev-stat-lbl">⭐⭐⭐⭐</div></div>
-        <div class="rev-stat-card"><div class="rev-stat-num" id="rev3">0</div><div class="rev-stat-lbl">⭐⭐⭐</div></div>
-        <div class="rev-stat-card"><div class="rev-stat-num" id="rev12">0</div><div class="rev-stat-lbl">⭐ / ⭐⭐</div></div>
+      <div class="rev-overview" id="revStats">
+        <div class="rev-score-left">
+          <div class="rev-big-num" id="revAvg">—</div>
+          <div class="rev-big-stars" id="revAvgStars">★★★★★</div>
+          <div class="rev-big-count"><span id="revTotal">0</span> reviews</div>
+        </div>
+        <div class="rev-bars">
+          <div class="rev-bar-row"><span class="rev-bar-lbl">5</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev5bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev5">0</span></div>
+          <div class="rev-bar-row"><span class="rev-bar-lbl">4</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev4bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev4">0</span></div>
+          <div class="rev-bar-row"><span class="rev-bar-lbl">3</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev3bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev3">0</span></div>
+          <div class="rev-bar-row"><span class="rev-bar-lbl">2</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev2bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev2">0</span></div>
+          <div class="rev-bar-row"><span class="rev-bar-lbl">1</span><div class="rev-bar-track"><div class="rev-bar-fill rev-bar-fill-low" id="rev1bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev1">0</span></div>
+        </div>
       </div>
       <div id="revList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
     </div>
@@ -1281,15 +1297,28 @@ function renderReviews(all){
   const total=all.length;
   document.getElementById('revTotal').textContent=total;
   if(total){
-    const avg=(all.reduce((s,r)=>s+(r.rating||0),0)/total).toFixed(1);
-    document.getElementById('revAvg').textContent=avg;
-    document.getElementById('rev5').textContent=all.filter(r=>r.rating===5).length;
-    document.getElementById('rev4').textContent=all.filter(r=>r.rating===4).length;
-    document.getElementById('rev3').textContent=all.filter(r=>r.rating===3).length;
-    document.getElementById('rev12').textContent=all.filter(r=>r.rating<=2).length;
+    const avg=(all.reduce((s,r)=>s+(r.rating||0),0)/total);
+    const avgDisplay=avg.toFixed(1);
+    document.getElementById('revAvg').textContent=avgDisplay;
+    // Filled average stars (rounded to nearest half → just floor for display)
+    const avgRound=Math.round(avg);
+    document.getElementById('revAvgStars').textContent='★'.repeat(avgRound)+'☆'.repeat(5-avgRound);
+    const c5=all.filter(r=>r.rating===5).length;
+    const c4=all.filter(r=>r.rating===4).length;
+    const c3=all.filter(r=>r.rating===3).length;
+    const c2=all.filter(r=>r.rating===2).length;
+    const c1=all.filter(r=>r.rating===1).length;
+    const pct=n=>Math.round((n/total)*100)+'%';
+    document.getElementById('rev5').textContent=c5; document.getElementById('rev5bar').style.width=pct(c5);
+    document.getElementById('rev4').textContent=c4; document.getElementById('rev4bar').style.width=pct(c4);
+    document.getElementById('rev3').textContent=c3; document.getElementById('rev3bar').style.width=pct(c3);
+    document.getElementById('rev2').textContent=c2; document.getElementById('rev2bar').style.width=pct(c2);
+    document.getElementById('rev1').textContent=c1; document.getElementById('rev1bar').style.width=pct(c1);
   } else {
-    ['revAvg','rev5','rev4','rev3','rev12'].forEach(id=>{document.getElementById(id).textContent='0';});
     document.getElementById('revAvg').textContent='—';
+    document.getElementById('revAvgStars').textContent='★★★★★';
+    ['rev5','rev4','rev3','rev2','rev1'].forEach(id=>{ document.getElementById(id).textContent='0'; });
+    ['rev5bar','rev4bar','rev3bar','rev2bar','rev1bar'].forEach(id=>{ document.getElementById(id).style.width='0%'; });
   }
   updRevBadge(all);
   // Compact list
