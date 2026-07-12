@@ -321,6 +321,34 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .rev-phone{font-size:12px;color:var(--muted);}
 .rev-comment{font-size:13px;color:var(--text);background:var(--bg);border-left:3px solid var(--orange);padding:8px 12px;border-radius:0 8px 8px 0;margin-bottom:8px;line-height:1.5;font-style:italic;}
 .rev-items{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.4;}
+.rev-name-btn{background:none;border:none;font-weight:700;font-size:14px;color:var(--orange);cursor:pointer;padding:0;font-family:'Poppins',sans-serif;text-decoration:underline;text-underline-offset:2px;}
+.rev-name-btn:hover{opacity:.8;}
+
+/* CUSTOMER PROFILE PANEL */
+.cxp-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3100;}
+.cxp-ov.on{display:block;}
+.cxp{position:fixed;top:0;right:-420px;width:min(400px,100vw);height:100vh;background:var(--card);border-left:1px solid var(--border);z-index:3200;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1);overflow:hidden;}
+.cxp.open{right:0;}
+.cxp-hd{display:flex;align-items:center;gap:14px;padding:20px 18px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.cxp-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#c05e00);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;}
+.cxp-info{flex:1;min-width:0;}
+.cxp-name{font-size:16px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cxp-phone{font-size:12px;color:var(--muted);margin-top:2px;}
+.cxp-email{font-size:11px;color:var(--muted);}
+.cxp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border);flex-shrink:0;}
+.cxp-stat{background:var(--card);padding:12px 10px;text-align:center;}
+.cxp-stat-num{font-size:20px;font-weight:800;color:var(--orange);}
+.cxp-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.4px;}
+.cxp-body{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;}
+.cxp-section-title{font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
+.cxp-review-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.cxp-order-row{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;cursor:pointer;transition:border-color .15s;}
+.cxp-order-row:hover{border-color:var(--orange);}
+.cxp-or-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.cxp-or-id{font-size:13px;font-weight:700;color:var(--orange);}
+.cxp-or-amt{font-size:13px;font-weight:700;}
+.cxp-or-items{font-size:11px;color:var(--muted);}
+.cxp-or-date{font-size:10px;color:var(--muted);margin-top:3px;}
 .rev-footer{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .rev-amount{font-size:13px;font-weight:700;color:var(--green);}
 .rev-pay{font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;}
@@ -596,6 +624,22 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
     <button class="odp-close" onclick="closeOrderDetail()">✕</button>
   </div>
   <div class="odp-body" id="odp-body"></div>
+</div>
+
+<!-- CUSTOMER PROFILE MODAL -->
+<div class="cxp-ov" id="cxp-ov" onclick="closeCxProfile()"></div>
+<div class="cxp" id="cxp">
+  <div class="cxp-hd">
+    <div class="cxp-avatar" id="cxpAvatar">?</div>
+    <div class="cxp-info">
+      <div class="cxp-name" id="cxpName">Customer</div>
+      <div class="cxp-phone" id="cxpPhone"></div>
+      <div class="cxp-email" id="cxpEmail"></div>
+    </div>
+    <button class="odp-close" onclick="closeCxProfile()">✕</button>
+  </div>
+  <div class="cxp-stats" id="cxpStats"></div>
+  <div class="cxp-body" id="cxpBody"></div>
 </div>
 
 <!-- DISPATCH MODAL -->
@@ -1177,6 +1221,7 @@ function loadReviews(){
   const q=query(collection(db,'ratings'),orderBy('ratedAt','desc'));
   _reviewsUnsub=onSnapshot(q,snap=>{
     const all=snap.docs.map(d=>({id:d.id,...d.data()}));
+    _cxReviewsCache=all;
     renderReviews(all);
   });
 }
@@ -1202,29 +1247,102 @@ function renderReviews(all){
     return;
   }
   el.innerHTML=all.map(r=>{
-    const stars='⭐'.repeat(r.rating||0)+'☆'.repeat(5-(r.rating||0));
+    const filled='★'.repeat(r.rating||0);
+    const empty='☆'.repeat(5-(r.rating||0));
     const date=r.ratedAt?new Date(r.ratedAt).toLocaleString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const safePhone=encodeURIComponent(r.phone||'');
+    const safeName=encodeURIComponent(r.customerName||'Customer');
+    const safeOid=encodeURIComponent(r.orderId||r.id||'');
     return `<div class="rev-card">
       <div class="rev-card-top">
-        <div class="rev-stars">${stars}</div>
+        <div class="rev-stars" style="font-size:20px;color:#f59e0b;letter-spacing:2px;">${filled}<span style="color:var(--border)">${empty}</span></div>
         <div class="rev-meta">
           <span class="rev-oid">${r.orderId||r.id}</span>
           <span class="rev-date">${date}</span>
         </div>
       </div>
-      <div class="rev-customer">
-        <span class="rev-name">${r.customerName||'Customer'}</span>
-        ${r.phone?`<span class="rev-phone">📞 ${r.phone}</span>`:''}
+      <div class="rev-customer" style="margin-bottom:8px;">
+        <button class="rev-name-btn" onclick="openCxProfile('${safePhone}','${safeName}','${safeOid}')">👤 ${r.customerName||'Customer'}</button>
+        ${r.phone?`<span class="rev-phone" style="margin-left:10px;">📞 ${r.phone}</span>`:''}
       </div>
       ${r.comment?`<div class="rev-comment">💬 "${r.comment}"</div>`:''}
       ${r.items?`<div class="rev-items">🍽️ ${r.items}</div>`:''}
       <div class="rev-footer">
         ${r.amount?`<span class="rev-amount">₹${r.amount}</span>`:''}
         ${r.paymentMethod?`<span class="rev-pay">${r.paymentMethod}</span>`:''}
-        ${r.orderDate?`<span class="rev-odate">Order: ${r.orderDate}</span>`:''}
+        ${r.orderDate?`<span class="rev-odate">Ordered: ${r.orderDate}</span>`:''}
       </div>
     </div>`;
   }).join('');
+}
+
+let _cxReviewsCache=[];
+function openCxProfile(rawPhone, rawName, rawOid){
+  const phone=decodeURIComponent(rawPhone);
+  const name=decodeURIComponent(rawName);
+  const oid=decodeURIComponent(rawOid);
+  // Get all orders for this customer (match by phone)
+  const cxOrders=phone?allOrders.filter(o=>o.phone===phone):[allOrders.find(o=>(o.orderId||o._id)===oid)].filter(Boolean);
+  // Get their review (from cached reviews list)
+  const review=_cxReviewsCache.find(r=>r.orderId===oid||(phone&&r.phone===phone));
+  // Header info
+  const ini=name.replace('Customer','?').charAt(0).toUpperCase();
+  document.getElementById('cxpAvatar').textContent=ini;
+  document.getElementById('cxpName').textContent=name;
+  document.getElementById('cxpPhone').textContent=phone?`📞 ${phone}`:'';
+  const email=cxOrders[0]?.email||'';
+  document.getElementById('cxpEmail').textContent=email?`✉️ ${email}`:'';
+  // Stats
+  const totalSpend=cxOrders.reduce((s,o)=>s+(o.amount||0),0);
+  const delivered=cxOrders.filter(o=>o.status==='delivered').length;
+  document.getElementById('cxpStats').innerHTML=`
+    <div class="cxp-stat"><div class="cxp-stat-num">${cxOrders.length}</div><div class="cxp-stat-lbl">Orders</div></div>
+    <div class="cxp-stat"><div class="cxp-stat-num">₹${totalSpend.toLocaleString('en-IN')}</div><div class="cxp-stat-lbl">Total Spent</div></div>
+    <div class="cxp-stat"><div class="cxp-stat-num">${delivered}</div><div class="cxp-stat-lbl">Delivered</div></div>`;
+  // Body
+  let html='';
+  // Review block
+  if(review){
+    const stars='★'.repeat(review.rating||0)+'☆'.repeat(5-(review.rating||0));
+    html+=`<div>
+      <div class="cxp-section-title">⭐ Their Review</div>
+      <div class="cxp-review-box">
+        <div style="font-size:20px;color:#f59e0b;letter-spacing:2px;margin-bottom:6px;">${stars}</div>
+        ${review.comment?`<div style="font-size:13px;font-style:italic;color:var(--text);line-height:1.5;">"${review.comment}"</div>`:'<div style="font-size:12px;color:var(--muted);">No comment left.</div>'}
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;">Rated on ${review.ratedAt?new Date(review.ratedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—'} · Order ${review.orderId||'—'}</div>
+      </div>
+    </div>`;
+  }
+  // Orders list
+  if(cxOrders.length){
+    html+=`<div>
+      <div class="cxp-section-title">🧾 Order History (${cxOrders.length})</div>
+      ${cxOrders.sort((a,b)=>(td(b.createdAt)||0)-(td(a.createdAt)||0)).map(o=>{
+        const its=(o.itemDetails||[]).map(i=>`${i.name} ×${i.qty}`).join(', ')||(o.items||[]).join(', ')||'—';
+        const st=o.status||'placed';
+        return `<div class="cxp-order-row" onclick="closeCxProfile();openOrderDetail('${o._id}')">
+          <div class="cxp-or-top">
+            <span class="cxp-or-id">${o.orderId||o._id}</span>
+            <span class="cxp-or-amt">₹${(o.amount||0).toLocaleString('en-IN')}</span>
+          </div>
+          <div class="cxp-or-items" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${its}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+            <div class="cxp-or-date">${fd(o.createdAt)}</div>
+            <span class="bdg ${st}" style="font-size:10px;padding:2px 7px;">${st.replace(/_/g,' ')}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } else {
+    html+='<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;">No orders found for this customer.</p>';
+  }
+  document.getElementById('cxpBody').innerHTML=html;
+  document.getElementById('cxp').classList.add('open');
+  document.getElementById('cxp-ov').classList.add('on');
+}
+function closeCxProfile(){
+  document.getElementById('cxp').classList.remove('open');
+  document.getElementById('cxp-ov').classList.remove('on');
 }
 
 // ── CSV EXPORT ─────────────────────────────────
