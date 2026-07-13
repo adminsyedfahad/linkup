@@ -170,7 +170,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 .det-oid{font-family:'Righteous',cursive;font-size:18px;color:var(--orange);flex:1;}
 
 /* MAP */
-.map-wrap{height:240px;flex-shrink:0;position:relative;background:var(--card);}
+.map-wrap{height:240px;min-height:240px;flex-shrink:0;position:relative;background:var(--card);}
 #riderMap{height:100%;width:100%;}
 .map-nav-btn{
   position:absolute;bottom:12px;right:12px;z-index:500;
@@ -612,8 +612,8 @@ function openDetail(id){
   const det=document.getElementById('detailScreen');
   det.style.display='flex';
   renderDetail();
-  // Init map after layout settles
-  setTimeout(()=>initDetailMap(currentOrder),80);
+  // initDetailMap checks container size itself and retries if not yet laid out
+  setTimeout(()=>initDetailMap(currentOrder),0);
 }
 function showOrders(){
   destroyMap();
@@ -730,9 +730,11 @@ async function doStatusUpdate(newStatus){
       if(_rMap){destroyMap();setTimeout(()=>initDetailMap(currentOrder),80);}
     }
   }catch(e){
-    console.error('Status update:',e);
-    if(btn){btn.disabled=false;btn.textContent='Retry';}
-    rToast('❌ Update failed. Check connection.');
+    console.error('[Wheels] Status update failed — code:',e?.code,'msg:',e?.message, e);
+    // Re-fetch button: optimistic Firestore snapshot may have replaced the DOM node
+    const freshBtn=document.getElementById('mainActBtn');
+    if(freshBtn){freshBtn.disabled=false;freshBtn.textContent='⚠️ Retry';}
+    rToast(fmtFbErr(e),4500);
   }
 }
 
@@ -779,11 +781,20 @@ function makeIcon(emoji,bg){
   });
 }
 
-function initDetailMap(o){
+function initDetailMap(o,_attempt){
   if(typeof L==='undefined') return;
+  const attempt=_attempt||0;
+  // Abort if user navigated away or switched to a different order while retrying
+  if(currentOrder?._id!==o?._id) return;
   destroyMap();
   const el=document.getElementById('riderMap');
   if(!el||!o) return;
+
+  // Wait for container to have non-zero dimensions (desktop can lag behind mobile)
+  if((el.offsetWidth===0||el.offsetHeight===0)&&attempt<10){
+    setTimeout(()=>initDetailMap(o,attempt+1),100);
+    return;
+  }
 
   const destC=getDestCoords(o);
   const restC=getRestCoords(o);
@@ -814,7 +825,9 @@ function initDetailMap(o){
   if(rl) rl.textContent=toRestaurant?'📍 Route to Restaurant':'📍 Route to Customer';
 
   _rMap.fitBounds([[riderC.lat,riderC.lng],[destC.lat,destC.lng]],{padding:[36,36],maxZoom:15});
-  setTimeout(()=>_rMap?.invalidateSize(),250);
+  // Two-pass invalidateSize: first for fast paint, second as desktop fallback
+  setTimeout(()=>_rMap?.invalidateSize(),200);
+  setTimeout(()=>_rMap?.invalidateSize(),800);
 
   fetchRoute(riderC,destC);
 }
@@ -924,6 +937,14 @@ function isToday(v){
   if(!v) return false;
   const d=new Date(v),n=new Date();
   return d.getDate()===n.getDate()&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();
+}
+function fmtFbErr(e){
+  const c=e?.code||'';
+  if(c.includes('permission-denied')) return '⛔ Permission denied (check Firestore rules)';
+  if(c.includes('not-found'))         return '⚠️ Document not found';
+  if(c.includes('unauthenticated'))   return '⚠️ Session expired — sign in again';
+  if(c.includes('unavailable')||c.includes('network')) return '⚠️ Network error — try again';
+  return '❌ Update failed: '+(c||e?.message?.split('.')[0]||'unknown error');
 }
 
 // ── START ──────────────────────────────────────────────
