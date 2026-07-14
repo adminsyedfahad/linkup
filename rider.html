@@ -523,6 +523,14 @@ html.light .rh-gear{background:rgba(0,0,0,.05);}
             <button onclick="saveNickname()" style="padding:0 18px;background:var(--orange);color:#000;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">Save</button>
           </div>
         </div>
+        <div class="stg-sec">
+          <div class="stg-sec-title">📍 My Delivery Area</div>
+          <div class="stg-sub" style="margin-bottom:12px;font-size:11px;color:var(--muted);">Admin uses this to assign you orders near your area</div>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="areaInp" class="l-inp" style="margin:0;flex:1;padding:12px 14px;font-size:14px;" placeholder="e.g. Koramangala, Indiranagar…" maxlength="60">
+            <button onclick="saveRiderArea()" style="padding:0 18px;background:var(--orange);color:#000;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">Save</button>
+          </div>
+        </div>
         <div class="stg-sec" id="myRatingSec" style="display:none;">
           <div class="stg-sec-title">⭐ My Rider Rating</div>
           <div id="riderRatingDisplay" style="min-height:28px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
@@ -1219,6 +1227,8 @@ function showSettings(){
   document.getElementById('settingsScreen').style.display='flex';
   const nickInput=document.getElementById('nicknameInp');
   if(nickInput) nickInput.value=riderProfile?.nickname||riderProfile?.name||'';
+  const areaInput=document.getElementById('areaInp');
+  if(areaInput) areaInput.value=riderProfile?.area||'';
   const themeToggle=document.getElementById('themeToggle');
   if(themeToggle) themeToggle.checked=document.documentElement.classList.contains('light');
   renderToneList();
@@ -1269,6 +1279,18 @@ async function saveNickname(){
     const el=document.getElementById('rNameEl');
     if(el){el.className='rh-name';el.textContent=nick;}
     rToast('✅ Nickname saved!');
+  }catch(e){rToast(fmtFbErr(e),4000);}
+}
+async function saveRiderArea(){
+  const input=document.getElementById('areaInp');
+  const area=(input?.value||'').trim();
+  if(!area){rToast('⚠️ Enter your delivery area.');return;}
+  if(riderProfile?.isAdmin){rToast('Area not applicable for admin.');return;}
+  if(!window._rdb||!riderProfile?.uid) return;
+  try{
+    await window._rfUpdate(window._rfDoc(window._rdb,'riders',riderProfile.uid),{area});
+    riderProfile.area=area;
+    rToast('✅ Area saved! Admin will see it in the assignment dropdown.');
   }catch(e){rToast(fmtFbErr(e),4000);}
 }
 
