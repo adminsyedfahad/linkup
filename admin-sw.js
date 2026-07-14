@@ -1,5 +1,5 @@
-const CACHE = 'wheels-v2';
-const STATIC = ['/rider.html', '/rider-manifest.json', '/rider-icon.svg'];
+const CACHE = 'linkup-admin-v1';
+const STATIC = ['/admin.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -20,7 +20,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = e.request.url;
   if (e.request.method !== 'GET') return;
-  if (url.includes('firestore') || url.includes('googleapis') || url.includes('gstatic')) return;
+  if (url.includes('firestore') || url.includes('googleapis') || url.includes('gstatic') || url.includes('fonts') || url.includes('leaflet')) return;
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
   );

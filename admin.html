@@ -1753,5 +1753,8 @@ async function submitRefund(){
   } catch(e){ toast('❌ Refund failed: '+(e.message||e),'#ef4444'); }
 }
 </script>
+<script>
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/admin-sw.js').catch(()=>{});
+</script>
 </body>
 </html>

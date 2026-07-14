@@ -6695,5 +6695,8 @@ function reverseGeocode(lat, lng) {
   </div>
 </div>
 
+<script>
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/index-sw.js').catch(()=>{});
+</script>
 </body>
 </html> 
