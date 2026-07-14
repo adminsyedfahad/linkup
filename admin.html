@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, where, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 const cfg = {
   apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
@@ -25,6 +25,7 @@ window._fbSnap=onSnapshot; window._fbQuery=query;
 window._fbOrderBy=orderBy; window._fbCol=collection;
 window._fbDoc=doc; window._fbUpdate=updateDoc; window._fbArrUnion=arrayUnion;
 window._fbSetDoc=setDoc; window._fbGetDoc=getDoc; window._fbGetDocs=getDocs;
+window._fbWhere=where;
 window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
 </script>
 <style>
@@ -428,6 +429,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         <span class="ico">⭐</span> Customer Reviews
         <span class="ni-badge" id="nrb">0</span>
       </div>
+      <div class="ni" id="nrr" onclick="showSec('rider-ratings')">
+        <span class="ico">🛵</span> Rider Ratings
+        <span class="ni-badge" id="nrrb">0</span>
+      </div>
       <div class="ni" id="nst" onclick="showSec('settings')">
         <span class="ico">⚙️</span> Settings
       </div>
@@ -582,6 +587,16 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         </div>
       </div>
       <div id="revList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
+    </div>
+
+    <!-- RIDER RATINGS -->
+    <div class="sec" id="sec-rider-ratings">
+      <div class="rev-header">
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;">🛵 Rider Ratings</h2>
+        <p style="margin:0;color:var(--muted);font-size:13px;">Ratings submitted by customers for each rider after delivery</p>
+      </div>
+      <div id="rrSummary" style="margin-bottom:18px;"></div>
+      <div id="rrList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
     </div>
 
     <!-- SETTINGS -->
@@ -1297,17 +1312,18 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
   document.getElementById('mnw').classList.toggle('active',name==='wallet');
   document.getElementById('mnr').classList.toggle('active',name==='reviews');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
   if(name==='reviews'){ loadReviews(); }
+  if(name==='rider-ratings'){ loadRiderRatings(); }
 }
 
 // ── CUSTOMER REVIEWS ──────────────────────────
@@ -1432,6 +1448,112 @@ function revRowClick(rid, safePhone, safeName, safeOid){
 }
 
 let _cxReviewsCache=[];
+
+// ── RIDER RATINGS ─────────────────────────────
+let _riderRatingsUnsub=null, _riderRatingsCache=[];
+const _SEEN_RR_KEY='lu_admin_seen_rr';
+function _getRRSeenIds(){ try{return new Set(JSON.parse(localStorage.getItem(_SEEN_RR_KEY)||'[]'));}catch{return new Set();} }
+function _markRRSeen(id){ const s=_getRRSeenIds(); s.add(id); localStorage.setItem(_SEEN_RR_KEY,JSON.stringify([...s])); }
+
+async function loadRiderRatings(){
+  if(!window._db) return;
+  if(_riderRatingsUnsub){_riderRatingsUnsub();_riderRatingsUnsub=null;}
+  const listEl=document.getElementById('rrList');
+  if(listEl) listEl.innerHTML='<p style="color:var(--muted);text-align:center;padding:30px 0;">⏳ Loading…</p>';
+  try{
+    const snap=await window._fbGetDocs(window._fbCol(window._db,'riderRatings'));
+    const initial=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||''));
+    _riderRatingsCache=initial;
+    renderRiderRatings(initial);
+  }catch(e){
+    console.error('[RiderRatings] getDocs failed:',e.code,e.message);
+    if(listEl) listEl.innerHTML=`<div style="color:#ef4444;text-align:center;padding:30px 16px;">
+      <div style="font-size:22px;margin-bottom:8px;">⚠️</div>
+      <div style="font-weight:700;margin-bottom:4px;">Could not load rider ratings</div>
+      <div style="font-size:12px;opacity:.8;">${e.code}: ${e.message}</div>
+      <button onclick="loadRiderRatings()" style="margin-top:14px;padding:8px 20px;background:var(--orange);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Retry</button>
+    </div>`;
+    return;
+  }
+  _riderRatingsUnsub=window._fbSnap(window._fbCol(window._db,'riderRatings'),snap=>{
+    const all=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||''));
+    _riderRatingsCache=all;
+    renderRiderRatings(all);
+  },err=>console.error('[RiderRatings] onSnapshot error:',err.code,err.message));
+}
+
+function renderRiderRatings(all){
+  // Per-rider summary
+  const summaryEl=document.getElementById('rrSummary');
+  const byRider={};
+  all.forEach(r=>{
+    if(!r.riderUid) return;
+    if(!byRider[r.riderUid]) byRider[r.riderUid]={name:r.riderName||r.riderUid,total:0,sum:0};
+    byRider[r.riderUid].total++;
+    byRider[r.riderUid].sum+=(r.rating||0);
+  });
+  const riderEntries=Object.entries(byRider).sort((a,b)=>(b[1].sum/b[1].total)-(a[1].sum/a[1].total));
+  if(summaryEl){
+    if(!riderEntries.length){
+      summaryEl.innerHTML='<p style="color:var(--muted);font-size:13px;">No ratings yet.</p>';
+    }else{
+      summaryEl.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:10px;">${riderEntries.map(([uid,rd])=>{
+        const avg=rd.sum/rd.total;
+        const stars='★'.repeat(Math.round(avg))+'☆'.repeat(5-Math.round(avg));
+        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-width:160px;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:3px;">${rd.name}</div>
+          <div style="color:var(--orange);font-size:15px;">${stars}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${avg.toFixed(1)} avg · ${rd.total} review${rd.total!==1?'s':''}</div>
+        </div>`;
+      }).join('')}</div>`;
+    }
+  }
+  // Badge
+  const seen=_getRRSeenIds();
+  const unseen=all.filter(r=>!seen.has(r.id||r.orderId)).length;
+  const b=document.getElementById('nrrb');
+  if(b){ if(unseen>0){b.textContent=unseen;b.classList.add('on');}else{b.classList.remove('on');} }
+  // List
+  const listEl=document.getElementById('rrList');
+  if(!listEl) return;
+  if(!all.length){
+    listEl.innerHTML='<p style="color:var(--muted);text-align:center;padding:40px 0;">No rider ratings yet.</p>';
+    return;
+  }
+  listEl.innerHTML=all.map(r=>{
+    const rid=r.id||r.orderId;
+    const isUnseen=!seen.has(rid);
+    const filled='★'.repeat(r.rating||0);
+    const empty=`<span style="color:var(--border)">${'★'.repeat(5-(r.rating||0))}</span>`;
+    const date=r.ratedAt?new Date(r.ratedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
+    const safeComment=r.comment?encodeURIComponent(r.comment):'';
+    const safeOid=encodeURIComponent(r.orderId||rid);
+    const safeRider=encodeURIComponent(r.riderName||'Rider');
+    return `<div class="rev-row" id="rrrow-${rid}" onclick="rrRowClick('${rid}','${safeOid}','${safeRider}','${safeComment}')">
+      <span class="rev-dot${isUnseen?' unseen':''}"></span>
+      <span class="rev-row-name">${r.riderName||'Rider'}</span>
+      <span class="rev-row-oid">– ${r.orderId||rid}</span>
+      <span class="rev-row-stars">${filled}${empty}</span>
+      <span class="rev-row-date">${date}</span>
+    </div>`;
+  }).join('');
+}
+
+function rrRowClick(rid, safeOid, safeRider, safeComment){
+  _markRRSeen(rid);
+  const dot=document.querySelector(`#rrrow-${rid} .rev-dot`);
+  if(dot) dot.classList.remove('unseen');
+  renderRiderRatings(_riderRatingsCache);
+  const oid=decodeURIComponent(safeOid);
+  const rider=decodeURIComponent(safeRider);
+  const comment=decodeURIComponent(safeComment);
+  const r=_riderRatingsCache.find(x=>(x.id||x.orderId)===rid)||{};
+  const stars='★'.repeat(r.rating||0)+'☆'.repeat(5-(r.rating||0));
+  toast(`🛵 ${rider} · Order ${oid} · ${stars}${comment?' — "'+comment+'"':''}`);
+}
+
 function openCxProfile(rawPhone, rawName, rawOid){
   const phone=decodeURIComponent(rawPhone);
   const name=decodeURIComponent(rawName);

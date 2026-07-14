@@ -135,5 +135,27 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── RIDER RATINGS ─────────────────────────────────────
+    // Create: customer must supply a valid 24-char tracking token whose
+    // orderTracking doc shows status==delivered and assignedRiderUid matches.
+    // No public update/delete. Rider can read their own. Admin has full access.
+    match /riderRatings/{orderId} {
+      allow create: if request.resource.data.token is string
+                    && request.resource.data.token.size() == 24
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.riderUid is string
+                    && request.resource.data.riderUid.size() > 0
+                    && request.resource.data.orderId == orderId
+                    && exists(/databases/$(database)/documents/orderTracking/$(request.resource.data.token))
+                    && get(/databases/$(database)/documents/orderTracking/$(request.resource.data.token)).data.status == 'delivered'
+                    && get(/databases/$(database)/documents/orderTracking/$(request.resource.data.token)).data.assignedRiderUid == request.resource.data.riderUid;
+      allow get:    if isAdmin()
+                    || (isActiveRider() && resource.data.riderUid == request.auth.uid);
+      allow list:   if isAdmin() || isActiveRider();
+      allow update, delete: if isAdmin();
+    }
+
   }
 }

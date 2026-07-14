@@ -886,6 +886,9 @@ body{
 .rate-star{font-size:34px;cursor:pointer;transition:transform .15s;opacity:.35;}
 .rate-star.lit{opacity:1;}
 .rate-star:hover{transform:scale(1.2);}
+.rate-star-rider{font-size:30px;cursor:pointer;transition:transform .15s;opacity:.35;}
+.rate-star-rider.lit{opacity:1;}
+.rate-star-rider:hover{transform:scale(1.2);}
 .rate-submit{width:100%;padding:12px;background:var(--orange);color:#fff;font-weight:800;font-size:14px;border:none;border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;}
 .rate-submit:active{opacity:.85;}
 .rate-skip{display:block;margin-top:10px;font-size:12px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'Poppins',sans-serif;width:100%;}
@@ -4733,6 +4736,13 @@ function showDeliveredCard(d){
   if(!firstShown) localStorage.setItem(shownKey,String(now));
   // Store current delivered order ID so rateOrder can find it even after reload
   if(oid) localStorage.setItem('lu_del_current_oid', oid);
+  // Save rider info so the rating modal can show and submit rider rating
+  if(d?.assignedRiderUid && oid){
+    localStorage.setItem('lu_rider_'+oid, JSON.stringify({
+      riderUid:d.assignedRiderUid,
+      riderName:d.riderName||'Your Rider'
+    }));
+  }
 
   const wrap=document.getElementById('aocWrap');
   const trackCard=document.getElementById('activeOrderCard');
@@ -4776,6 +4786,18 @@ function rateOrder(orderId, fromDeliveredCard=false){
   if(sub) sub.textContent=_ratingOrderId?`Order ${_ratingOrderId}`:'Tell us about your experience';
   const cm=document.getElementById('rateComment');
   if(cm){cm.value=''; document.getElementById('rateCommentCount').textContent='0';}
+  // Rider rating section
+  _riderRatingValue=0;
+  _updateRiderStars(0);
+  const riderInfo=JSON.parse(localStorage.getItem('lu_rider_'+_ratingOrderId)||'null');
+  const riderSec=document.getElementById('riderRateSection');
+  if(riderSec) riderSec.style.display=riderInfo?'block':'none';
+  if(riderInfo){
+    const nameEl=document.getElementById('riderRateNameEl');
+    if(nameEl) nameEl.textContent='🛵 '+riderInfo.riderName;
+    const rc=document.getElementById('riderRateComment');
+    if(rc){rc.value=''; const cnt=document.getElementById('rrcCount'); if(cnt) cnt.textContent='0';}
+  }
   // Reset to form view (in case previous session showed thank-you)
   const form=document.getElementById('rateForm');
   const ty=document.getElementById('rateThankyou');
@@ -4795,6 +4817,13 @@ function hoverRating(n){ _updateStars(n); }
 function resetStarHover(){ _updateStars(_ratingValue); }
 function _updateStars(n){
   document.querySelectorAll('.rate-star').forEach((s,i)=>s.classList.toggle('lit',i<n));
+}
+let _riderRatingValue=0;
+function setRiderRating(n){ _riderRatingValue=n; _updateRiderStars(n); }
+function hoverRiderRating(n){ _updateRiderStars(n); }
+function resetRiderStarHover(){ _updateRiderStars(_riderRatingValue); }
+function _updateRiderStars(n){
+  document.querySelectorAll('.rate-star-rider').forEach((s,i)=>s.classList.toggle('lit',i<n));
 }
 async function submitRating(){
   if(!_ratingValue){ showToast('⭐ Please select a rating first'); return; }
@@ -4838,6 +4867,22 @@ async function submitRating(){
     saved=true;
   }
   if(saved){
+    // Fire-and-forget rider rating if the rider gave a rating
+    if(_riderRatingValue>0 && window._fbReady && window._db){
+      const riderInfo=JSON.parse(localStorage.getItem('lu_rider_'+oid)||'null');
+      if(riderInfo?.riderUid){
+        const riderComment=(document.getElementById('riderRateComment')?.value||'').trim();
+        window._fbSetDoc(window._fbDoc(window._db,'riderRatings',oid),{
+          token,
+          orderId:oid,
+          riderUid:riderInfo.riderUid,
+          riderName:riderInfo.riderName,
+          rating:_riderRatingValue,
+          comment:riderComment,
+          ratedAt:new Date().toISOString(),
+        }).catch(e=>console.warn('[LinkUp] Rider rating save failed:',e));
+      }
+    }
     localStorage.setItem(`lu_rated_${oid}`,String(_ratingValue));
     const form=document.getElementById('rateForm');
     const ty=document.getElementById('rateThankyou');
@@ -6612,6 +6657,19 @@ function reverseGeocode(lat, lng) {
       </div>
       <textarea class="rate-comment" id="rateComment" placeholder="Share your experience… (optional)" maxlength="300" oninput="document.getElementById('rateCommentCount').textContent=this.value.length"></textarea>
       <div class="rate-comment-hint"><span id="rateCommentCount">0</span>/300</div>
+      <div id="riderRateSection" style="display:none;border-top:1px solid var(--border);margin-top:14px;padding-top:14px;text-align:left;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Rate your rider 🛵</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;" id="riderRateNameEl">—</div>
+        <div class="rate-stars" id="riderRateStars" style="justify-content:flex-start;margin-bottom:10px;">
+          <span class="rate-star-rider" onclick="setRiderRating(1)" onmouseover="hoverRiderRating(1)" onmouseout="resetRiderStarHover()">★</span>
+          <span class="rate-star-rider" onclick="setRiderRating(2)" onmouseover="hoverRiderRating(2)" onmouseout="resetRiderStarHover()">★</span>
+          <span class="rate-star-rider" onclick="setRiderRating(3)" onmouseover="hoverRiderRating(3)" onmouseout="resetRiderStarHover()">★</span>
+          <span class="rate-star-rider" onclick="setRiderRating(4)" onmouseover="hoverRiderRating(4)" onmouseout="resetRiderStarHover()">★</span>
+          <span class="rate-star-rider" onclick="setRiderRating(5)" onmouseover="hoverRiderRating(5)" onmouseout="resetRiderStarHover()">★</span>
+        </div>
+        <textarea class="rate-comment" id="riderRateComment" placeholder="Optional comment about your rider…" maxlength="200" style="min-height:60px;margin-bottom:4px;" oninput="document.getElementById('rrcCount').textContent=this.value.length"></textarea>
+        <div class="rate-comment-hint"><span id="rrcCount">0</span>/200</div>
+      </div>
       <button class="rate-submit" onclick="submitRating()">Send Feedback ✈</button>
       <button class="rate-skip" onclick="closeRateModal()">Maybe later</button>
     </div>

@@ -372,8 +372,13 @@ html.light #gpsBar{background:#070710;}
 .stg-sub{font-size:11px;color:var(--muted);margin-top:2px;}
 
 /* Gear icon in header */
-.rh-gear{background:none;border:none;font-size:20px;cursor:pointer;padding:6px;flex-shrink:0;line-height:1;opacity:.8;}
-.rh-gear:active{opacity:.5;}
+.rh-gear{
+  background:rgba(255,255,255,.06);border:1.5px solid var(--border);border-radius:9px;
+  font-size:19px;cursor:pointer;padding:7px 9px;flex-shrink:0;line-height:1;
+  transition:background .15s,border-color .15s;
+}
+.rh-gear:active{background:rgba(255,140,0,.12);border-color:var(--orange);}
+html.light .rh-gear{background:rgba(0,0,0,.05);}
 
 /* Toggle switch */
 .sw-toggle{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;}
@@ -516,6 +521,12 @@ html.light #gpsBar{background:#070710;}
           <div style="display:flex;gap:8px;">
             <input type="text" id="nicknameInp" class="l-inp" style="margin:0;flex:1;padding:12px 14px;font-size:14px;" placeholder="Enter nickname…" maxlength="24">
             <button onclick="saveNickname()" style="padding:0 18px;background:var(--orange);color:#000;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">Save</button>
+          </div>
+        </div>
+        <div class="stg-sec" id="myRatingSec" style="display:none;">
+          <div class="stg-sec-title">⭐ My Rider Rating</div>
+          <div id="riderRatingDisplay" style="min-height:28px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+            <span style="color:var(--muted);font-size:12px;">Loading…</span>
           </div>
         </div>
         <div class="stg-sec">
@@ -910,6 +921,14 @@ function startDeliveryConfirm(){
 function closeCodModal(){document.getElementById('codModal').classList.remove('open');}
 function confirmDeliveredOk(){closeCodModal();doStatusUpdate('delivered');}
 
+// Wraps _rfUpdate with a 12-second hard timeout so stuck writes surface as errors
+function _timedUpdate(ref,data){
+  return Promise.race([
+    window._rfUpdate(ref,data),
+    new Promise((_,rej)=>setTimeout(()=>rej({code:'deadline-exceeded',message:'Write timed out after 12s — check network or Firestore rules'}),12000))
+  ]);
+}
+
 async function doStatusUpdate(newStatus,extra={}){
   const o=currentOrder;
   if(!o||!window._rdb) return;
@@ -918,7 +937,7 @@ async function doStatusUpdate(newStatus,extra={}){
   const now=new Date();
   const orderRef=window._rfDoc(window._rdb,'orders',o._id);
   const trackRef=o.trackingToken?window._rfDoc(window._rdb,'orderTracking',o.trackingToken):null;
-  const orderData={status:newStatus,statusHistory:window._rfArrUnion({status:newStatus,time:now}),...extra};
+  const orderData={status:newStatus,statusHistory:window._rfArrUnion({status:newStatus,time:now})};
   const trackData={status:newStatus};
   if(newStatus==='picked_up'){
     orderData.dispatchedAt=now.toISOString();orderData.dispatchTime=now.toISOString();
@@ -930,13 +949,16 @@ async function doStatusUpdate(newStatus,extra={}){
   }
   if(newStatus==='delivery_failed'){
     const ts=extra.failedAt||now.toISOString();
-    orderData.failedAt=ts;
+    orderData.failedAt=ts;orderData.failReason=extra.failReason||'';
     trackData.failedAt=ts;
     if(extra.failReason) trackData.failReason=extra.failReason;
   }
+  console.log('[Wheels] doStatusUpdate →',newStatus);
+  console.log('[Wheels] orders payload (allowed: status,statusHistory,dispatchedAt,dispatchTime,deliveredAt,deliveryTime,failReason,failedAt):',JSON.stringify(orderData));
+  console.log('[Wheels] orderTracking payload (allowed: status,statusHistory,dispatchedAt,dispatchTime,deliveredAt,deliveryTime,riderLocation,failReason,failedAt):',JSON.stringify(trackData));
   try{
-    await window._rfUpdate(orderRef,orderData);
-    if(trackRef) await window._rfUpdate(trackRef,trackData);
+    await _timedUpdate(orderRef,orderData);
+    if(trackRef) await _timedUpdate(trackRef,trackData);
     if(newStatus==='picked_up'||newStatus==='on_the_way') startGPS(o.trackingToken);
     if(newStatus==='delivered'){
       stopGPS();
@@ -948,15 +970,13 @@ async function doStatusUpdate(newStatus,extra={}){
       rToast('📋 Delivery marked as failed.',3000);
       setTimeout(showOrders,2200);
     }else{
-      // Re-render map route direction after status change
       if(_rMap){destroyMap();setTimeout(()=>initDetailMap(currentOrder),80);}
     }
   }catch(e){
-    console.error('[Wheels] Status update failed — code:',e?.code,'msg:',e?.message, e);
-    // Re-fetch button: optimistic Firestore snapshot may have replaced the DOM node
+    console.error('[Wheels] Status update FAILED — code:',e?.code,'msg:',e?.message,e);
     const freshBtn=document.getElementById('mainActBtn');
     if(freshBtn){freshBtn.disabled=false;freshBtn.textContent='⚠️ Retry';}
-    rToast(fmtFbErr(e),4500);
+    rToast('❌ '+(e?.code||'error')+': '+(e?.message||'Update failed'),5000);
   }
 }
 
@@ -1190,7 +1210,10 @@ async function submitDeliveryFailed(){
 }
 
 // ── SETTINGS SCREEN ────────────────────────────────────
+let _riderRatingsUnsub=null;
 function showSettings(){
+  // Clean up map if opened from detail screen
+  destroyMap();
   document.getElementById('ordersScreen').style.display='none';
   document.getElementById('detailScreen').style.display='none';
   document.getElementById('settingsScreen').style.display='flex';
@@ -1199,10 +1222,35 @@ function showSettings(){
   const themeToggle=document.getElementById('themeToggle');
   if(themeToggle) themeToggle.checked=document.documentElement.classList.contains('light');
   renderToneList();
+  loadRiderOwnRating();
 }
 function showOrdersFromSettings(){
+  if(_riderRatingsUnsub){_riderRatingsUnsub();_riderRatingsUnsub=null;}
   document.getElementById('settingsScreen').style.display='none';
   document.getElementById('ordersScreen').style.display='flex';
+}
+
+function loadRiderOwnRating(){
+  const sec=document.getElementById('myRatingSec');
+  const el=document.getElementById('riderRatingDisplay');
+  if(riderProfile?.isAdmin||!riderProfile?.uid||!window._rdb){if(sec)sec.style.display='none';return;}
+  if(sec) sec.style.display='block';
+  if(el) el.innerHTML='<span style="color:var(--muted);font-size:12px;">Loading…</span>';
+  if(_riderRatingsUnsub){_riderRatingsUnsub();_riderRatingsUnsub=null;}
+  const q=window._rfQuery(window._rfCol(window._rdb,'riderRatings'),
+    window._rfWhere('riderUid','==',riderProfile.uid));
+  _riderRatingsUnsub=window._rfSnap(q,snap=>{
+    const ratings=snap.docs.map(d=>d.data());
+    const total=ratings.length;
+    if(!total){
+      if(el) el.innerHTML='<span style="color:var(--muted);font-size:12px;">No ratings yet</span>';
+      return;
+    }
+    const avg=ratings.reduce((s,r)=>s+(r.rating||0),0)/total;
+    const filled=Math.round(avg);
+    const stars='★'.repeat(filled)+'☆'.repeat(5-filled);
+    if(el) el.innerHTML=`<span style="color:var(--orange);font-size:20px;letter-spacing:2px;">${stars}</span>&nbsp;<span style="font-size:15px;font-weight:800;">${avg.toFixed(1)}</span>&nbsp;<span style="color:var(--muted);font-size:12px;">(${total} review${total!==1?'s':''})</span>`;
+  },()=>{if(el) el.innerHTML='<span style="color:var(--muted);font-size:12px;">Could not load ratings</span>';});
 }
 function toggleRiderTheme(){
   const isLight=document.getElementById('themeToggle')?.checked;
