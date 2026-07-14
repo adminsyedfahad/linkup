@@ -4605,8 +4605,9 @@ const AOC_STATUS_META = {
   preparing: {icon:'👨‍🍳', prompts:['Your food is being freshly prepared','Chef is cooking your meal with love ❤️','Sizzle sizzle… your meal is almost ready!'], pulse:true},
   picked_up: {icon:'📦', prompts:['Rider has your order! Heading your way','Package collected — on the way to you! 🏍','Your meal is in safe hands, rider is rolling'], pulse:true},
   on_the_way:{icon:'📍', prompts:['Almost there — hot and fresh!','Your rider is speeding to you 🏎💨','Hang tight, delivery imminent!','The countdown begins — almost at your door 🚪'], pulse:true},
-  delivered: {icon:'🎉', prompts:['Delivered! Enjoy your meal 😋']},
-  cancelled: {icon:'❌', prompts:['Order cancelled']}
+  delivered:       {icon:'🎉', prompts:['Delivered! Enjoy your meal 😋']},
+  cancelled:       {icon:'❌', prompts:['Order cancelled']},
+  delivery_failed: {icon:'📞', prompts:["We couldn't complete your delivery. Our team will contact you shortly 📞"]}
 };
 const AOC_STEP_IDX = {placed:0,accepted:1,preparing:2,picked_up:3,on_the_way:4,delivered:5,cancelled:6};
 const AOC_PROGRESS_MAP = {placed:0.03,accepted:0.08,preparing:0.16,picked_up:0.28,on_the_way:null,delivered:1,cancelled:0};
@@ -4627,20 +4628,25 @@ function _calcEtaMins(d) {
 function startActiveOrderTracking() {
   if(_aocUnsub){_aocUnsub();_aocUnsub=null;}
   if(_aocEtaTimer){clearInterval(_aocEtaTimer);_aocEtaTimer=null;}
-  const order=orderHistory.find(o=>o.trackingToken&&o.status!=='delivered'&&o.status!=='cancelled');
+  const order=orderHistory.find(o=>o.trackingToken&&o.status!=='delivered'&&o.status!=='cancelled'&&o.status!=='delivery_failed');
   if(!order||!window._fbReady||!window._db){hideAOC();return;}
   const ref=window._fbDoc(window._db,'orderTracking',order.trackingToken);
   _aocUnsub=window._fbSnap(ref,snap=>{
     if(!snap.exists()){hideAOC();return;}
     _aocData={orderId:order.id,trackingToken:order.trackingToken,...snap.data()};
     const st=_aocData.status||'placed';
-    if(st==='delivered'||st==='cancelled'){
-      // Sync status to localStorage so Orders page shows Rate button
+    if(st==='delivered'||st==='cancelled'||st==='delivery_failed'){
+      // Sync status to localStorage so Orders page shows correct state
       const lo=orderHistory.find(o=>o.id===order.id);
-      if(lo&&lo.status!==st){lo.status=st;lo.statusLabel=st==='delivered'?'Delivered ✅':'Cancelled ❌';localStorage.setItem('lu_orders',JSON.stringify(orderHistory));}
+      if(lo&&lo.status!==st){
+        lo.status=st;
+        lo.statusLabel=st==='delivered'?'Delivered ✅':st==='delivery_failed'?'Failed 📞':'Cancelled ❌';
+        localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
+      }
     }
     if(st==='delivered'){showDeliveredCard(_aocData);loadOrderAgainSection();return;}
     if(st==='cancelled'){hideAOC();return;}
+    if(st==='delivery_failed'){showAOC(_aocData);return;}
     showAOC(_aocData);
   });
 }

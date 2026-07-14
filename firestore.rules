@@ -19,7 +19,11 @@ service cloud.firestore {
       allow get:    if request.auth != null && (request.auth.uid == uid || isAdmin());
       allow list:   if isAdmin();
       allow create: if isAdmin();
-      allow update: if isAdmin();
+      allow update: if isAdmin()
+                    || (request.auth != null
+                        && request.auth.uid == uid
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(['nickname']));
       allow delete: if isAdmin();
     }
 
@@ -40,9 +44,9 @@ service cloud.firestore {
                         && request.resource.data.diff(resource.data)
                              .affectedKeys()
                              .hasOnly(['status','statusHistory','dispatchedAt','dispatchTime',
-                                       'deliveredAt','deliveryTime'])
+                                       'deliveredAt','deliveryTime','failReason','failedAt'])
                         && request.resource.data.status
-                             in ['picked_up','on_the_way','delivered']);
+                             in ['picked_up','on_the_way','delivered','delivery_failed']);
       allow delete: if isAdmin();
     }
 
@@ -65,11 +69,12 @@ service cloud.firestore {
                         && request.resource.data.diff(resource.data)
                              .affectedKeys()
                              .hasOnly(['status','statusHistory','dispatchedAt','dispatchTime',
-                                       'deliveredAt','deliveryTime','riderLocation'])
+                                       'deliveredAt','deliveryTime','riderLocation',
+                                       'failReason','failedAt'])
                         && (!request.resource.data.diff(resource.data)
                                .affectedKeys().hasAny(['status'])
                             || request.resource.data.status
-                                 in ['picked_up','on_the_way','delivered']));
+                                 in ['picked_up','on_the_way','delivered','delivery_failed']));
       allow delete: if isAdmin();
     }
 

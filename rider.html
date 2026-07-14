@@ -318,6 +318,89 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 
 /* Leaflet override for dark theme */
 .leaflet-container{background:#12121e;}
+
+/* ── LIGHT THEME ──────────────────────────────────────── */
+html.light{
+  --bg:#f0f0f7;--surface:#fff;--card:#fff;--card2:#f4f4fb;--border:#e0e0ee;
+  --text:#1a1a2e;--muted:#6a6a88;--muted2:#9595b5;
+}
+html.light .leaflet-container{background:#e8e8f0;}
+html.light #gpsBar{background:#070710;}
+
+/* ── DELIVERY FAILED STATES ───────────────────────────── */
+.o-chip.delivery_failed{background:rgba(239,68,68,.15);color:var(--red);}
+
+/* Fail secondary button under main action */
+.fail-btn{
+  width:100%;padding:13px;border:none;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  background:none;color:var(--red);margin-top:8px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:background .15s;
+}
+.fail-btn:active{background:rgba(239,68,68,.1);}
+
+/* Fail reason chips */
+.fail-chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0;}
+.fail-chip{
+  padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+  background:var(--card);border:1.5px solid var(--border);color:var(--muted);
+  transition:all .15s;user-select:none;
+}
+.fail-chip.selected{background:rgba(239,68,68,.1);border-color:var(--red);color:var(--red);}
+.fail-txtarea{
+  width:100%;min-height:78px;padding:11px 13px;
+  background:var(--bg);border:1.5px solid var(--border);border-radius:12px;
+  color:var(--text);font-size:13px;font-family:inherit;outline:none;resize:none;
+  transition:border-color .2s;
+}
+.fail-txtarea:focus{border-color:var(--red);}
+.fail-confirm{
+  width:100%;padding:15px;background:var(--red);color:#fff;
+  border:none;border-radius:12px;font-size:15px;font-weight:800;
+  cursor:pointer;font-family:inherit;margin-top:12px;transition:opacity .15s;
+}
+.fail-confirm:active{opacity:.8;}
+
+/* ── SETTINGS SCREEN ──────────────────────────────────── */
+#settingsScreen{overflow-y:auto;padding-bottom:24px;}
+.stg-body{display:flex;flex-direction:column;padding:14px;}
+.stg-sec{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+.stg-sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--orange);margin-bottom:12px;}
+.stg-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 0;}
+.stg-lbl{font-size:13px;font-weight:600;color:var(--text);}
+.stg-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* Gear icon in header */
+.rh-gear{background:none;border:none;font-size:20px;cursor:pointer;padding:6px;flex-shrink:0;line-height:1;opacity:.8;}
+.rh-gear:active{opacity:.5;}
+
+/* Toggle switch */
+.sw-toggle{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;}
+.sw-toggle input{opacity:0;width:0;height:0;}
+.sw-track{position:absolute;inset:0;border-radius:13px;background:var(--border);cursor:pointer;transition:background .2s;}
+.sw-track:before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .2s;}
+.sw-toggle input:checked+.sw-track{background:var(--orange);}
+.sw-toggle input:checked+.sw-track:before{transform:translateX(20px);}
+
+/* Tone picker */
+.tone-item{
+  display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;
+  border:1.5px solid var(--border);background:var(--bg);margin-bottom:8px;
+  cursor:pointer;transition:all .15s;user-select:none;
+}
+.tone-item:last-child{margin-bottom:0;}
+.tone-item.selected{border-color:var(--orange);background:rgba(255,140,0,.06);}
+.tone-icon{font-size:22px;flex-shrink:0;}
+.tone-info{flex:1;}
+.tone-name{font-size:13px;font-weight:700;}
+.tone-desc{font-size:11px;color:var(--muted);margin-top:1px;}
+.tone-preview{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
+  padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;
+  color:var(--muted);font-family:inherit;transition:all .15s;flex-shrink:0;
+}
+.tone-preview:active{background:var(--orange);color:#000;border-color:var(--orange);}
 </style>
 </head>
 <body>
@@ -361,6 +444,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
       <span class="rh-title">Wheels</span>
     </div>
     <span id="rNameEl"></span>
+    <button class="rh-gear" onclick="showSettings()" title="Settings">⚙️</button>
     <button class="rh-out" onclick="rDoLogout()">Sign Out</button>
   </div>
   <div id="rContent">
@@ -406,8 +490,64 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
       <div class="action-bar" id="actionBar"></div>
     </div>
 
+    <!-- SETTINGS SCREEN -->
+    <div id="settingsScreen" class="r-screen" style="display:none;">
+      <div class="det-nav">
+        <button class="det-back" onclick="showOrdersFromSettings()">‹</button>
+        <div class="det-oid">Settings</div>
+      </div>
+      <div class="stg-body">
+        <div class="stg-sec">
+          <div class="stg-sec-title">🎨 Appearance</div>
+          <div class="stg-row">
+            <div>
+              <div class="stg-lbl">Light Theme</div>
+              <div class="stg-sub">Switch between dark and light mode</div>
+            </div>
+            <label class="sw-toggle">
+              <input type="checkbox" id="themeToggle" onchange="toggleRiderTheme()">
+              <span class="sw-track"></span>
+            </label>
+          </div>
+        </div>
+        <div class="stg-sec">
+          <div class="stg-sec-title">👤 Display Name</div>
+          <div class="stg-sub" style="margin-bottom:12px;font-size:11px;color:var(--muted);">Shown in the header instead of your account name</div>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="nicknameInp" class="l-inp" style="margin:0;flex:1;padding:12px 14px;font-size:14px;" placeholder="Enter nickname…" maxlength="24">
+            <button onclick="saveNickname()" style="padding:0 18px;background:var(--orange);color:#000;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;">Save</button>
+          </div>
+        </div>
+        <div class="stg-sec">
+          <div class="stg-sec-title">🔔 New Order Alert Tone</div>
+          <div class="stg-sub" style="margin-bottom:14px;font-size:11px;color:var(--muted);">Plays when you receive a new assignment</div>
+          <div id="toneList"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- #rContent -->
 </div><!-- #rApp -->
+
+<!-- DELIVERY FAILED MODAL -->
+<div class="modal-bg" id="failModal">
+  <div class="modal-sheet">
+    <div class="modal-icon">📋</div>
+    <div class="modal-title">Delivery Failed</div>
+    <div class="modal-sub">Select a reason or describe what happened. The customer will be notified.</div>
+    <div class="fail-chips">
+      <div class="fail-chip" data-reason="Customer not responding" onclick="selectFailChip(this)">📵 Not responding</div>
+      <div class="fail-chip" data-reason="Wrong address provided" onclick="selectFailChip(this)">📍 Wrong address</div>
+      <div class="fail-chip" data-reason="Customer refused the order" onclick="selectFailChip(this)">🚫 Refused order</div>
+      <div class="fail-chip" data-reason="Other issue" onclick="selectFailChip(this)">… Other</div>
+    </div>
+    <textarea class="fail-txtarea" id="failReasonTxt" placeholder="Describe the issue (min 10 characters)…" maxlength="250"></textarea>
+    <button class="fail-confirm" onclick="submitDeliveryFailed()">⚠️ Mark as Failed</button>
+    <div style="text-align:center;margin-top:10px;">
+      <button class="modal-cancel" style="width:auto;padding:10px 26px;" onclick="closeFailModal()">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- COD CONFIRM MODAL -->
 <div class="modal-bg" id="codModal">
@@ -463,6 +603,14 @@ const ADMIN_EMAIL='adminlinkup@gmail.com';
 let riderProfile=null;
 let myOrders=[], deliveredToday=[], currentOrder=null;
 let _ordersUnsub=null, _delivExpanded=false;
+
+// Notification / settings
+let _prevOrderIds=new Set(), _isFirstOrderLoad=true;
+let _selectedTone=localStorage.getItem('rw_tone')||'tripleBeep';
+let _audioCtx=null;
+
+// Apply saved theme immediately
+(function(){if(localStorage.getItem('rw_theme')==='light')document.documentElement.classList.add('light');})();
 
 // GPS
 let _gpsWatchId=null, _wakeLock=null;
@@ -543,7 +691,7 @@ function showApp(){
   if(riderProfile?.isAdmin){
     el.innerHTML='<span class="rh-badge">🔧 Test Mode</span>';
   }else{
-    el.className='rh-name'; el.textContent=riderProfile?.name||'';
+    el.className='rh-name'; el.textContent=riderProfile?.nickname||riderProfile?.name||'';
   }
 }
 function cleanupOnLogout(){
@@ -574,6 +722,7 @@ async function rDoLogout(){cleanupOnLogout();try{await window._rfSignOut(window.
 function startOrdersListener(){
   if(!riderProfile?.uid||!window._rdb) return;
   if(_ordersUnsub){_ordersUnsub();_ordersUnsub=null;}
+  _isFirstOrderLoad=true;
   const q=riderProfile.isAdmin
     ?window._rfQuery(window._rfCol(window._rdb,'orders'),
         window._rfWhere('status','in',['placed','accepted','preparing','picked_up','on_the_way']))
@@ -581,7 +730,21 @@ function startOrdersListener(){
         window._rfWhere('assignedRiderUid','==',riderProfile.uid));
   _ordersUnsub=window._rfSnap(q,snap=>{
     const all=snap.docs.map(d=>({_id:d.id,...d.data()}));
-    myOrders=all.filter(o=>!['delivered','cancelled'].includes(o.status||''));
+    const active=all.filter(o=>!['delivered','cancelled','delivery_failed'].includes(o.status||''));
+
+    // Notify on new assignments (skip very first snapshot to avoid false positives on login)
+    if(!_isFirstOrderLoad){
+      const newOrders=active.filter(o=>!_prevOrderIds.has(o._id));
+      if(newOrders.length){
+        playSelectedTone();
+        if(navigator.vibrate) navigator.vibrate([300,100,300,100,500]);
+        rToast('🔔 '+newOrders.length+' new order'+(newOrders.length>1?'s':'')+' assigned!',5000);
+      }
+    }
+    _isFirstOrderLoad=false;
+    _prevOrderIds=new Set(active.map(o=>o._id));
+
+    myOrders=active;
     deliveredToday=all.filter(o=>o.status==='delivered'&&isToday(o.deliveredAt||o.deliveryTime));
     renderOrders();
     if(currentOrder){
@@ -729,7 +892,8 @@ function renderActionBtn(status,cod){
   };
   const a=ACTS[status];
   if(!a){bar.innerHTML=`<button class="act-btn complete">Order Complete ✓</button>`;return;}
-  bar.innerHTML=`<button class="act-btn ${a.cls}" id="mainActBtn" onclick="${a.next==='delivered'?'startDeliveryConfirm()':'doStatusUpdate(\''+a.next+'\')'}">${a.label}</button>`;
+  const canFail=['picked_up','on_the_way'].includes(status);
+  bar.innerHTML=`<button class="act-btn ${a.cls}" id="mainActBtn" onclick="${a.next==='delivered'?'startDeliveryConfirm()':'doStatusUpdate(\''+a.next+'\')'}">${a.label}</button>${canFail?`<button class="fail-btn" onclick="openFailModal()">⚠️ Delivery Failed</button>`:''}`;
 }
 
 // ── STATUS UPDATE ──────────────────────────────────────
@@ -746,7 +910,7 @@ function startDeliveryConfirm(){
 function closeCodModal(){document.getElementById('codModal').classList.remove('open');}
 function confirmDeliveredOk(){closeCodModal();doStatusUpdate('delivered');}
 
-async function doStatusUpdate(newStatus){
+async function doStatusUpdate(newStatus,extra={}){
   const o=currentOrder;
   if(!o||!window._rdb) return;
   const btn=document.getElementById('mainActBtn');
@@ -754,7 +918,7 @@ async function doStatusUpdate(newStatus){
   const now=new Date();
   const orderRef=window._rfDoc(window._rdb,'orders',o._id);
   const trackRef=o.trackingToken?window._rfDoc(window._rdb,'orderTracking',o.trackingToken):null;
-  const orderData={status:newStatus,statusHistory:window._rfArrUnion({status:newStatus,time:now})};
+  const orderData={status:newStatus,statusHistory:window._rfArrUnion({status:newStatus,time:now}),...extra};
   const trackData={status:newStatus};
   if(newStatus==='picked_up'){
     orderData.dispatchedAt=now.toISOString();orderData.dispatchTime=now.toISOString();
@@ -764,6 +928,12 @@ async function doStatusUpdate(newStatus){
     orderData.deliveredAt=now.toISOString();orderData.deliveryTime=now.toISOString();
     trackData.deliveredAt=now.toISOString();trackData.deliveryTime=now.toISOString();
   }
+  if(newStatus==='delivery_failed'){
+    const ts=extra.failedAt||now.toISOString();
+    orderData.failedAt=ts;
+    trackData.failedAt=ts;
+    if(extra.failReason) trackData.failReason=extra.failReason;
+  }
   try{
     await window._rfUpdate(orderRef,orderData);
     if(trackRef) await window._rfUpdate(trackRef,trackData);
@@ -772,6 +942,10 @@ async function doStatusUpdate(newStatus){
       stopGPS();
       creditWallet(o,now);
       rToast('✅ Delivered! Great work 🎉',3000);
+      setTimeout(showOrders,2200);
+    }else if(newStatus==='delivery_failed'){
+      stopGPS();
+      rToast('📋 Delivery marked as failed.',3000);
       setTimeout(showOrders,2200);
     }else{
       // Re-render map route direction after status change
@@ -979,7 +1153,8 @@ function isCOD(o){return(o.paymentMethod||'').toLowerCase().includes('cod');}
 function fmtSt(s){
   return{placed:'Placed',accepted:'Accepted',preparing:'Preparing',
     picked_up:'Picked Up',on_the_way:'On the Way',
-    delivered:'Delivered',cancelled:'Cancelled'}[s]||s||'—';
+    delivered:'Delivered',cancelled:'Cancelled',
+    delivery_failed:'❌ Failed'}[s]||s||'—';
 }
 function isToday(v){
   if(!v) return false;
@@ -993,6 +1168,126 @@ function fmtFbErr(e){
   if(c.includes('unauthenticated'))   return '⚠️ Session expired — sign in again';
   if(c.includes('unavailable')||c.includes('network')) return '⚠️ Network error — try again';
   return '❌ Update failed: '+(c||e?.message?.split('.')[0]||'unknown error');
+}
+
+// ── DELIVERY FAILED ────────────────────────────────────
+function openFailModal(){
+  document.getElementById('failModal').classList.add('open');
+  document.getElementById('failReasonTxt').value='';
+  document.querySelectorAll('.fail-chip').forEach(c=>c.classList.remove('selected'));
+}
+function closeFailModal(){document.getElementById('failModal').classList.remove('open');}
+function selectFailChip(el){
+  document.getElementById('failReasonTxt').value=el.dataset.reason;
+  document.querySelectorAll('.fail-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+async function submitDeliveryFailed(){
+  const reason=(document.getElementById('failReasonTxt')?.value||'').trim();
+  if(reason.length<10){rToast('⚠️ Please describe the issue (min 10 chars).');return;}
+  closeFailModal();
+  await doStatusUpdate('delivery_failed',{failReason:reason,failedAt:new Date().toISOString()});
+}
+
+// ── SETTINGS SCREEN ────────────────────────────────────
+function showSettings(){
+  document.getElementById('ordersScreen').style.display='none';
+  document.getElementById('detailScreen').style.display='none';
+  document.getElementById('settingsScreen').style.display='flex';
+  const nickInput=document.getElementById('nicknameInp');
+  if(nickInput) nickInput.value=riderProfile?.nickname||riderProfile?.name||'';
+  const themeToggle=document.getElementById('themeToggle');
+  if(themeToggle) themeToggle.checked=document.documentElement.classList.contains('light');
+  renderToneList();
+}
+function showOrdersFromSettings(){
+  document.getElementById('settingsScreen').style.display='none';
+  document.getElementById('ordersScreen').style.display='flex';
+}
+function toggleRiderTheme(){
+  const isLight=document.getElementById('themeToggle')?.checked;
+  document.documentElement.classList.toggle('light',isLight);
+  localStorage.setItem('rw_theme',isLight?'light':'dark');
+}
+async function saveNickname(){
+  const input=document.getElementById('nicknameInp');
+  const nick=(input?.value||'').trim();
+  if(!nick){rToast('⚠️ Enter a nickname.');return;}
+  if(riderProfile?.isAdmin){rToast('Admin display name is fixed.');return;}
+  if(!window._rdb||!riderProfile?.uid) return;
+  try{
+    await window._rfUpdate(window._rfDoc(window._rdb,'riders',riderProfile.uid),{nickname:nick});
+    riderProfile.nickname=nick;
+    const el=document.getElementById('rNameEl');
+    if(el){el.className='rh-name';el.textContent=nick;}
+    rToast('✅ Nickname saved!');
+  }catch(e){rToast(fmtFbErr(e),4000);}
+}
+
+// ── AUDIO TONES ────────────────────────────────────────
+function getACtx(){
+  if(!_audioCtx) _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return _audioCtx;
+}
+function playOsc(ctx,freq,type,vol,dur,delay){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);
+  o.type=type;o.frequency.value=freq;
+  const t=ctx.currentTime+delay;
+  g.gain.setValueAtTime(vol,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t);o.stop(t+dur+0.02);
+}
+const TONE_DEFS=[
+  {id:'tripleBeep', icon:'📳',name:'Triple Beep',  desc:'3 short loud beeps'},
+  {id:'siren',      icon:'🚨',name:'Siren',         desc:'Alternating urgent sweep'},
+  {id:'airHorn',    icon:'📢',name:'Air Horn',      desc:'Loud sustained horn blast'},
+  {id:'urgentPulse',icon:'⚡',name:'Urgent Pulse',  desc:'5 rapid descending tones'},
+  {id:'bellRing',   icon:'🔔',name:'Bell Ring',     desc:'Classic double bell chime'},
+];
+function playTone(id){
+  try{
+    const ctx=getACtx();
+    if(id==='tripleBeep'){
+      for(let i=0;i<3;i++) playOsc(ctx,1400,'square',0.6,0.13,i*0.23);
+    }else if(id==='siren'){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);o.type='sawtooth';
+      const t=ctx.currentTime;
+      for(let i=0;i<3;i++){
+        o.frequency.setValueAtTime(550,t+i*0.38);
+        o.frequency.linearRampToValueAtTime(1100,t+i*0.38+0.19);
+        o.frequency.linearRampToValueAtTime(550,t+i*0.38+0.38);
+      }
+      g.gain.setValueAtTime(0.5,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.14);
+      o.start(t);o.stop(t+1.15);
+    }else if(id==='airHorn'){
+      playOsc(ctx,120,'sawtooth',0.7,0.55,0);
+      playOsc(ctx,240,'sawtooth',0.35,0.55,0);
+    }else if(id==='urgentPulse'){
+      for(let i=0;i<5;i++) playOsc(ctx,1500-i*180,'square',0.5,0.1,i*0.14);
+    }else if(id==='bellRing'){
+      [880,1320,2200].forEach((f,i)=>playOsc(ctx,f,'sine',0.35/(i+1),0.7,0));
+      setTimeout(()=>{
+        const ctx2=getACtx();
+        [880,1320,2200].forEach((f,i)=>playOsc(ctx2,f,'sine',0.35/(i+1),0.7,0));
+      },860);
+    }
+  }catch(e){}
+}
+function playSelectedTone(){playTone(_selectedTone);}
+function selectTone(id){
+  _selectedTone=id;localStorage.setItem('rw_tone',id);renderToneList();
+}
+function renderToneList(){
+  const container=document.getElementById('toneList');
+  if(!container) return;
+  container.innerHTML=TONE_DEFS.map(t=>`
+    <div class="tone-item${_selectedTone===t.id?' selected':''}" onclick="selectTone('${t.id}')">
+      <div class="tone-icon">${t.icon}</div>
+      <div class="tone-info"><div class="tone-name">${t.name}</div><div class="tone-desc">${t.desc}</div></div>
+      <button class="tone-preview" onclick="event.stopPropagation();playTone('${t.id}')">▶ Preview</button>
+    </div>`).join('');
 }
 
 // ── START ──────────────────────────────────────────────
