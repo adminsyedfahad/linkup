@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0b0b0f",
-  "theme_color": "#ff8c00",
+  "theme_color": "#070710",
   "icons": [
     {
       "src": "/rider-icon.svg",

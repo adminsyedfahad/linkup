@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#ff8c00">
+<meta name="theme-color" content="#070710">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -54,7 +54,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 @keyframes splLoad{from{width:0;}to{width:100%;}}
 
 /* ── LOGIN ────────────────────────────────────────────── */
-#rLogin{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:var(--bg);}
+#rLogin{
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+  padding:calc(20px + constant(safe-area-inset-top,0px))
+          calc(20px + constant(safe-area-inset-right,0px))
+          calc(20px + constant(safe-area-inset-bottom,0px))
+          calc(20px + constant(safe-area-inset-left,0px));
+  padding:calc(20px + env(safe-area-inset-top,0px))
+          calc(20px + env(safe-area-inset-right,0px))
+          calc(20px + env(safe-area-inset-bottom,0px))
+          calc(20px + env(safe-area-inset-left,0px));
+  background:var(--bg);
+}
 .login-box{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:34px 26px;width:100%;max-width:360px;}
 .login-logo{text-align:center;margin-bottom:30px;}
 .login-logo .ll-icon{font-size:50px;margin-bottom:10px;}
@@ -71,10 +82,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 /* ── APP SHELL ────────────────────────────────────────── */
 #rApp{position:fixed;inset:0;display:none;flex-direction:column;}
 
-/* GPS BAR */
+/* GPS BAR — background extends behind notch; content sits below it */
 #gpsBar{
   display:flex;align-items:center;gap:9px;
-  padding:0 16px;height:40px;flex-shrink:0;
+  /* base padding — overridden below with safe-area additions */
+  padding:0 16px;
+  /* iOS ≤11.1 fallback */
+  padding-top:constant(safe-area-inset-top);
+  padding-left:calc(16px + constant(safe-area-inset-left,0px));
+  padding-right:calc(16px + constant(safe-area-inset-right,0px));
+  /* modern iOS / Android */
+  padding-top:env(safe-area-inset-top,0px);
+  padding-left:calc(16px + env(safe-area-inset-left,0px));
+  padding-right:calc(16px + env(safe-area-inset-right,0px));
+  /* grow height to include notch area */
+  height:calc(40px + constant(safe-area-inset-top,0px));
+  height:calc(40px + env(safe-area-inset-top,0px));
+  flex-shrink:0;
   background:#070710;border-bottom:1px solid var(--border);
 }
 .gps-led{width:10px;height:10px;border-radius:50%;background:var(--muted2);flex-shrink:0;transition:background .3s,box-shadow .3s;}
@@ -84,10 +108,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 #gpsLabel.on{color:var(--green);}
 #gpsTime{font-size:11px;color:var(--muted2);margin-left:auto;}
 
-/* HEADER */
+/* HEADER — horizontal safe-area for landscape notch */
 #rHeader{
   display:flex;align-items:center;gap:10px;
-  padding:0 16px;height:52px;flex-shrink:0;
+  padding:0 16px;
+  padding-left:calc(16px + env(safe-area-inset-left,0px));
+  padding-right:calc(16px + env(safe-area-inset-right,0px));
+  height:52px;flex-shrink:0;
   background:var(--surface);border-bottom:1px solid var(--border);
 }
 .rh-brand{display:flex;align-items:center;gap:8px;flex:1;overflow:hidden;}
@@ -233,8 +260,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 }
 .phone-call:active{opacity:.7;}
 
-/* ACTION BAR */
-.action-bar{padding:12px 14px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;}
+/* ACTION BAR — safe-area bottom clears home indicator / gesture bar */
+.action-bar{
+  padding:12px 14px;
+  padding-left:calc(14px + env(safe-area-inset-left,0px));
+  padding-right:calc(14px + env(safe-area-inset-right,0px));
+  padding-bottom:calc(12px + constant(safe-area-inset-bottom,0px));
+  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;
+}
 .act-btn{
   width:100%;padding:18px;border:none;border-radius:15px;
   font-size:17px;font-weight:800;cursor:pointer;
@@ -252,7 +286,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 /* COD CONFIRM MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:800;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
 .modal-bg.open{display:flex;}
-.modal-sheet{background:var(--card2);border-radius:22px 22px 0 0;padding:28px 24px 36px;width:100%;max-width:480px;animation:slideUp .25s ease;}
+.modal-sheet{
+  background:var(--card2);border-radius:22px 22px 0 0;
+  padding:28px 24px 36px;
+  padding-bottom:calc(36px + constant(safe-area-inset-bottom,0px));
+  padding-bottom:calc(36px + env(safe-area-inset-bottom,0px));
+  width:100%;max-width:480px;animation:slideUp .25s ease;
+}
 @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 .modal-icon{font-size:44px;text-align:center;margin-bottom:14px;}
 .modal-title{font-size:20px;font-weight:800;text-align:center;margin-bottom:6px;}
@@ -265,7 +305,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 .modal-confirm:active{opacity:.8;}
 
 /* TOAST */
-.rtoast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(16px);background:#1e1e30;color:var(--text);padding:11px 22px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:700;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.rtoast{
+  position:fixed;
+  bottom:calc(96px + constant(safe-area-inset-bottom,0px));
+  bottom:calc(96px + env(safe-area-inset-bottom,0px));
+  left:50%;transform:translateX(-50%) translateY(16px);
+  background:#1e1e30;color:var(--text);padding:11px 22px;border-radius:12px;
+  font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:700;
+  pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5);
+}
 .rtoast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* Leaflet override for dark theme */
