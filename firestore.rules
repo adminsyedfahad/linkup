@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── HELPERS ───────────────────────────────────────────
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.token.email == 'adminlinkup@gmail.com';
+    }
+
+    function isActiveRider() {
+      return request.auth != null
+          && exists(/databases/$(database)/documents/riders/$(request.auth.uid))
+          && get(/databases/$(database)/documents/riders/$(request.auth.uid)).data.active == true;
+    }
+
+    // ── RIDERS ────────────────────────────────────────────
+    match /riders/{uid} {
+      allow get:    if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow list:   if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── ORDERS ────────────────────────────────────────────
+    // Customers (unauthenticated) can create; riders can read+update own assigned;
+    // nobody can list without auth; admin has full access.
+    match /orders/{orderId} {
+      allow get:  if isAdmin()
+                  || (request.auth != null
+                      && resource.data.assignedRiderUid == request.auth.uid);
+      allow list: if isAdmin()
+                  || (request.auth != null
+                      && resource.data.assignedRiderUid == request.auth.uid);
+      allow create: if true; // unauthenticated customers place orders
+      allow update: if isAdmin()
+                    || (isActiveRider()
+                        && resource.data.assignedRiderUid == request.auth.uid
+                        && request.resource.data.diff(resource.data)
+                             .affectedKeys()
+                             .hasOnly(['status','statusHistory','dispatchedAt','dispatchTime',
+                                       'deliveredAt','deliveryTime'])
+                        && request.resource.data.status
+                             in ['picked_up','on_the_way','delivered']);
+      allow delete: if isAdmin();
+    }
+
+    // ── COUNTERS ──────────────────────────────────────────
+    // Public read/write: unauthenticated customers increment order ID counter.
+    match /counters/{counterId} {
+      allow read:  if true;
+      allow write: if true;
+    }
+
+    // ── ORDER TRACKING (path-based via trackingToken) ─────
+    // Token is a 24-char crypto-random string — unguessable, so public read is safe.
+    // Riders may only update status/timestamps/riderLocation (not assignedRiderUid).
+    match /orderTracking/{token} {
+      allow read:   if true;
+      allow create: if true; // created during order placement
+      allow update: if isAdmin()
+                    || (isActiveRider()
+                        && resource.data.assignedRiderUid == request.auth.uid
+                        && request.resource.data.diff(resource.data)
+                             .affectedKeys()
+                             .hasOnly(['status','statusHistory','dispatchedAt','dispatchTime',
+                                       'deliveredAt','deliveryTime','riderLocation'])
+                        && (!request.resource.data.diff(resource.data)
+                               .affectedKeys().hasAny(['status'])
+                            || request.resource.data.status
+                                 in ['picked_up','on_the_way','delivered']));
+      allow delete: if isAdmin();
+    }
+
+    // ── WALLETS (path-based via walletToken) ──────────────
+    // list:false prevents enumeration. Token is unguessable so get:true is safe.
+    // Customers (unauthenticated) may only decrease balance, never below zero.
+    // Riders may credit balance on delivery (isActiveRider).
+    match /wallets/{token} {
+      allow list:   if false;
+      allow get:    if true;
+      allow create: if true;
+      allow update: if isAdmin()
+                    || isActiveRider()
+                    || (request.auth == null
+                        && resource.data.balance >= request.resource.data.balance
+                        && request.resource.data.balance >= 0);
+      allow delete: if isAdmin();
+    }
+
+    // ── NOTIFICATIONS (path-based via walletToken) ────────
+    match /notifications/{token} {
+      allow list:   if false;
+      allow get:    if true;
+      allow create: if true;
+      allow update: if isAdmin() || request.auth != null;
+      allow delete: if isAdmin();
+    }
+
+    // ── OFFERS ────────────────────────────────────────────
+    match /offers/{offerId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // ── REFUNDS ───────────────────────────────────────────
+    match /refunds/{refundId} {
+      allow read:   if isAdmin();
+      allow create: if true; // customers submit refund requests
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── DELIVERED ITEMS (path-based via walletToken) ──────
+    // Written by admin or active rider when marking order delivered.
+    match /deliveredItems/{token} {
+      allow list:   if false;
+      allow get:    if true;
+      allow create: if isAdmin() || isActiveRider();
+      allow update: if isAdmin() || isActiveRider();
+      allow delete: if isAdmin();
+    }
+
+    // ── RATINGS ───────────────────────────────────────────
+    match /ratings/{ratingId} {
+      allow read:   if true;
+      allow create: if true;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+  }
+}
