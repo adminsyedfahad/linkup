@@ -4177,9 +4177,9 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   let orderId = 'LU-' + Date.now(); // fallback if Firestore unavailable
   const trackingToken = genToken(24);
 
+  // ── Step 1: ONLY await the counter transaction (need sequential ID) ──
   if(window._fbReady && window._db){
     try{
-      // ── Atomic sequential counter ──
       const counterRef = window._fbDoc(window._db, 'counters', 'orders');
       const orderNum   = await window._fbTxn(window._db, async (txn) => {
         const snap    = await txn.get(counterRef);
@@ -4189,48 +4189,10 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         return next;
       });
       orderId = `LU-${orderNum}`;
-
-      // ── Save full order doc (admin access only) ──
-      const orderRef = window._fbDoc(window._db, 'orders', orderId);
-      await window._fbSetDoc(orderRef, {
-        orderId,
-        trackingToken,
-        walletToken,   // admin uses this to credit wallet on delivery
-        customerName:  name,
-        phone,
-        email,
-        address,
-        items:         cart.map(c => c.name),
-        itemDetails:   cart.map(c => ({name:c.name, qty:c.qty, price:c.price})),
-        amount:        total,
-        paymentMethod: payMethod,
-        orderType:     'food',
-        status:        'placed',
-        statusHistory: [{status:'placed', time: now}],
-        createdAt:     now,
-        estimatedDeliveryTime: null,
-        deliveryTime:  null
-      });
-
-      // ── Save tracking doc (public — no sensitive customer data) ──
-      const trackRef = window._fbDoc(window._db, 'orderTracking', trackingToken);
-      await window._fbSetDoc(trackRef, {
-        orderId,
-        orderType:     'food',
-        status:        'placed',
-        statusHistory: [{status:'placed', time: now}],
-        itemsSummary:  cart.map(c=>c.name).join(', '),
-        amount:        total,
-        riderName:     null,
-        riderPhone:    null,
-        etaMinutes:    null,
-        estimatedDeliveryTime: null,
-        deliveryTime:  null,
-        createdAt:     now
-      });
-    }catch(e){ console.warn('Firestore save error:',e); }
+    }catch(e){ console.warn('Counter error, using timestamp ID:', e); }
   }
 
+  // ── Step 2: Build local order + update UI IMMEDIATELY ──
   const eta = 22 + Math.floor(Math.random()*10);
   const order = {
     id:           orderId,
@@ -4245,11 +4207,10 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
     eta,
     customerName: name, phone, email, address
   };
-
   orderHistory.unshift(order);
   localStorage.setItem('lu_orders', JSON.stringify(orderHistory));
 
-  // Deduct wallet balance if applied (Firestore)
+  // Points / wallet deductions (local — no waiting)
   if(wAmt>0){
     const wTxn={type:'spent',amount:wAmt,orderId,date:now.toISOString(),note:'Applied at checkout'};
     walletBalance=Math.max(0,walletBalance-wAmt);
@@ -4261,30 +4222,63 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
       }).catch(()=>{});
     }
   }
-
-  // Deduct points if applied (localStorage)
   if(pAmt>0){
     luPoints=Math.max(0,luPoints-pAmt);
     luPointsTxns.push({type:'spent',pts:pAmt,orderId,date:now.toISOString(),note:'Applied at checkout'});
     localStorage.setItem('lu_points',String(luPoints));
     localStorage.setItem('lu_points_txns',JSON.stringify(luPointsTxns));
   }
-
-  // Earn 5 points for placing this order
   luPoints+=5;
   luPointsTxns.push({type:'earned',pts:5,orderId,date:now.toISOString(),note:'Order placed'});
   localStorage.setItem('lu_points',String(luPoints));
   localStorage.setItem('lu_points_txns',JSON.stringify(luPointsTxns));
-
   updatePointsUI();
 
+  // Show success immediately — user doesn't wait for Firestore writes
   cart=[]; updateCartUI();
   btn.textContent = '🎉 Confirm & Place Order'; btn.disabled = false;
   showPage('orders'); renderOrders();
+  startActiveOrderTracking();
   loadOrderAgainSection();
   showToast('🎉 Order placed! +5 ⭐ pts earned');
   pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'✅');
   setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider is on the way!','🛵'),8000);
+
+  // ── Step 3: Write orders + orderTracking in PARALLEL background (no await) ──
+  if(window._fbReady && window._db){
+    const cartSnapshot = order.items; // already captured above
+    const itemDetails  = cart.length ? cart.map(c=>({name:c.name,qty:c.qty,price:c.price})) : order.items.map(s=>{const m=s.match(/^(.+) ×(\d+)$/);return m?{name:m[1],qty:+m[2],price:0}:{name:s,qty:1,price:0};});
+    Promise.all([
+      window._fbSetDoc(window._fbDoc(window._db,'orders',orderId),{
+        orderId, trackingToken, walletToken,
+        customerName: name, phone, email, address,
+        items:        order.items.map(s=>s.replace(/ ×\d+$/,'')),
+        itemDetails,
+        amount:        total,
+        paymentMethod: payMethod,
+        orderType:     'food',
+        status:        'placed',
+        statusHistory: [{status:'placed', time: now}],
+        createdAt:     now,
+        estimatedDeliveryTime: null,
+        deliveryTime:  null
+      }),
+      window._fbSetDoc(window._fbDoc(window._db,'orderTracking',trackingToken),{
+        orderId,
+        orderType:    'food',
+        status:       'placed',
+        statusHistory:[{status:'placed', time: now}],
+        itemsSummary: order.items.join(', '),
+        amount:       total,
+        riderName:    null,
+        riderPhone:   null,
+        etaMinutes:   null,
+        estimatedDeliveryTime: null,
+        deliveryTime: null,
+        createdAt:    now
+      })
+    ]).catch(e=>console.warn('Firestore background write error:',e));
+  }
 }
 function renderOrders(){
   const el=document.getElementById('ordersList');
@@ -4651,22 +4645,30 @@ function startActiveOrderTracking() {
   const order=orderHistory.find(o=>o.trackingToken&&o.status!=='delivered'&&o.status!=='cancelled'&&o.status!=='delivery_failed');
   if(!order||!window._fbReady||!window._db){hideAOC();return;}
   const ref=window._fbDoc(window._db,'orderTracking',order.trackingToken);
+  const _STATUS_LABELS={
+    placed:     'Order Placed 📝',
+    accepted:   'Accepted by Restaurant ✅',
+    preparing:  'Being Prepared 👨‍🍳',
+    picked_up:  'Picked Up by Rider 📦',
+    on_the_way: 'On the Way 🛵',
+    delivered:  'Delivered ✅',
+    cancelled:  'Cancelled ❌',
+    delivery_failed: 'Delivery Failed 📞',
+  };
   _aocUnsub=window._fbSnap(ref,snap=>{
     if(!snap.exists()){hideAOC();return;}
     _aocData={orderId:order.id,trackingToken:order.trackingToken,...snap.data()};
     const st=_aocData.status||'placed';
-    if(st==='delivered'||st==='cancelled'||st==='delivery_failed'){
-      // Sync status to localStorage so Orders page shows correct state
-      const lo=orderHistory.find(o=>o.id===order.id);
-      if(lo&&lo.status!==st){
-        lo.status=st;
-        lo.statusLabel=st==='delivered'?'Delivered ✅':st==='delivery_failed'?'Failed 📞':'Cancelled ❌';
-        localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
-      }
+    // Sync EVERY status change to orderHistory so Orders page stays live
+    const lo=orderHistory.find(o=>o.id===order.id);
+    if(lo&&lo.status!==st){
+      lo.status=st;
+      lo.statusLabel=_STATUS_LABELS[st]||st;
+      localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
+      renderOrders();
     }
     if(st==='delivered'){showDeliveredCard(_aocData);loadOrderAgainSection();return;}
     if(st==='cancelled'){hideAOC();return;}
-    if(st==='delivery_failed'){showAOC(_aocData);return;}
     showAOC(_aocData);
   });
 }
