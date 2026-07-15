@@ -712,6 +712,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 // ── STATE ──────────────────────────────────────
 let allOrders=[], isInit=true, unsub=null, dispatchOrderId=null, newCnt=0;
 let allRiders=[], _ridersUnsub=null;
+let _visitorTotal='—', _visitorToday='—', _visitorUnsub=null;
 const ADMIN='adminlinkup@gmail.com';
 let theme=localStorage.getItem('lu_adm_theme')||'dark';
 let soundOn=localStorage.getItem('lu_adm_sound')!=='off';
@@ -850,6 +851,7 @@ function showApp(email){
   if(tb){document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('active'));tb.classList.add('active');}
   startListener();
   loadRiders();
+  loadVisitorStats();
 }
 
 async function doLogin(){
@@ -958,6 +960,23 @@ function updBadge(){
   else{b.classList.remove('on');document.title='LinkUp Admin';}
 }
 
+// ── VISITOR STATS ──────────────────────────────
+function loadVisitorStats(){
+  if(!window._db) return;
+  if(_visitorUnsub){_visitorUnsub();_visitorUnsub=null;}
+  _visitorUnsub=window._fbSnap(window._fbDoc(window._db,'analytics','visitors'),snap=>{
+    if(snap.exists()){
+      const d=snap.data();
+      _visitorTotal=d.total||0;
+      const today=new Date().toISOString().slice(0,10).replace(/-/g,'');
+      _visitorToday=d['d_'+today]||0;
+    }else{
+      _visitorTotal=0; _visitorToday=0;
+    }
+    renderStats();
+  },()=>{});
+}
+
 // ── STATS ──────────────────────────────────────
 function renderStats(){
   const tod=allOrders.filter(o=>isToday(o.createdAt));
@@ -984,7 +1003,10 @@ function renderStats(){
       <div class="sc-sub">last 7 days</div></div>
     <div class="sc" onclick="filterStat('week-completed')" title="Show week's completed orders">
       <div class="sc-lbl">Orders Completed</div><div class="sc-val" style="color:var(--green);">${wCompleted}</div>
-      <div class="sc-sub">this week delivered</div></div>`;
+      <div class="sc-sub">this week delivered</div></div>
+    <div class="sc" title="Unique browser sessions — live">
+      <div class="sc-lbl">👥 Site Visitors</div><div class="sc-val" style="color:var(--orange);">${_visitorTotal.toLocaleString?.()??_visitorTotal}</div>
+      <div class="sc-sub">today: ${_visitorToday}</div></div>`;
 }
 
 // ── FILTERS + TABLE ────────────────────────────

@@ -135,6 +135,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // ── ANALYTICS ─────────────────────────────────────────
+    // Public may only increment counters (total must go up by exactly 1 per write,
+    // and no existing field may be removed). Admin has full read/write.
+    match /analytics/{docId} {
+      allow read:   if isAdmin();
+      allow create: if true;
+      allow update: if isAdmin()
+                    || (request.resource.data.total == resource.data.total + 1
+                        && request.resource.data.keys().hasAll(resource.data.keys()));
+      allow delete: if isAdmin();
+    }
+
     // ── RIDER RATINGS ─────────────────────────────────────
     // Create: customer must supply a valid 24-char tracking token whose
     // orderTracking doc shows status==delivered and assignedRiderUid matches.
