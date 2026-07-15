@@ -1,4 +1,4 @@
-const CACHE = 'wheels-v2';
+const CACHE = 'wheels-v3';
 const STATIC = ['/rider.html', '/rider-manifest.json', '/rider-icon.svg'];
 
 self.addEventListener('install', e => {

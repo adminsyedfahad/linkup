@@ -627,6 +627,13 @@ let _ordersUnsub=null, _delivExpanded=false;
 let _prevOrderIds=new Set(), _isFirstOrderLoad=true;
 let _selectedTone=localStorage.getItem('rw_tone')||'tripleBeep';
 let _audioCtx=null;
+// Unlock AudioContext on first user interaction so notifications always play
+document.addEventListener('click',function _unlockRiderAudio(){
+  try{
+    if(!_audioCtx) _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    else if(_audioCtx.state==='suspended') _audioCtx.resume();
+  }catch(e){}
+},{once:true});
 
 // Apply saved theme immediately
 (function(){if(localStorage.getItem('rw_theme')==='light')document.documentElement.classList.add('light');})();

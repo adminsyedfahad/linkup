@@ -947,6 +947,29 @@ body{
 .order-pay-badge.online{background:rgba(59,130,246,0.15);color:var(--blue);}
 .track-order-btn{margin-top:10px;width:100%;padding:9px;background:transparent;border:1px solid var(--orange);color:var(--orange);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Poppins',sans-serif;}
 .track-order-btn:hover{background:var(--orange);color:#000;}
+/* ── ORDER DETAIL SHEET ── */
+.od-section-title{font-size:11px;font-weight:700;color:var(--orange);letter-spacing:1.5px;text-transform:uppercase;margin:14px 0 8px;}
+.od-divider{height:1px;background:var(--border);margin:12px 0;}
+.od-row{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;font-size:14px;color:var(--text);}
+.od-item-name{font-weight:600;color:var(--text);}
+.od-item-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.od-item-amt{font-weight:600;white-space:nowrap;padding-left:8px;}
+.od-sub{color:var(--muted);font-size:13px;}
+.od-disc{color:var(--green);font-size:13px;font-weight:600;}
+.od-total-row{display:flex;justify-content:space-between;padding:7px 0;font-size:16px;font-weight:800;color:var(--orange);}
+.od-meta{color:var(--muted);font-size:13px;}
+.od-addr{background:var(--card);border-radius:10px;padding:12px;margin-bottom:14px;}
+.od-label{font-size:11px;font-weight:700;color:var(--orange);display:block;margin-bottom:4px;letter-spacing:.5px;}
+.od-addr-val{font-size:13px;color:var(--text);line-height:1.5;}
+.od-status-badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(255,140,0,0.15);color:var(--orange);margin-bottom:14px;}
+.od-status-badge.delivered,.od-status-badge.Delivered{background:rgba(34,197,94,0.15);color:#22c55e;}
+.od-status-badge.cancelled,.od-status-badge.Cancelled{background:rgba(239,68,68,0.15);color:#ef4444;}
+.od-cancel-btn{width:100%;padding:13px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.35);color:#ef4444;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font,inherit);margin-bottom:10px;transition:background .15s;}
+.od-cancel-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.od-cancel-msg{font-size:13px;color:var(--muted);text-align:center;margin-bottom:10px;padding:10px 14px;background:var(--card);border-radius:10px;line-height:1.5;}
+.od-help-btn{width:100%;padding:12px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font,inherit);transition:border-color .15s;}
+.od-help-btn:hover{border-color:var(--orange);}
+.od-details-btn{flex:1;padding:9px 10px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;}
 
 /* PROFILE */
 .profile-header{text-align:center;padding:30px 16px 20px;}
@@ -2406,6 +2429,18 @@ img[alt="LinkUp"]{
     <div class="page-back-title">📦 Your Orders</div>
   </div>
   <div id="ordersList"></div>
+</div>
+
+<!-- ORDER DETAIL SHEET -->
+<div class="psheet-overlay" id="odOverlay" onclick="closeOrderDetail()">
+  <div class="psheet" onclick="event.stopPropagation()" style="max-height:92vh;">
+    <div class="psheet-handle"></div>
+    <div class="psheet-head">
+      <button class="psheet-back-btn" onclick="closeOrderDetail()">‹</button>
+      <div class="psheet-title" id="odTitle">Order Details</div>
+    </div>
+    <div id="odBody" style="padding-bottom:24px;"></div>
+  </div>
 </div>
 
 <!-- PROFILE PAGE -->
@@ -4198,7 +4233,10 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
     id:           orderId,
     trackingToken,
     items:        cart.map(c=>`${c.name} ×${c.qty}`),
+    cartItems:    cart.map(c=>({name:c.name,price:c.price,qty:c.qty})),
     total, payMethod,
+    walletDiscount: wAmt||0,
+    pointsDiscount: pAmt||0,
     status:       'placed',
     statusLabel:  payMethod.includes('COD') ? 'Order Placed — Pay on Delivery 🧾' : 'Paid Online ✅',
     time:         now.toLocaleTimeString(),
@@ -4308,12 +4346,87 @@ function renderOrders(){
       <div class="order-total">Total: ₹${o.total}</div>
       <span class="order-pay-badge ${o.payMethod&&o.payMethod.includes('COD')?'cod':'online'}">${o.payMethod||'COD'}</span>
       <div style="font-size:11px;color:var(--muted);margin-top:4px;">${o.date||''} ${o.time}</div>
-      <div style="margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
-        <button class="track-order-btn" onclick="openTracking('${o.id}',${o.eta||24},'${o.trackingToken||''}')">🗺️ Track Order</button>
+      <div style="margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+        <button class="track-order-btn" style="flex:1;" onclick="openTracking('${o.id}',${o.eta||24},'${o.trackingToken||''}')">🗺️ Track</button>
+        <button class="od-details-btn" onclick="openOrderDetail('${o.id}')">📋 Details</button>
         ${rateBtn}
       </div>
     </div>`;
   }).join('');
+}
+
+// ── ORDER DETAIL ─────────────────────────────────
+function openOrderDetail(orderId){
+  const o=orderHistory.find(x=>x.id===orderId);
+  if(!o) return;
+  const statusCls=o.status||'placed';
+  let itemsHtml='',subtotal=0;
+  if(o.cartItems&&o.cartItems.length){
+    itemsHtml=o.cartItems.map(c=>{
+      const lt=c.price*c.qty; subtotal+=lt;
+      return `<div class="od-row"><div><div class="od-item-name">${c.name}</div><div class="od-item-sub">₹${c.price} × ${c.qty}</div></div><div class="od-item-amt">₹${lt}</div></div>`;
+    }).join('');
+  }else{
+    itemsHtml=o.items.map(s=>`<div class="od-row"><span>${s}</span></div>`).join('');
+    subtotal=o.total;
+  }
+  const wD=o.walletDiscount||0, pD=o.pointsDiscount||0;
+  const canCancel=['placed','accepted','preparing','ready'].includes(o.status);
+  const tooLate=['picked_up','on_the_way'].includes(o.status);
+  const done=['delivered','cancelled','delivery_failed'].includes(o.status);
+  let cancelHtml='';
+  if(!done){
+    if(canCancel){
+      cancelHtml=`<button class="od-cancel-btn" onclick="cancelOrder('${o.id}')">Cancel Order</button>`;
+    }else if(tooLate){
+      cancelHtml=`<div class="od-cancel-msg">Order can no longer be cancelled. Please contact customer support.</div>`;
+    }
+  }
+  document.getElementById('odTitle').textContent=`Order ${o.id}`;
+  document.getElementById('odBody').innerHTML=`
+    <div><span class="od-status-badge ${statusCls}">${o.statusLabel||o.status}</span></div>
+    ${o.address?`<div class="od-addr"><span class="od-label">📍 Delivery Address</span><div class="od-addr-val">${o.address}</div></div>`:''}
+    <div class="od-section-title">Order Items</div>
+    ${itemsHtml}
+    <div class="od-divider"></div>
+    ${subtotal>o.total||wD>0||pD>0?`<div class="od-row od-sub"><span>Subtotal</span><span>₹${subtotal}</span></div>`:''}
+    <div class="od-row od-sub"><span>Delivery Fee</span><span style="color:var(--green)">FREE</span></div>
+    ${wD>0?`<div class="od-row od-disc"><span>🏦 Wallet Discount</span><span>−₹${wD}</span></div>`:''}
+    ${pD>0?`<div class="od-row od-disc"><span>⭐ Points Discount</span><span>−₹${pD}</span></div>`:''}
+    <div class="od-total-row"><span>Total</span><span>₹${o.total}</span></div>
+    <div class="od-divider"></div>
+    <div class="od-row od-meta"><span>💳 Payment</span><span>${o.payMethod||'COD'}</span></div>
+    <div class="od-row od-meta"><span>🕐 Placed</span><span>${o.date||''} ${o.time||''}</span></div>
+    <div class="od-row od-meta"><span>🔖 Order ID</span><span style="font-size:11px;">${o.id}</span></div>
+    <div style="margin-top:18px;">
+      ${cancelHtml}
+      <button class="od-help-btn" onclick="closeOrderDetail();openPsheet('help')">❓ Help & Support</button>
+    </div>`;
+  document.getElementById('odOverlay').classList.add('open');
+}
+function closeOrderDetail(){
+  document.getElementById('odOverlay').classList.remove('open');
+}
+async function cancelOrder(orderId){
+  const o=orderHistory.find(x=>x.id===orderId);
+  if(!o||!o.trackingToken) return;
+  if(!['placed','accepted','preparing','ready'].includes(o.status)) return;
+  const btn=document.querySelector('.od-cancel-btn');
+  if(btn){btn.textContent='Cancelling…';btn.disabled=true;}
+  try{
+    if(window._fbReady&&window._db){
+      await window._fbUpdateDoc(window._fbDoc(window._db,'orderTracking',o.trackingToken),{status:'cancelled'});
+      window._fbUpdateDoc(window._fbDoc(window._db,'orders',orderId),{status:'cancelled',_cancelToken:o.trackingToken}).catch(()=>{});
+    }
+    o.status='cancelled';o.statusLabel='Cancelled ❌';
+    localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
+    renderOrders();
+    closeOrderDetail();
+    showToast('Order cancelled.');
+  }catch(e){
+    if(btn){btn.textContent='Cancel Order';btn.disabled=false;}
+    showToast('Could not cancel. Please try again.');
+  }
 }
 
 // ── WALLET ────────────────────────────────────────
