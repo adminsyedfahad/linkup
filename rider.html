@@ -622,6 +622,7 @@ const ADMIN_EMAIL='adminlinkup@gmail.com';
 let riderProfile=null;
 let myOrders=[], deliveredToday=[], currentOrder=null;
 let _ordersUnsub=null, _delivExpanded=false;
+let _isStatusUpdating=false; // blocks renderDetail() during in-flight writes
 
 // Notification / settings
 let _prevOrderIds=new Set(), _isFirstOrderLoad=true;
@@ -724,6 +725,7 @@ function cleanupOnLogout(){
   if(_ordersUnsub){_ordersUnsub();_ordersUnsub=null;}
   stopGPS(); destroyMap();
   myOrders=[];deliveredToday=[];currentOrder=null;riderProfile=null;
+  _isStatusUpdating=false;
 }
 async function rDoLogin(){
   const email=document.getElementById('rEmail').value.trim();
@@ -775,7 +777,9 @@ function startOrdersListener(){
     renderOrders();
     if(currentOrder){
       const upd=myOrders.find(o=>o._id===currentOrder._id);
-      if(upd){currentOrder=upd;renderDetail();}
+      // Always update data, but skip re-rendering action bar during in-flight writes
+      // (renderDetail will be called explicitly after the write resolves/rejects)
+      if(upd){currentOrder=upd; if(!_isStatusUpdating) renderDetail();}
     }
   },err=>console.error('[Wheels] orders:',err.code,err.message));
 }
@@ -947,34 +951,59 @@ function _timedUpdate(ref,data){
 async function doStatusUpdate(newStatus,extra={}){
   const o=currentOrder;
   if(!o||!window._rdb) return;
+
+  // Pre-flight: active check (isActiveRider rule requires boolean true, not string/undefined)
+  if(!riderProfile?.isAdmin && riderProfile?.active !== true){
+    rToast('❌ Your rider account is not marked active. Go to Firebase Console → riders/'+
+      (riderProfile?.uid||'?')+' and set active = true (boolean).', 8000);
+    console.error('[Wheels] isActiveRider would FAIL: riderProfile.active =',
+      riderProfile?.active,'(type:',typeof riderProfile?.active,') — must be boolean true');
+    return;
+  }
+
   const btn=document.getElementById('mainActBtn');
   if(btn){btn.disabled=true;btn.textContent='Updating…';}
+  _isStatusUpdating=true;
+
   const now=new Date();
   const orderRef=window._rfDoc(window._rdb,'orders',o._id);
   const trackRef=o.trackingToken?window._rfDoc(window._rdb,'orderTracking',o.trackingToken):null;
-  const orderData={status:newStatus,statusHistory:window._rfArrUnion({status:newStatus,time:now})};
+
+  // Fields exactly matching Firestore rules allowlist for orders
+  const orderData={status:newStatus,statusHistory:window._rfArrUnion({status:newStatus,time:now.toISOString()})};
+  // Fields exactly matching Firestore rules allowlist for orderTracking
   const trackData={status:newStatus};
+
   if(newStatus==='picked_up'){
-    orderData.dispatchedAt=now.toISOString();orderData.dispatchTime=now.toISOString();
-    trackData.dispatchedAt=now.toISOString();trackData.dispatchTime=now.toISOString();
+    orderData.dispatchedAt=now.toISOString(); orderData.dispatchTime=now.toISOString();
+    trackData.dispatchedAt=now.toISOString(); trackData.dispatchTime=now.toISOString();
   }
   if(newStatus==='delivered'){
-    orderData.deliveredAt=now.toISOString();orderData.deliveryTime=now.toISOString();
-    trackData.deliveredAt=now.toISOString();trackData.deliveryTime=now.toISOString();
+    orderData.deliveredAt=now.toISOString(); orderData.deliveryTime=now.toISOString();
+    trackData.deliveredAt=now.toISOString(); trackData.deliveryTime=now.toISOString();
   }
   if(newStatus==='delivery_failed'){
     const ts=extra.failedAt||now.toISOString();
-    orderData.failedAt=ts;orderData.failReason=extra.failReason||'';
+    orderData.failedAt=ts; orderData.failReason=extra.failReason||'';
     trackData.failedAt=ts;
     if(extra.failReason) trackData.failReason=extra.failReason;
   }
-  console.log('[Wheels] doStatusUpdate →',newStatus);
-  console.log('[Wheels] orders payload (allowed: status,statusHistory,dispatchedAt,dispatchTime,deliveredAt,deliveryTime,failReason,failedAt):',JSON.stringify(orderData));
-  console.log('[Wheels] orderTracking payload (allowed: status,statusHistory,dispatchedAt,dispatchTime,deliveredAt,deliveryTime,riderLocation,failReason,failedAt):',JSON.stringify(trackData));
+
+  console.log('[Wheels] doStatusUpdate →',newStatus,
+    '\n  orders keys:',Object.keys(orderData).join(','),
+    '\n  orderTracking keys:',Object.keys(trackData).join(','),
+    '\n  assignedRiderUid in order:',o.assignedRiderUid,
+    '\n  rider uid:',riderProfile?.uid,
+    '\n  rider active (must be boolean true):',riderProfile?.active,'type:',typeof riderProfile?.active);
+
   try{
     await _timedUpdate(orderRef,orderData);
     if(trackRef) await _timedUpdate(trackRef,trackData);
+
+    _isStatusUpdating=false;
+
     if(newStatus==='picked_up'||newStatus==='on_the_way') startGPS(o.trackingToken);
+
     if(newStatus==='delivered'){
       stopGPS();
       creditWallet(o,now);
@@ -985,13 +1014,27 @@ async function doStatusUpdate(newStatus,extra={}){
       rToast('📋 Delivery marked as failed.',3000);
       setTimeout(showOrders,2200);
     }else{
+      renderDetail(); // update action bar to next status
       if(_rMap){destroyMap();setTimeout(()=>initDetailMap(currentOrder),80);}
     }
   }catch(e){
-    console.error('[Wheels] Status update FAILED — code:',e?.code,'msg:',e?.message,e);
-    const freshBtn=document.getElementById('mainActBtn');
-    if(freshBtn){freshBtn.disabled=false;freshBtn.textContent='⚠️ Retry';}
-    rToast('❌ '+(e?.code||'error')+': '+(e?.message||'Update failed'),5000);
+    _isStatusUpdating=false;
+    console.error('[Wheels] doStatusUpdate FAILED',
+      '\n  code:',e?.code,'\n  message:',e?.message,
+      '\n  Full error:',e);
+
+    // Helpful message for the most common causes
+    let msg;
+    if(e?.code==='permission-denied'){
+      msg='Permission denied — check: (1) rider active=true in Firestore, (2) order is assigned to your UID';
+    }else if(e?.code==='deadline-exceeded'){
+      msg='Timed out — check network connection';
+    }else{
+      msg=(e?.code||'error')+': '+(e?.message||'Update failed');
+    }
+
+    renderDetail(); // reset action bar to original status after Firestore revert
+    rToast('❌ '+msg, 6000);
   }
 }
 
