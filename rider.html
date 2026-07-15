@@ -676,20 +676,44 @@ function init(){
     window._rfOnAuth(window._rauth,async fbUser=>{
       authOk=true; maybeDismiss();
       if(fbUser){
+        // Always derive UID from the live auth state to avoid any closure staleness
+        const uid=window._rauth.currentUser?.uid??fbUser.uid;
+        console.log('[Wheels] Auth state: fbUser.uid='+fbUser.uid
+          +' | rauth.currentUser.uid='+window._rauth.currentUser?.uid
+          +' | using uid='+uid);
+
         if(fbUser.email?.toLowerCase()===ADMIN_EMAIL){
-          riderProfile={uid:fbUser.uid,name:'Admin',isAdmin:true};
+          riderProfile={uid,name:'Admin',isAdmin:true};
           showApp(); startOrdersListener(); return;
         }
         try{
-          const snap=await window._rfGetDoc(window._rfDoc(window._rdb,'riders',fbUser.uid));
-          if(!snap.exists()||snap.data().active===false){
+          const snap=await window._rfGetDoc(window._rfDoc(window._rdb,'riders',uid));
+          console.log('[Wheels] Rider doc fetch: id='+snap.id
+            +' | exists='+snap.exists()
+            +' | active='+snap.data()?.active
+            +' (type:'+typeof snap.data()?.active+')');
+          if(!snap.exists()){
             await window._rfSignOut(window._rauth);
-            showLogin('❌ Not registered as a rider. Contact admin.');
+            showLogin('❌ No rider doc found for UID '+uid+'. Contact admin to create riders/'+uid+'.');
             return;
           }
-          riderProfile={uid:fbUser.uid,...snap.data()};
+          if(snap.data().active===false){
+            await window._rfSignOut(window._rauth);
+            showLogin('❌ Rider account is deactivated. Contact admin.');
+            return;
+          }
+          riderProfile={uid,...snap.data()};
+          // Warn early if active is not boolean true — Firestore rule requires exactly true
+          if(riderProfile.active!==true){
+            console.warn('[Wheels] WARNING: riders/'+uid+'.active =',riderProfile.active,
+              '(type:',typeof riderProfile.active,') — Firestore rule requires boolean true.',
+              'Status updates will fail with permission-denied until fixed in Firebase Console.');
+          }
           showApp(); startOrdersListener();
-        }catch(e){showLogin('⚠️ Could not verify profile. Check connection.');}
+        }catch(e){
+          console.error('[Wheels] Profile fetch error:',e);
+          showLogin('⚠️ Could not verify profile. Check connection.');
+        }
       }else{cleanupOnLogout();showLogin();}
     });
   }
@@ -789,27 +813,29 @@ function renderOrders(){
   const list=document.getElementById('ordersList');
   const empty=document.getElementById('emptyState');
   const cnt=document.getElementById('activeCnt');
-  cnt.textContent=myOrders.length;
+  if(cnt) cnt.textContent=myOrders.length;
   if(!myOrders.length){
-    list.innerHTML='';
-    empty.style.display='flex';
+    if(list) list.innerHTML='';
+    if(empty) empty.style.display='flex';
   }else{
-    empty.style.display='none';
-    list.innerHTML=myOrders.map(o=>orderCardHtml(o,false)).join('');
+    if(empty) empty.style.display='none';
+    if(list) list.innerHTML=myOrders.map(o=>orderCardHtml(o,false)).join('');
   }
   // Delivered today section
   const ds=document.getElementById('delivSection');
   if(deliveredToday.length){
-    document.getElementById('delivCnt').textContent=deliveredToday.length;
+    const cntEl=document.getElementById('delivCnt');
+    if(cntEl) cntEl.textContent=deliveredToday.length;
     const codTotal=deliveredToday.filter(isCOD).reduce((s,o)=>s+(o.amount||0),0);
     const codEl=document.getElementById('delivCod');
-    codEl.textContent=codTotal?'💵 ₹'+codTotal.toLocaleString('en-IN'):'';
+    if(codEl) codEl.textContent=codTotal?'💵 ₹'+codTotal.toLocaleString('en-IN'):'';
     if(_delivExpanded){
-      document.getElementById('delivList').innerHTML=deliveredToday.map(o=>orderCardHtml(o,true)).join('');
+      const dl=document.getElementById('delivList');
+      if(dl) dl.innerHTML=deliveredToday.map(o=>orderCardHtml(o,true)).join('');
     }
-    ds.style.display='block';
+    if(ds) ds.style.display='block';
   }else{
-    ds.style.display='none';
+    if(ds) ds.style.display='none';
   }
 }
 let _delivToggleState=false;
