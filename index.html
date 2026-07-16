@@ -4772,11 +4772,20 @@ function startActiveOrderTracking() {
     if(!snap.exists()){hideAOC();return;}
     _aocData={orderId:order.id,trackingToken:order.trackingToken,...snap.data()};
     const st=_aocData.status||'placed';
+    // Persist rider info as soon as it appears (not just on delivery) so the rating modal can show it
+    if(_aocData.assignedRiderUid && order.id){
+      localStorage.setItem('lu_rider_'+order.id, JSON.stringify({
+        riderUid:_aocData.assignedRiderUid,
+        riderName:_aocData.riderName||'Your Rider'
+      }));
+    }
     // Sync EVERY status change to orderHistory so Orders page stays live
     const lo=orderHistory.find(o=>o.id===order.id);
     if(lo&&lo.status!==st){
       lo.status=st;
       lo.statusLabel=_STATUS_LABELS[st]||st;
+      // Sync rider info into orderHistory entry so rating modal can find it even after page reload
+      if(_aocData.assignedRiderUid){ lo.riderUid=_aocData.assignedRiderUid; lo.riderName=_aocData.riderName||''; }
       localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
       renderOrders();
     }
@@ -4921,15 +4930,17 @@ function rateOrder(orderId, fromDeliveredCard=false){
   if(sub) sub.textContent=_ratingOrderId?`Order ${_ratingOrderId}`:'Tell us about your experience';
   const cm=document.getElementById('rateComment');
   if(cm){cm.value=''; document.getElementById('rateCommentCount').textContent='0';}
-  // Rider rating section
+  // Rider rating section — fall back to orderHistory entry if localStorage key missing
   _riderRatingValue=0;
   _updateRiderStars(0);
-  const riderInfo=JSON.parse(localStorage.getItem('lu_rider_'+_ratingOrderId)||'null');
+  const _rateOrderEntry=orderHistory.find(o=>o.id===_ratingOrderId)||{};
+  const riderInfo=JSON.parse(localStorage.getItem('lu_rider_'+_ratingOrderId)||'null')
+    || (_rateOrderEntry.riderUid?{riderUid:_rateOrderEntry.riderUid,riderName:_rateOrderEntry.riderName||'Your Rider'}:null);
   const riderSec=document.getElementById('riderRateSection');
   if(riderSec) riderSec.style.display=riderInfo?'block':'none';
   if(riderInfo){
     const nameEl=document.getElementById('riderRateNameEl');
-    if(nameEl) nameEl.textContent='🛵 '+riderInfo.riderName;
+    if(nameEl) nameEl.textContent=riderInfo.riderName||'Your Rider';
     const rc=document.getElementById('riderRateComment');
     if(rc){rc.value=''; const cnt=document.getElementById('rrcCount'); if(cnt) cnt.textContent='0';}
   }
@@ -5009,7 +5020,9 @@ async function submitRating(){
   if(saved){
     // Fire-and-forget rider rating if the rider gave a rating
     if(_riderRatingValue>0 && window._fbReady && window._db){
-      const riderInfo=JSON.parse(localStorage.getItem('lu_rider_'+oid)||'null');
+      const _rrEntry=orderHistory.find(o=>o.id===oid)||{};
+      const riderInfo=JSON.parse(localStorage.getItem('lu_rider_'+oid)||'null')
+        || (_rrEntry.riderUid?{riderUid:_rrEntry.riderUid,riderName:_rrEntry.riderName||'Your Rider'}:null);
       if(riderInfo?.riderUid){
         const riderComment=(document.getElementById('riderRateComment')?.value||'').trim();
         window._fbSetDoc(window._fbDoc(window._db,'riderRatings',oid),{
@@ -6797,17 +6810,17 @@ function reverseGeocode(lat, lng) {
       </div>
       <textarea class="rate-comment" id="rateComment" placeholder="Share your experience… (optional)" maxlength="300" oninput="document.getElementById('rateCommentCount').textContent=this.value.length"></textarea>
       <div class="rate-comment-hint"><span id="rateCommentCount">0</span>/300</div>
-      <div id="riderRateSection" style="display:none;border-top:1px solid var(--border);margin-top:14px;padding-top:14px;text-align:left;">
-        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Rate your rider 🛵</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;" id="riderRateNameEl">—</div>
-        <div class="rate-stars" id="riderRateStars" style="justify-content:flex-start;margin-bottom:10px;">
+      <div id="riderRateSection" style="display:none;background:rgba(255,140,0,0.06);border:1px solid rgba(255,140,0,0.2);border-radius:14px;padding:14px;margin-top:14px;text-align:left;">
+        <div style="font-size:13px;font-weight:800;margin-bottom:2px;color:var(--orange);">Rate your rider 🛵</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:600;" id="riderRateNameEl">—</div>
+        <div class="rate-stars" id="riderRateStars" style="justify-content:flex-start;gap:6px;margin-bottom:12px;">
           <span class="rate-star-rider" onclick="setRiderRating(1)" onmouseover="hoverRiderRating(1)" onmouseout="resetRiderStarHover()">★</span>
           <span class="rate-star-rider" onclick="setRiderRating(2)" onmouseover="hoverRiderRating(2)" onmouseout="resetRiderStarHover()">★</span>
           <span class="rate-star-rider" onclick="setRiderRating(3)" onmouseover="hoverRiderRating(3)" onmouseout="resetRiderStarHover()">★</span>
           <span class="rate-star-rider" onclick="setRiderRating(4)" onmouseover="hoverRiderRating(4)" onmouseout="resetRiderStarHover()">★</span>
           <span class="rate-star-rider" onclick="setRiderRating(5)" onmouseover="hoverRiderRating(5)" onmouseout="resetRiderStarHover()">★</span>
         </div>
-        <textarea class="rate-comment" id="riderRateComment" placeholder="Optional comment about your rider…" maxlength="200" style="min-height:60px;margin-bottom:4px;" oninput="document.getElementById('rrcCount').textContent=this.value.length"></textarea>
+        <textarea class="rate-comment" id="riderRateComment" placeholder="How was your delivery? (optional)" maxlength="200" style="min-height:56px;margin-bottom:4px;" oninput="document.getElementById('rrcCount').textContent=this.value.length"></textarea>
         <div class="rate-comment-hint"><span id="rrcCount">0</span>/200</div>
       </div>
       <button class="rate-submit" onclick="submitRating()">Send Feedback ✈</button>

@@ -765,6 +765,17 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<!-- RIDER RATING DETAIL MODAL -->
+<div class="mo" id="rrDetailMo" onclick="if(event.target===this)closeRrDetail()">
+  <div class="mb" style="width:min(400px,94vw);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h3 id="rrDetailTitle" style="margin:0;font-size:16px;font-weight:800;">Rider Rating</h3>
+      <button class="odp-close" onclick="closeRrDetail()">✕</button>
+    </div>
+    <div id="rrDetailBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="tst"></div>
 
 <script>
@@ -1629,21 +1640,22 @@ function renderRiderRatings(all){
     if(!riderEntries.length){
       summaryEl.innerHTML='<p style="color:var(--muted);font-size:13px;">No ratings yet.</p>';
     }else{
-      summaryEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">${riderEntries.map(([uid,rd])=>{
+      summaryEl.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px;">${riderEntries.map(([uid,rd])=>{
         const avg=rd.sum/rd.total;
         const ar=Math.round(avg);
         const filled='★'.repeat(ar);
         const empty=`<span style="color:var(--border)">${'★'.repeat(5-ar)}</span>`;
-        return `<div class="rev-card">
-          <div class="rev-card-top">
-            <div>
-              <div style="font-size:15px;font-weight:700;">${rd.name}</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px;">${rd.total} review${rd.total!==1?'s':''}</div>
-            </div>
-            <div class="rev-stars" style="color:#f59e0b;font-size:14px;">${filled}${empty}</div>
+        const ini=(rd.name||'?').charAt(0).toUpperCase();
+        return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--odim);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--orange);flex-shrink:0;">${ini}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${rd.name}</div>
+            <div style="font-size:13px;color:#f59e0b;margin-top:1px;">${filled}${empty}</div>
           </div>
-          <div style="font-size:28px;font-weight:800;color:var(--text);line-height:1.1;">${avg.toFixed(1)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">average rating</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:20px;font-weight:800;line-height:1;">${avg.toFixed(1)}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${rd.total} review${rd.total!==1?'s':''}</div>
+          </div>
         </div>`;
       }).join('')}</div>`;
     }
@@ -1683,13 +1695,36 @@ function rrRowClick(rid, safeOid, safeRider, safeComment){
   _markRRSeen(rid);
   const dot=document.querySelector(`#rrrow-${rid} .rev-dot`);
   if(dot) dot.classList.remove('unseen');
-  renderRiderRatings(_riderRatingsCache);
+  // Update badge without full re-render
+  const seen=_getRRSeenIds();
+  const unseen=_riderRatingsCache.filter(r=>!seen.has(r.id||r.orderId)).length;
+  const b=document.getElementById('nrrb');
+  if(b){ if(unseen>0){b.textContent=unseen;b.classList.add('on');}else{b.classList.remove('on');} }
+  // Open detail modal
+  const r=_riderRatingsCache.find(x=>(x.id||x.orderId)===rid)||{};
   const oid=decodeURIComponent(safeOid);
   const rider=decodeURIComponent(safeRider);
   const comment=decodeURIComponent(safeComment);
-  const r=_riderRatingsCache.find(x=>(x.id||x.orderId)===rid)||{};
-  const stars='★'.repeat(r.rating||0)+'☆'.repeat(5-(r.rating||0));
-  toast(`🛵 ${rider} · Order ${oid} · ${stars}${comment?' — "'+comment+'"':''}`);
+  const filled='★'.repeat(r.rating||0);
+  const empty='<span style="color:var(--border);">'+'★'.repeat(5-(r.rating||0))+'</span>';
+  const date=r.ratedAt?new Date(r.ratedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
+  document.getElementById('rrDetailTitle').textContent='🛵 '+rider;
+  document.getElementById('rrDetailBody').innerHTML=`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+      <div style="font-size:28px;color:#f59e0b;letter-spacing:4px;">${filled}${empty}</div>
+      <div style="font-size:38px;font-weight:800;line-height:1.1;margin-top:6px;">${r.rating||0}<span style="font-size:16px;color:var(--muted);font-weight:400;"> / 5</span></div>
+    </div>
+    <div class="odp-row"><span class="odp-lbl">Order ID</span><span class="odp-val hi">${oid}</span></div>
+    <div class="odp-row"><span class="odp-lbl">Date Rated</span><span class="odp-val">${date}</span></div>
+    ${comment?`<div style="margin-top:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Customer Comment</div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;font-style:italic;line-height:1.6;">"${comment}"</div>
+    </div>`:'<div style="font-size:12px;color:var(--muted);margin-top:14px;text-align:center;">No comment left.</div>'}
+    <button class="mok" style="margin-top:18px;" onclick="closeRrDetail()">Close</button>`;
+  document.getElementById('rrDetailMo').classList.add('on');
+}
+function closeRrDetail(){
+  document.getElementById('rrDetailMo').classList.remove('on');
 }
 
 // ── RIDER MANAGEMENT ──────────────────────────
