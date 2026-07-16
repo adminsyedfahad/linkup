@@ -4913,6 +4913,9 @@ let _ratingOrderId='';
 function rateOrder(orderId, fromDeliveredCard=false){
   _ratingValue=0; _ratingOrderId=orderId||_aocData?.orderId||localStorage.getItem('lu_del_current_oid')||'';
   _rateFromDeliveredCard=fromDeliveredCard;
+  // Reset submit button in case a previous submission got stuck
+  const sb=document.querySelector('.rate-submit');
+  if(sb){sb.disabled=false;sb.textContent='Send Feedback ✈';}
   _updateStars(0);
   const sub=document.getElementById('rateSubText');
   if(sub) sub.textContent=_ratingOrderId?`Order ${_ratingOrderId}`:'Tell us about your experience';
@@ -4973,7 +4976,8 @@ async function submitRating(){
   let saved=false;
   if(window._fbReady && window._db){
     try{
-      await window._fbSetDoc(window._fbDoc(window._db,'ratings',oid),{
+      // 5-second timeout so a slow/offline Firestore never leaves the button stuck
+      const _ratingWrite=window._fbSetDoc(window._fbDoc(window._db,'ratings',oid),{
         orderId:oid,
         token,           // 24-char tracking token — used by Firestore rule to verify delivered status
         rating:_ratingValue,
@@ -4987,11 +4991,15 @@ async function submitRating(){
         orderDate:order.date?`${order.date} ${order.time}`:'',
         ratedAt:new Date().toISOString(),
       });
+      await Promise.race([
+        _ratingWrite,
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
+      ]);
       saved=true;
     } catch(e){
       console.warn('Rating save failed:',e);
       if(submitBtn){ submitBtn.disabled=false; submitBtn.textContent='Send Feedback ✈'; }
-      showToast('❌ Rating failed — please try again');
+      showToast('❌ '+(e?.message==='timeout'?'Request timed out — check connection':'Rating failed — please try again'));
       return;
     }
   } else {

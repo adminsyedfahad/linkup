@@ -718,13 +718,17 @@ let theme=localStorage.getItem('lu_adm_theme')||'dark';
 let soundOn=localStorage.getItem('lu_adm_sound')!=='off';
 let activeTone=localStorage.getItem('lu_adm_tone')||'ding';
 let _adminAC=null;
-// Unlock AudioContext on first user interaction so notifications always play
-document.addEventListener('click',function _unlockAdminAudio(){
+// Keep AudioContext unlocked: create on first interaction, re-resume on every
+// subsequent interaction (browsers can silently re-suspend it, e.g. on mobile).
+function _ensureAdminAudio(){
   try{
     if(!_adminAC) _adminAC=new(window.AudioContext||window.webkitAudioContext)();
-    else if(_adminAC.state==='suspended') _adminAC.resume();
+    if(_adminAC.state==='suspended') _adminAC.resume();
   }catch(e){}
-},{once:true});
+}
+document.addEventListener('click',_ensureAdminAudio);
+document.addEventListener('keydown',_ensureAdminAudio);
+document.addEventListener('touchstart',_ensureAdminAudio,{passive:true});
 
 // ── HELPERS ────────────────────────────────────
 function td(ts){
@@ -786,7 +790,9 @@ function beep(){ if(soundOn) playTone(activeTone); }
 
 function playTone(name){
   try{
-    const ac=(_adminAC&&_adminAC.state!=='closed')?_adminAC:new(window.AudioContext||window.webkitAudioContext)();
+    if(!_adminAC) _adminAC=new(window.AudioContext||window.webkitAudioContext)();
+    if(_adminAC.state==='suspended') _adminAC.resume();
+    const ac=_adminAC.state!=='closed'?_adminAC:new(window.AudioContext||window.webkitAudioContext)();
     const t=ac.currentTime;
     if(name==='ding'){
       // Single pure bell at 880 Hz

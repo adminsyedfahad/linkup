@@ -628,13 +628,15 @@ let _isStatusUpdating=false; // blocks renderDetail() during in-flight writes
 let _prevOrderIds=new Set(), _isFirstOrderLoad=true;
 let _selectedTone=localStorage.getItem('rw_tone')||'tripleBeep';
 let _audioCtx=null;
-// Unlock AudioContext on first user interaction so notifications always play
-document.addEventListener('click',function _unlockRiderAudio(){
+// Keep AudioContext unlocked on every interaction (browsers can re-suspend silently).
+function _ensureRiderAudio(){
   try{
     if(!_audioCtx) _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    else if(_audioCtx.state==='suspended') _audioCtx.resume();
+    if(_audioCtx.state==='suspended') _audioCtx.resume();
   }catch(e){}
-},{once:true});
+}
+document.addEventListener('click',_ensureRiderAudio);
+document.addEventListener('touchstart',_ensureRiderAudio,{passive:true});
 
 // Apply saved theme immediately
 (function(){if(localStorage.getItem('rw_theme')==='light')document.documentElement.classList.add('light');})();
@@ -1373,6 +1375,7 @@ async function saveRiderArea(){
 // ── AUDIO TONES ────────────────────────────────────────
 function getACtx(){
   if(!_audioCtx) _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(_audioCtx.state==='suspended') _audioCtx.resume();
   return _audioCtx;
 }
 function playOsc(ctx,freq,type,vol,dur,delay){
