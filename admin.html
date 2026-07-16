@@ -342,6 +342,22 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .rev-row-stars{font-size:13px;color:#f59e0b;letter-spacing:1px;flex-shrink:0;margin-left:auto;}
 .rev-row-date{font-size:10px;color:var(--muted);flex-shrink:0;white-space:nowrap;margin-left:10px;}
 
+/* RIDER MANAGEMENT */
+.rdm-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+.rdm-avatar{width:42px;height:42px;border-radius:50%;background:var(--odim);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:var(--orange);flex-shrink:0;}
+.rdm-info{flex:1;min-width:0;}
+.rdm-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rdm-phone{font-size:12px;color:var(--muted);margin-top:2px;}
+.rdm-rating{font-size:12px;color:var(--muted);margin-top:3px;}
+.rdm-stars{color:#f59e0b;}
+.rdm-badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;}
+.rdm-badge.active{background:rgba(34,197,94,.14);color:#22c55e;}
+.rdm-badge.inactive{background:rgba(239,68,68,.12);color:#ef4444;}
+.rdm-toggle{padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Poppins',sans-serif;transition:opacity .15s;white-space:nowrap;}
+.rdm-toggle:hover{opacity:.75;}
+.rdm-toggle.deactivate{background:rgba(239,68,68,.1);color:#ef4444;}
+.rdm-toggle.activate{background:rgba(34,197,94,.14);color:#22c55e;}
+
 /* CUSTOMER PROFILE PANEL */
 .cxp-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3100;}
 .cxp-ov.on{display:block;}
@@ -404,6 +420,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
     <button class="mnb" id="mns" onclick="showSec('search')">🔍 Search</button>
     <button class="mnb" id="mnw" onclick="showSec('wallet')">💰 Refunds</button>
     <button class="mnb" id="mnr" onclick="showSec('reviews')">⭐ Reviews</button>
+    <button class="mnb" id="mnri" onclick="showSec('riders')">👤 Riders</button>
     <button class="mnb" id="mnst" onclick="showSec('settings')">⚙️ Settings</button>
     <button class="mnb" onclick="doLogout()">⏻</button>
   </div>
@@ -432,6 +449,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
       <div class="ni" id="nrr" onclick="showSec('rider-ratings')">
         <span class="ico">🛵</span> Rider Ratings
         <span class="ni-badge" id="nrrb">0</span>
+      </div>
+      <div class="ni" id="nri" onclick="showSec('riders')">
+        <span class="ico">👤</span> Rider Mgmt
       </div>
       <div class="ni" id="nst" onclick="showSec('settings')">
         <span class="ico">⚙️</span> Settings
@@ -595,8 +615,47 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;">🛵 Rider Ratings</h2>
         <p style="margin:0;color:var(--muted);font-size:13px;">Ratings submitted by customers for each rider after delivery</p>
       </div>
+      <div class="rev-overview" id="rrOverview">
+        <div class="rev-score-left">
+          <div class="rev-big-num" id="rrAvg">—</div>
+          <div class="rev-big-stars" id="rrAvgStars">★★★★★</div>
+          <div class="rev-big-count"><span id="rrTotal">0</span> reviews</div>
+        </div>
+        <div class="rev-bars">
+          <div class="rev-bar-row"><span class="rev-bar-lbl">5</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rr5bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rr5">0</span></div>
+          <div class="rev-bar-row"><span class="rev-bar-lbl">4</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rr4bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rr4">0</span></div>
+          <div class="rev-bar-row"><span class="rev-bar-lbl">3</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rr3bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rr3">0</span></div>
+          <div class="rev-bar-row"><span class="rev-bar-lbl">2</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rr2bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rr2">0</span></div>
+          <div class="rev-bar-row"><span class="rev-bar-lbl">1</span><div class="rev-bar-track"><div class="rev-bar-fill rev-bar-fill-low" id="rr1bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rr1">0</span></div>
+        </div>
+      </div>
       <div id="rrSummary" style="margin-bottom:18px;"></div>
       <div id="rrList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
+    </div>
+
+    <!-- RIDER MANAGEMENT -->
+    <div class="sec" id="sec-riders">
+      <div class="ref-block">
+        <h3>➕ Add New Rider</h3>
+        <div class="ref-field">
+          <label class="ref-lbl">Rider Name</label>
+          <input class="ref-input" id="newRiderName" placeholder="Full name" autocomplete="off">
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Phone Number</label>
+          <input class="ref-input" id="newRiderPhone" type="tel" placeholder="+91 XXXXX XXXXX" autocomplete="off">
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Password</label>
+          <input class="ref-input" id="newRiderPass" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
+        </div>
+        <button class="ref-btn" id="addRiderBtn" onclick="addRider()">Create Rider Account</button>
+        <div id="addRiderMsg" style="margin-top:12px;font-size:13px;display:none;line-height:1.6;"></div>
+      </div>
+      <div class="ref-block">
+        <h3>🛵 All Riders</h3>
+        <div id="riderMgmtList"><p style="color:var(--muted);text-align:center;padding:20px 0;">Loading…</p></div>
+      </div>
     </div>
 
     <!-- SETTINGS -->
@@ -711,7 +770,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 <script>
 // ── STATE ──────────────────────────────────────
 let allOrders=[], isInit=true, unsub=null, dispatchOrderId=null, newCnt=0;
-let allRiders=[], _ridersUnsub=null;
+let allRiders=[], allRidersAdmin=[], _ridersUnsub=null;
+const ADMIN_API_KEY='AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas';
 let _visitorTotal='—', _visitorToday='—', _visitorUnsub=null;
 const ADMIN='adminlinkup@gmail.com';
 let theme=localStorage.getItem('lu_adm_theme')||'dark';
@@ -916,8 +976,11 @@ function loadRiders(){
   if(_ridersUnsub){_ridersUnsub();_ridersUnsub=null;}
   if(!window._db) return;
   _ridersUnsub=window._fbSnap(window._fbCol(window._db,'riders'),snap=>{
-    allRiders=snap.docs.map(d=>({uid:d.id,...d.data()})).filter(r=>r.active!==false).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    const all=snap.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    allRidersAdmin=all;
+    allRiders=all.filter(r=>r.active!==false);
     afr();
+    if(document.getElementById('sec-riders')?.classList.contains('on')) renderRidersManagement();
   },err=>console.warn('[Admin] riders:',err));
 }
 
@@ -1348,18 +1411,23 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',riders:'nri',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
   document.getElementById('mnw').classList.toggle('active',name==='wallet');
   document.getElementById('mnr').classList.toggle('active',name==='reviews');
+  document.getElementById('mnri').classList.toggle('active',name==='riders');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',riders:'Rider Management',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
   if(name==='reviews'){ loadReviews(); }
   if(name==='rider-ratings'){ loadRiderRatings(); }
+  if(name==='riders'){
+    if(!_riderRatingsCache.length) loadRiderRatings();
+    renderRidersManagement();
+  }
 }
 
 // ── CUSTOMER REVIEWS ──────────────────────────
@@ -1521,7 +1589,33 @@ async function loadRiderRatings(){
 }
 
 function renderRiderRatings(all){
-  // Per-rider summary
+  // ── Overall overview stats ──
+  const total=all.length;
+  const rrAvgEl=document.getElementById('rrAvg');
+  const rrAvgStarsEl=document.getElementById('rrAvgStars');
+  const rrTotalEl=document.getElementById('rrTotal');
+  if(rrTotalEl) rrTotalEl.textContent=total;
+  if(total){
+    const avg=all.reduce((s,r)=>s+(r.rating||0),0)/total;
+    if(rrAvgEl) rrAvgEl.textContent=avg.toFixed(1);
+    const ar=Math.round(avg);
+    if(rrAvgStarsEl) rrAvgStarsEl.textContent='★'.repeat(ar)+'☆'.repeat(5-ar);
+    const c5=all.filter(r=>r.rating===5).length,c4=all.filter(r=>r.rating===4).length,
+          c3=all.filter(r=>r.rating===3).length,c2=all.filter(r=>r.rating===2).length,
+          c1=all.filter(r=>r.rating===1).length;
+    const pct=n=>Math.round((n/total)*100)+'%';
+    ['5','4','3','2','1'].forEach(n=>{
+      const cnt={5:c5,4:c4,3:c3,2:c2,1:c1}[n];
+      const cEl=document.getElementById('rr'+n); if(cEl) cEl.textContent=cnt;
+      const bEl=document.getElementById('rr'+n+'bar'); if(bEl) bEl.style.width=pct(cnt);
+    });
+  }else{
+    if(rrAvgEl) rrAvgEl.textContent='—';
+    if(rrAvgStarsEl) rrAvgStarsEl.textContent='★★★★★';
+    ['rr5','rr4','rr3','rr2','rr1'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='0';});
+    ['rr5bar','rr4bar','rr3bar','rr2bar','rr1bar'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.width='0%';});
+  }
+  // ── Per-rider summary cards ──
   const summaryEl=document.getElementById('rrSummary');
   const byRider={};
   all.forEach(r=>{
@@ -1535,13 +1629,21 @@ function renderRiderRatings(all){
     if(!riderEntries.length){
       summaryEl.innerHTML='<p style="color:var(--muted);font-size:13px;">No ratings yet.</p>';
     }else{
-      summaryEl.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:10px;">${riderEntries.map(([uid,rd])=>{
+      summaryEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">${riderEntries.map(([uid,rd])=>{
         const avg=rd.sum/rd.total;
-        const stars='★'.repeat(Math.round(avg))+'☆'.repeat(5-Math.round(avg));
-        return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-width:160px;">
-          <div style="font-weight:700;font-size:13px;margin-bottom:3px;">${rd.name}</div>
-          <div style="color:var(--orange);font-size:15px;">${stars}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${avg.toFixed(1)} avg · ${rd.total} review${rd.total!==1?'s':''}</div>
+        const ar=Math.round(avg);
+        const filled='★'.repeat(ar);
+        const empty=`<span style="color:var(--border)">${'★'.repeat(5-ar)}</span>`;
+        return `<div class="rev-card">
+          <div class="rev-card-top">
+            <div>
+              <div style="font-size:15px;font-weight:700;">${rd.name}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">${rd.total} review${rd.total!==1?'s':''}</div>
+            </div>
+            <div class="rev-stars" style="color:#f59e0b;font-size:14px;">${filled}${empty}</div>
+          </div>
+          <div style="font-size:28px;font-weight:800;color:var(--text);line-height:1.1;">${avg.toFixed(1)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">average rating</div>
         </div>`;
       }).join('')}</div>`;
     }
@@ -1588,6 +1690,96 @@ function rrRowClick(rid, safeOid, safeRider, safeComment){
   const r=_riderRatingsCache.find(x=>(x.id||x.orderId)===rid)||{};
   const stars='★'.repeat(r.rating||0)+'☆'.repeat(5-(r.rating||0));
   toast(`🛵 ${rider} · Order ${oid} · ${stars}${comment?' — "'+comment+'"':''}`);
+}
+
+// ── RIDER MANAGEMENT ──────────────────────────
+async function addRider(){
+  const name=document.getElementById('newRiderName').value.trim();
+  const rawPhone=document.getElementById('newRiderPhone').value.trim();
+  const pass=document.getElementById('newRiderPass').value;
+  const btn=document.getElementById('addRiderBtn');
+  const msg=document.getElementById('addRiderMsg');
+  msg.style.display='none';
+  if(!name){toast('⚠️ Enter rider name.','#f59e0b');return;}
+  if(!rawPhone){toast('⚠️ Enter phone number.','#f59e0b');return;}
+  if(!pass||pass.length<6){toast('⚠️ Password must be at least 6 characters.','#f59e0b');return;}
+  if(!window._db){toast('Not connected.','#ef4444');return;}
+  btn.disabled=true; btn.textContent='Creating…';
+  // Strip non-digits for the email username so it's always valid
+  const phone=rawPhone.replace(/[^0-9+]/g,'');
+  const email=phone.replace(/\D/g,'')+'@linkup.rider';
+  try{
+    // Use Firebase Auth REST API — doesn't disturb the current admin SDK session
+    const resp=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${ADMIN_API_KEY}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass,returnSecureToken:true})
+    });
+    const data=await resp.json();
+    if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
+    const uid=data.localId;
+    await window._fbSetDoc(window._fbDoc(window._db,'riders',uid),{
+      name,phone:rawPhone,active:true,createdAt:new Date()
+    });
+    document.getElementById('newRiderName').value='';
+    document.getElementById('newRiderPhone').value='';
+    document.getElementById('newRiderPass').value='';
+    msg.style.display='block'; msg.style.color='var(--green)';
+    msg.innerHTML=`✅ <strong>${name}</strong> created successfully!<br>
+      <span style="font-family:monospace;font-size:12px;background:var(--bg);padding:5px 10px;border-radius:6px;display:inline-block;margin-top:6px;">
+        Login email: ${email}
+      </span>`;
+    toast(`✅ Rider ${name} created!`,'#22c55e');
+  }catch(e){
+    msg.style.display='block'; msg.style.color='#ef4444';
+    msg.textContent='❌ '+(e.message||'Failed to create rider');
+    toast('❌ '+(e.message||'Failed'),'#ef4444');
+  }finally{ btn.disabled=false; btn.textContent='Create Rider Account'; }
+}
+
+function renderRidersManagement(){
+  const el=document.getElementById('riderMgmtList');
+  if(!el) return;
+  if(!allRidersAdmin.length){
+    el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px 0;">No riders found. Add one above.</p>';
+    return;
+  }
+  const ratingMap={};
+  _riderRatingsCache.forEach(r=>{
+    if(!r.riderUid) return;
+    if(!ratingMap[r.riderUid]) ratingMap[r.riderUid]={sum:0,count:0};
+    ratingMap[r.riderUid].sum+=(r.rating||0);
+    ratingMap[r.riderUid].count++;
+  });
+  el.innerHTML=allRidersAdmin.map(r=>{
+    const ini=(r.name||'?').charAt(0).toUpperCase();
+    const isActive=r.active===true;
+    const rd=ratingMap[r.uid];
+    const ar=rd&&rd.count?Math.round(rd.sum/rd.count):0;
+    const starsHtml=rd&&rd.count
+      ?`<span class="rdm-stars">${'★'.repeat(ar)}<span style="color:var(--border)">${'★'.repeat(5-ar)}</span></span> ${(rd.sum/rd.count).toFixed(1)} · ${rd.count} review${rd.count!==1?'s':''}`
+      :`<span style="color:var(--muted);">No ratings yet</span>`;
+    return `<div class="rdm-card">
+      <div class="rdm-avatar">${ini}</div>
+      <div class="rdm-info">
+        <div class="rdm-name">${r.name||'Unknown'}</div>
+        <div class="rdm-phone">${r.phone||'No phone'}</div>
+        <div class="rdm-rating">${starsHtml}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0;">
+        <span class="rdm-badge ${isActive?'active':'inactive'}">${isActive?'Active':'Inactive'}</span>
+        <button class="rdm-toggle ${isActive?'deactivate':'activate'}" onclick="toggleRiderActive('${r.uid}',${isActive})">${isActive?'Deactivate':'Activate'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleRiderActive(uid, currentActive){
+  if(!window._db){toast('Not connected.','#ef4444');return;}
+  try{
+    await window._fbUpdate(window._fbDoc(window._db,'riders',uid),{active:!currentActive});
+    toast(currentActive?'Rider deactivated.':'✅ Rider activated!',currentActive?'#f59e0b':'#22c55e');
+  }catch(e){ toast('❌ '+e.message,'#ef4444'); }
 }
 
 function openCxProfile(rawPhone, rawName, rawOid){
