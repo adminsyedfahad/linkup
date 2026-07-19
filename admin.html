@@ -1741,7 +1741,9 @@ async function addRider(){
   if(!window._db||!window._auth?.currentUser){toast('Not connected — please refresh.','#ef4444');return;}
   btn.disabled=true; btn.textContent='Creating…';
   const phone=rawPhone.replace(/[^0-9+]/g,'');
-  const email=phone.replace(/\D/g,'')+'@linkup.rider';
+  // Email derived from name: lowercase, spaces/special chars stripped, e.g. "Adnan Khan" → adnankhan@linkup.rider
+  const emailUser=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const email=(emailUser||phone.replace(/\D/g,''))+'@linkup.rider';
   try{
     // Step 1: Capture admin token NOW — the signUp REST call below can trigger an SDK auth
     // state refresh, potentially replacing currentUser with the new rider's account.
@@ -1826,6 +1828,7 @@ function renderRidersManagement(){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0;">
         <span class="rdm-badge ${isActive?'active':'inactive'}">${isActive?'Active':'Inactive'}</span>
         <button class="rdm-toggle ${isActive?'deactivate':'activate'}" onclick="toggleRiderActive('${r.uid}',${isActive})">${isActive?'Deactivate':'Activate'}</button>
+        <button class="rdm-toggle deactivate" style="opacity:.7;" onclick="removeRider('${r.uid}','${(r.name||'').replace(/'/g,'\\\'')}')" >🗑 Remove</button>
       </div>
     </div>`;
   }).join('');
@@ -1837,6 +1840,39 @@ async function toggleRiderActive(uid, currentActive){
     await window._fbUpdate(window._fbDoc(window._db,'riders',uid),{active:!currentActive});
     toast(currentActive?'Rider deactivated.':'✅ Rider activated!',currentActive?'#f59e0b':'#22c55e');
   }catch(e){ toast('❌ '+e.message,'#ef4444'); }
+}
+
+async function removeRider(uid, riderName){
+  if(!confirm(`Are you sure you want to remove ${riderName||'this rider'}?\n\nThe rider will be removed from the app and can no longer log in. This cannot be undone.`)) return;
+  if(!window._db||!window._auth?.currentUser){toast('Not connected.','#ef4444');return;}
+  try{
+    // Capture admin token before any op that might affect auth state
+    const adminToken=await window._auth.currentUser.getIdToken();
+
+    // Delete Firestore document via REST API (saved admin token guarantees auth)
+    // Deleting this doc is the critical step — isActiveRider() checks existence of riders/{uid},
+    // so without this doc the rider cannot perform any Firestore operations in the rider app.
+    const fsResp=await fetch(
+      `https://firestore.googleapis.com/v1/projects/food-app-linkup/databases/(default)/documents/riders/${uid}`,
+      {method:'DELETE', headers:{'Authorization':'Bearer '+adminToken}}
+    );
+    if(!fsResp.ok && fsResp.status!==404){
+      const err=await fsResp.json().catch(()=>({}));
+      throw new Error('Firestore delete: '+(err.error?.message||fsResp.status));
+    }
+
+    // Firebase Auth account: the client REST API (accounts:delete) requires the user's OWN
+    // idToken — it cannot be done with the admin's token from the browser.
+    // The Firestore doc deletion above already fully blocks access (isActiveRider() fails).
+    // To clean up the orphan Auth account, go to:
+    // Firebase Console → Authentication → Users → find the @linkup.rider email → Delete
+    console.info(`[removeRider] Firestore doc deleted for ${uid}. Auth account (email ending @linkup.rider) can be cleaned up in Firebase Console → Authentication if needed.`);
+
+    toast(`🗑 ${riderName||'Rider'} removed from app.`,'#ef4444');
+  }catch(e){
+    console.error('[removeRider]',e);
+    toast('❌ '+e.message,'#ef4444');
+  }
 }
 
 function openCxProfile(rawPhone, rawName, rawOid){
