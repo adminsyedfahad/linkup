@@ -119,6 +119,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .ot tr:hover td{background:rgba(255,255,255,.015);}
 .ot tr.new-flash{animation:nf 1.6s ease;}
 @keyframes nf{0%{background:rgba(255,140,0,.12);}100%{background:transparent;}}
+@keyframes adminDelayBlink{0%,100%{background:transparent;}50%{background:rgba(239,68,68,.1);}}
+.ord-delayed td{animation:adminDelayBlink 1.4s ease-in-out infinite;}
+.delayed-badge{display:inline-block;font-size:10px;font-weight:800;color:#ef4444;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:1px 5px;margin-left:5px;vertical-align:middle;}
 .oid{font-weight:700;color:var(--orange);font-size:12px;}
 .cname{font-weight:600;font-size:12px;}
 .cphone{font-size:11px;color:var(--muted);}
@@ -944,6 +947,31 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 <script>
 // ── STATE ──────────────────────────────────────
 let allOrders=[], isInit=true, unsub=null, dispatchOrderId=null, newCnt=0;
+const _adminDelayAlerted=new Set();
+const ADMIN_PREP_LIMIT=8;
+
+function isOrderDelayed(o){
+  const status=o.status||'';
+  if(!['accepted','preparing'].includes(status)) return false;
+  const ac=o.acceptedAt;
+  if(!ac) return false;
+  const start=ac.toDate?ac.toDate():ac.seconds?new Date(ac.seconds*1000):new Date(ac);
+  if(isNaN(start)) return false;
+  return (Date.now()-start)/60000>ADMIN_PREP_LIMIT;
+}
+
+function checkAdminDelayed(){
+  const delayed=allOrders.filter(o=>isOrderDelayed(o));
+  delayed.forEach(o=>{
+    const id=o.orderId||o._id;
+    if(!_adminDelayAlerted.has(id)){
+      _adminDelayAlerted.add(id);
+      const shortId='LU-'+(id||'').slice(-5).toUpperCase();
+      toast('⚠️ Order '+shortId+' is delayed — over 8 min in prep!','#ef4444');
+    }
+  });
+  afr();
+}
 let allRiders=[], allRidersAdmin=[], _ridersUnsub=null;
 let _riderStatusCache={}, _riderStatusFilter='all', _riderStatusUnsubs=[];
 let _currentRiderUid=null, _rdrFilter='today', _rdrLiveInterval=null, _rdrStatusData={};
@@ -1194,6 +1222,7 @@ async function assignRider(orderId,trackingToken){
 function startListener(){
   if(unsub) unsub();
   if(!window._db) return;
+  if(!window._adminDelayInterval) window._adminDelayInterval=setInterval(checkAdminDelayed,30000);
   isInit=true;
   const q=window._fbQuery(window._fbCol(window._db,'orders'),window._fbOrderBy('createdAt','desc'));
   unsub=window._fbSnap(q,snap=>{
@@ -1463,12 +1492,14 @@ function renderTable(orders){
     const dispAt=o.dispatchedAt||o.dispatchTime||null;
     const delAt=o.deliveredAt||o.deliveryTime||null;
     const dur=dispDur(dispAt,delAt);
-    return `<tr data-id="${o._id}" onclick="openOrderDetail('${o._id}')">
+    const delayed=isOrderDelayed(o);
+    const delayedBadge=delayed?`<span class="delayed-badge">⚠️ DELAYED</span>`:'';
+    return `<tr class="${delayed?'ord-delayed':''}" data-id="${o._id}" onclick="openOrderDetail('${o._id}')">
       <td><div class="oid">${o.orderId||o._id}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">${timeStr}</div></td>
       <td><div class="cname">${o.customerName||'—'}</div><div class="cphone">${o.phone||''}</div></td>
       <td><div class="iline" title="${its}">${sh}</div>${totalQty?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">${totalQty} item${totalQty>1?'s':''}</div>`:''}</td>
       <td class="amt">₹${(o.amount||0).toLocaleString('en-IN')}</td>
-      <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span>${o.riderName?`<div style="font-size:9px;color:var(--muted);margin-top:3px;">${(()=>{const rs=o.assignedRiderUid?(_riderStatusCache[o.assignedRiderUid]?.status||null):null;return rs==='available'?'🟢 ':rs==='break'?'🟡 ':rs==='finished'?'🔴 ':''})()}🛵 ${o.riderName}</div>`:''}</td>
+      <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span>${delayedBadge}${o.riderName?`<div style="font-size:9px;color:var(--muted);margin-top:3px;">${(()=>{const rs=o.assignedRiderUid?(_riderStatusCache[o.assignedRiderUid]?.status||null):null;return rs==='available'?'🟢 ':rs==='break'?'🟡 ':rs==='finished'?'🔴 ':''})()}🛵 ${o.riderName}</div>`:''}</td>
       <td class="tcol">${fmtTime12(dispAt)}</td>
       <td class="tcol">${fmtTime12(delAt)}${dur?`<div class="tdur">${dur}</div>`:''}</td>
       <td class="ac" onclick="event.stopPropagation()">${actBtns(o._id,st)}</td>

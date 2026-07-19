@@ -297,7 +297,17 @@ html.light .od-items{background:#f4f4fc;}
 .refund-form-card{background:var(--card);border:1px solid rgba(239,68,68,.25);border-radius:14px;padding:16px 18px;margin-bottom:16px;}
 .refund-form-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:14px;}
 html.light .refund-form-card{background:#fff;}
-.refund-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.refund-list{display:flex;flex-direction:column;gap:8px;}
+/* ── DELAYED ORDER ANIMATION ─────────────────────── */
+@keyframes ordDelayPulse{0%,100%{background:transparent;}50%{background:rgba(239,68,68,.13);}}
+.ord-row-delayed td{animation:ordDelayPulse 1.4s ease-in-out infinite;}
+.ord-m-card.ord-row-delayed{animation:ordDelayPulse 1.4s ease-in-out infinite;}
+.delayed-badge{display:inline-block;font-size:10px;font-weight:800;color:#ef4444;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:1px 6px;margin-left:6px;vertical-align:middle;}
+.ord-prep-val.over{color:#ef4444;}
+/* ── REFUND IN ORDER DETAIL ──────────────────────── */
+.od-refund-area{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;}
+.od-refund-form{display:none;margin-top:10px;}
+.od-refund-form .mo-field{margin-bottom:10px;}
 .refund-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
 .refund-id{font-size:11px;font-weight:700;color:var(--muted);min-width:70px;}
 .refund-info{flex:1;}
@@ -562,6 +572,9 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
       <div class="rni" id="rn-history" onclick="showSec('history')">
         <span class="ico">📋</span> Order History
       </div>
+      <div class="rni" id="rn-refunds" onclick="showSec('refunds')">
+        <span class="ico">💸</span> Refunds
+      </div>
       <div class="rni" id="rn-profile" onclick="showSec('profile')">
         <span class="ico">⚙️</span> Profile
       </div>
@@ -672,10 +685,6 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
           <option value="month">This Month</option>
           <option value="custom">Custom Date</option>
         </select>
-        <select class="ord-select" id="earnViewSel" onchange="onEarnViewChange(this.value)">
-          <option value="earnings">📊 Earnings</option>
-          <option value="refunds">💸 Refunds</option>
-        </select>
       </div>
       <div id="earnCustomDateRow" style="display:none;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
         <input type="date" id="eFromDate" style="padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
@@ -693,29 +702,35 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
           💡 Revenue is calculated from orders with <strong style="color:var(--text);">delivered</strong> status. Commission of 20% is deducted by LinkUp.
         </div>
       </div>
-      <div id="earnRefundsSection" style="display:none;">
-        <div class="refund-form-card">
-          <div class="refund-form-title">Initiate a Refund</div>
-          <div class="mo-field">
-            <label>Order ID</label>
-            <input id="rfOrderId" type="text" placeholder="e.g. LU-1748…" style="text-transform:uppercase;">
-          </div>
-          <div class="mo-field">
-            <label>Refund To</label>
-            <select id="rfDest" class="ord-select" style="width:100%;">
-              <option value="wallet">💳 LinkUp Wallet (Instant)</option>
-              <option value="bank">🏦 Bank Account (3–5 days)</option>
-            </select>
-          </div>
-          <div class="mo-field">
-            <label>Reason</label>
-            <textarea id="rfReason" placeholder="Reason for refund…" style="min-height:70px;"></textarea>
-          </div>
-          <button id="rfSubmitBtn" class="mo-btn primary" onclick="submitRefundRequest()" style="margin-top:8px;width:auto;padding:10px 24px;">Submit Refund</button>
-        </div>
-        <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 8px;">Past Refunds</div>
-        <div id="refundList" class="refund-list"></div>
+    </div>
+
+    <!-- REFUNDS -->
+    <div class="sec" id="sec-refunds">
+      <div class="sec-hdr">
+        <h2>💸 Refunds</h2>
+        <p>Initiate and track refunds</p>
       </div>
+      <div class="refund-form-card">
+        <div class="refund-form-title">Initiate a Refund</div>
+        <div class="mo-field">
+          <label>Order ID</label>
+          <input id="rfOrderId" type="text" placeholder="e.g. LU-1748…" style="text-transform:uppercase;">
+        </div>
+        <div class="mo-field">
+          <label>Refund To</label>
+          <select id="rfDest" class="ord-select" style="width:100%;">
+            <option value="wallet">💳 LinkUp Wallet (Instant)</option>
+            <option value="bank">🏦 Bank Account (3–5 days)</option>
+          </select>
+        </div>
+        <div class="mo-field">
+          <label>Reason</label>
+          <textarea id="rfReason" placeholder="Reason for refund…" style="min-height:70px;"></textarea>
+        </div>
+        <button id="rfSubmitBtn" class="mo-btn primary" onclick="submitRefundRequest()" style="margin-top:8px;width:auto;padding:10px 24px;">Submit Refund</button>
+      </div>
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 8px;">Refund History</div>
+      <div id="refundList" class="refund-list"></div>
     </div>
 
     <!-- HISTORY -->
@@ -789,6 +804,9 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
       </button>
       <button class="bnav-item" id="bn-history" onclick="showSec('history')">
         <span class="bico">📋</span>History
+      </button>
+      <button class="bnav-item" id="bn-refunds" onclick="showSec('refunds')">
+        <span class="bico">💸</span>Refunds
       </button>
       <button class="bnav-item" id="bn-profile" onclick="showSec('profile')">
         <span class="bico">⚙️</span>Profile
@@ -1004,12 +1022,40 @@ function showSec(name){
   if(name==='menu') renderMenuUI();
   if(name==='earnings') renderEarnings();
   if(name==='history') renderHistory();
+  if(name==='refunds') renderRefunds();
 }
 
 // ── ORDERS ─────────────────────────────────────────────────
+const PREP_LIMIT=8;
+const _delayedAlerted=new Set();
+
+function _isDelayed(o){
+  const status=o.status||'';
+  if(!['accepted','preparing'].includes(status)) return false;
+  const ac=o.acceptedAt;
+  if(!ac) return false;
+  const start=ac.toDate?ac.toDate():new Date(ac);
+  if(isNaN(start)) return false;
+  return (Date.now()-start)/60000>PREP_LIMIT;
+}
+
+function checkDelayedOrders(){
+  const delayed=allOrders.filter(o=>_isDelayed(o));
+  delayed.forEach(o=>{
+    const id=o.orderId||o._id;
+    if(!_delayedAlerted.has(id)){
+      _delayedAlerted.add(id);
+      const shortId='LU-'+(id||'').slice(-5).toUpperCase();
+      rToast('⚠️ Order '+shortId+' is taking more than 8 minutes!');
+    }
+  });
+  renderOrders();
+}
+
 function subscribeOrders(){
   if(_ordersUnsub){_ordersUnsub();_ordersUnsub=null;}
   if(!window._resDb) return;
+  if(!window._delayCheckInterval) window._delayCheckInterval=setInterval(checkDelayedOrders,30000);
   const q=window._resQuery(
     window._resCol(window._resDb,'counters'),
     window._resWhere('type','==','orderqueue')
@@ -1071,10 +1117,11 @@ function _prepTime(o){
   if(rd){
     const end=rd.toDate?rd.toDate():new Date(rd);
     const mins=Math.max(0,Math.round((end-start)/60000));
-    return {done:true,mins};
+    return {done:true,mins,overdue:mins>PREP_LIMIT};
   }
+  if(!['accepted','preparing'].includes(o.status||'')) return null;
   const mins=Math.max(0,Math.round((Date.now()-start)/60000));
-  return {done:false,mins};
+  return {done:false,mins,overdue:mins>PREP_LIMIT};
 }
 
 function _ordBadge(status){
@@ -1130,9 +1177,11 @@ function renderOrderRow(o){
   const itemLines=cartItems.slice(0,2).map(i=>`<div class="ord-item-line">×${i.qty} ${i.name}</div>`).join('');
   const moreItems=cartItems.length>2?`<div class="ord-item-more">+${cartItems.length-2} more</div>`:'';
   const pt=_prepTime(o);
-  const prepHtml=pt
-    ?`<span class="ord-prep-val ${pt.done?'done':'running'}">${pt.mins}m</span>`
-    :`<span class="ord-prep-val">—</span>`;
+  let prepHtml;
+  if(!pt){prepHtml=`<span class="ord-prep-val">—</span>`;}
+  else{const ptCls=pt.done?(pt.overdue?'over':'done'):(pt.overdue?'over':'running');prepHtml=`<span class="ord-prep-val ${ptCls}">${pt.mins}m</span>`;}
+  const isDelayed=_isDelayed(o);
+  const delayedBadge=isDelayed?`<span class="delayed-badge">⚠️ DELAYED</span>`:'';
   let actHtml='<span class="ord-act-done">'+lbl+'</span>';
   if(status==='placed'){
     actHtml=`<div class="ord-act-row">
@@ -1146,13 +1195,15 @@ function renderOrderRow(o){
   }else if(status==='ready_for_pickup'){
     actHtml=`<span class="ord-act-done">⏳ Awaiting rider</span>`;
   }
-  const rowCls=status==='placed'?' class="ord-row-new"':'';
-  return `<tr${rowCls} id="oc-${orderId}" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
+  let rowClass='';
+  if(status==='placed') rowClass='ord-row-new';
+  else if(isDelayed) rowClass='ord-row-delayed';
+  return `<tr class="${rowClass}" id="oc-${orderId}" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
     <td class="ord-td"><span class="ord-id">${shortId}</span><span class="ord-time">${time}</span></td>
     <td class="ord-td"><span class="ord-cust-name">${o.customerName||'—'}</span>${o.phone?`<span class="ord-cust-ph">📞 ${o.phone}</span>`:''}</td>
     <td class="ord-td"><div>${itemLines}${moreItems}</div></td>
     <td class="ord-td"><span class="ord-amt-val">₹${o.amount||0}</span><span class="ord-pay-lbl">${o.payMethod||''}</span></td>
-    <td class="ord-td"><span class="ord-badge ${cls}">${lbl}</span></td>
+    <td class="ord-td"><span class="ord-badge ${cls}">${lbl}</span>${delayedBadge}</td>
     <td class="ord-td">${prepHtml}</td>
     <td class="ord-td">${actHtml}</td>
   </tr>`;
@@ -1168,7 +1219,11 @@ function renderOrderMobileCard(o){
   const cartItems=Array.isArray(o.cartItems)?o.cartItems:[];
   const itemsHtml=cartItems.map(i=>`<div class="ord-m-item"><span class="ord-m-item-n">×${i.qty} ${i.name}</span><span class="ord-m-item-p">₹${(i.price*i.qty)||''}</span></div>`).join('');
   const pt=_prepTime(o);
-  const prepStr=pt?`${pt.mins}m ${pt.done?'prep time':'elapsed'}`:'—';
+  let prepStr,prepCls;
+  if(!pt){prepStr='—';prepCls='';}
+  else{prepStr=`${pt.mins}m ${pt.done?'prep time':'elapsed'}`;prepCls=pt.done?(pt.overdue?'over':'done'):(pt.overdue?'over':'running');}
+  const isDelayed=_isDelayed(o);
+  const delayedBadge=isDelayed?`<span class="delayed-badge">⚠️ DELAYED</span>`:'';
   let actions='';
   if(status==='placed'){
     actions=`<button class="ord-act-btn accept" onclick="orderAction('${orderId}','accept')">✓ Accept</button>
@@ -1176,16 +1231,18 @@ function renderOrderMobileCard(o){
   }else if(status==='accepted'||status==='preparing'){
     actions=`<button class="ord-act-btn markready" onclick="orderAction('${orderId}','ready')">✅ Mark Ready</button>`;
   }
-  const cardCls='ord-m-card'+(status==='placed'?' ord-row-new':'');
-  return `<div class="${cardCls}" id="oc-${orderId}">
+  let cardClass='ord-m-card';
+  if(status==='placed') cardClass+=' ord-row-new';
+  else if(isDelayed) cardClass+=' ord-row-delayed';
+  return `<div class="${cardClass}" id="oc-${orderId}">
     <div class="ord-m-hdr" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
       <div><span class="ord-m-id">${shortId}</span><span class="ord-m-time">${time}</span></div>
-      <span class="ord-badge ${cls}">${lbl}</span>
+      <span class="ord-badge ${cls}">${lbl}</span>${delayedBadge}
     </div>
     <div class="ord-m-body" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
       <div class="ord-m-row"><span class="ord-m-lbl">Customer</span><span class="ord-m-val">👤 ${o.customerName||'—'}</span></div>
       ${o.phone?`<div class="ord-m-row"><span class="ord-m-lbl">Phone</span><span class="ord-m-val">📞 ${o.phone}</span></div>`:''}
-      <div class="ord-m-row"><span class="ord-m-lbl">Prep Time</span><span class="ord-m-val">${prepStr}</span></div>
+      <div class="ord-m-row"><span class="ord-m-lbl">Prep Time</span><span class="ord-m-val ${prepCls}">${prepStr}</span></div>
     </div>
     ${itemsHtml?`<div class="ord-m-items" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">${itemsHtml}</div>`:''}
     <div class="ord-m-footer">
@@ -1208,6 +1265,26 @@ function openOrderDetail(orderId){
     <span class="od-item-price">₹${((i.price||0)*(i.qty||1)).toLocaleString('en-IN')}</span>
   </div>`).join('');
   const {cls,lbl}=_ordBadge(o.status||'placed');
+  const canRefund=o.status==='delivered';
+  const refundArea=canRefund?`
+    <div class="od-refund-area">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;">Initiate Refund</div>
+      <button class="ord-act-btn markready" id="odRefundBtn" onclick="document.getElementById('odRefundForm').style.display='block';this.style.display='none';" style="font-size:12px;padding:7px 16px;">💸 Initiate Refund</button>
+      <div class="od-refund-form" id="odRefundForm">
+        <div class="mo-field">
+          <label style="font-size:12px;color:var(--text-muted);">Refund To</label>
+          <select id="odRefundDest" class="ord-select" style="width:100%;margin-top:4px;">
+            <option value="wallet">💳 LinkUp Wallet (Instant)</option>
+            <option value="bank">🏦 Bank Account (3–5 days)</option>
+          </select>
+        </div>
+        <div class="mo-field">
+          <label style="font-size:12px;color:var(--text-muted);">Reason (optional)</label>
+          <textarea id="odRefundReason" placeholder="Reason for refund…" style="min-height:60px;margin-top:4px;width:100%;box-sizing:border-box;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:13px;resize:vertical;"></textarea>
+        </div>
+        <button class="ord-act-btn accept" id="odRefundConfirmBtn" onclick="submitRefundFromDetail('${orderId}')" style="font-size:12px;padding:7px 16px;">✅ Confirm Refund</button>
+      </div>
+    </div>`:'';
   document.getElementById('odTitle').textContent='Order '+shortId;
   document.getElementById('odBody').innerHTML=`
     <div class="od-row"><span class="od-lbl">Order ID</span><span class="od-val" style="font-family:monospace;">${shortId}</span></div>
@@ -1223,6 +1300,7 @@ function openOrderDetail(orderId){
     <div class="od-row"><span class="od-lbl">Payment</span><span class="od-val">${o.payMethod||'—'}</span></div>
     ${o.riderName?`<div class="od-row"><span class="od-lbl">Rider</span><span class="od-val">🛵 ${o.riderName}${o.riderPhone?` · ${o.riderPhone}`:''}</span></div>`:''}
     <div class="od-row"><span class="od-lbl">Status</span><span class="od-val"><span class="ord-badge ${cls}">${lbl}</span></span></div>
+    ${refundArea}
   `;
   document.getElementById('ordDetailBg').classList.add('on');
 }
@@ -1519,41 +1597,19 @@ function closeMo(){
 }
 
 // ── EARNINGS ───────────────────────────────────────────────
-function _syncEarnDropdowns(){
-  const dateSel=document.getElementById('earnDateSel');
-  const viewSel=document.getElementById('earnViewSel');
-  const isRefunds=_earnFilter==='refunds';
-  if(dateSel&&!isRefunds) dateSel.value=_earnFilter;
-  if(viewSel) viewSel.value=isRefunds?'refunds':'earnings';
-}
-function _applyEarnView(isRefunds){
-  const statsSection=document.getElementById('earnStatsSection');
-  const refundsSection=document.getElementById('earnRefundsSection');
-  if(statsSection) statsSection.style.display=isRefunds?'none':'block';
-  if(refundsSection) refundsSection.style.display=isRefunds?'block':'none';
-}
 function onEarnDateChange(v){
   _earnFilter=v;
   const customRow=document.getElementById('earnCustomDateRow');
   if(customRow) customRow.style.display=v==='custom'?'flex':'none';
   if(v!=='custom') renderEarnings();
 }
-function onEarnViewChange(v){
-  const isRefunds=v==='refunds';
-  if(isRefunds) _earnFilter='refunds'; // keep date filter value intact for when switching back
-  _applyEarnView(isRefunds);
-  if(isRefunds) renderRefunds();
-  else renderEarnings();
-}
 function setEarnFilter(f){
   _earnFilter=f;
-  const isRefunds=f==='refunds';
+  const dateSel=document.getElementById('earnDateSel');
+  if(dateSel&&f!=='refunds') dateSel.value=f;
   const customRow=document.getElementById('earnCustomDateRow');
-  if(customRow) customRow.style.display=(!isRefunds&&f==='custom')?'flex':'none';
-  _applyEarnView(isRefunds);
-  _syncEarnDropdowns();
-  if(isRefunds) renderRefunds();
-  else if(f!=='custom') renderEarnings();
+  if(customRow) customRow.style.display=f==='custom'?'flex':'none';
+  if(f!=='custom'&&f!=='refunds') renderEarnings();
 }
 
 function renderEarnings(){
@@ -1617,57 +1673,60 @@ function renderRefunds(){
   }).join('');
 }
 
+async function processRefund(orderId,dest,reason,onSuccess){
+  if(!window._resDb||!restProfile?.uid){rToast('⚠️ Not logged in.');return;}
+  try{
+    const snap=await window._resGetDoc(window._resDoc(window._resDb,'counters','rq_'+orderId));
+    if(!snap.exists()){rToast('⚠️ Order not found. Check the Order ID.');return;}
+    const order=snap.data();
+    if(order.restaurantId&&order.restaurantId!==restProfile.uid){rToast('⚠️ This order does not belong to your restaurant.');return;}
+    if(order.status==='refund_initiated'||order.status==='refunded'){rToast('⚠️ Refund already initiated for this order.');return;}
+    const now=new Date();
+    const amount=order.amount||0;
+    const destLabel=dest==='wallet'?'LinkUp Wallet':'Bank Account';
+    await window._resSetDoc(window._resDoc(window._resDb,'counters','rq_'+orderId),
+      {status:'refund_initiated',refundBy:'restaurant',refundDest:dest,refundReason:reason||'',refundInitiatedAt:now,refundAmount:amount},{merge:true});
+    await window._resSetDoc(window._resDoc(window._resDb,'counters','rstatus_'+orderId),
+      {type:'rstatus',orderId,status:'refund_initiated',refundBy:'restaurant',refundDest:dest,refundReason:reason||'',refundAmount:amount,updatedAt:now,restaurantId:restProfile.uid},{merge:true});
+    if(order.walletToken){
+      await window._resSetDoc(window._resDoc(window._resDb,'counters','notif_refund_'+orderId),
+        {type:'refund_notification',walletToken:order.walletToken,orderId,amount,dest,reason:reason||'',
+         initiatedBy:'restaurant',restaurantName:restProfile.name||'Restaurant',
+         message:`Refund of ₹${amount} initiated by ${restProfile.name||'restaurant'} — amount will reflect in ${destLabel} within 3–5 business days`,
+         createdAt:now,read:false});
+    }
+    rToast('✅ Refund initiated for order '+orderId);
+    if(onSuccess) onSuccess();
+  }catch(e){rToast('⚠️ Failed: '+e.message);}
+}
+
+async function submitRefundFromDetail(orderId){
+  const dest=document.getElementById('odRefundDest')?.value||'wallet';
+  const reason=(document.getElementById('odRefundReason')?.value||'').trim();
+  const btn=document.getElementById('odRefundConfirmBtn');
+  if(btn){btn.disabled=true;btn.textContent='Processing…';}
+  await processRefund(orderId,dest,reason,()=>{
+    closeOrderDetail();
+    renderRefunds();
+  });
+  if(btn){btn.disabled=false;btn.textContent='✅ Confirm Refund';}
+}
+
 async function submitRefundRequest(){
   const rawId=(document.getElementById('rfOrderId')?.value||'').trim().toUpperCase();
   const dest=document.getElementById('rfDest')?.value||'wallet';
   const reason=(document.getElementById('rfReason')?.value||'').trim();
   if(!rawId){rToast('⚠️ Enter Order ID.');return;}
   if(!reason){rToast('⚠️ Enter a reason for the refund.');return;}
-  if(!window._resDb||!restProfile?.uid){rToast('⚠️ Not logged in.');return;}
   const orderId=rawId.startsWith('LU-')?rawId:'LU-'+rawId;
   const btn=document.getElementById('rfSubmitBtn');
   if(btn){btn.disabled=true;btn.textContent='Processing…';}
-  try{
-    const snap=await window._resGetDoc(window._resDoc(window._resDb,'counters','rq_'+orderId));
-    if(!snap.exists()){
-      rToast('⚠️ Order not found. Check the Order ID.');
-      if(btn){btn.disabled=false;btn.textContent='Submit Refund';}
-      return;
-    }
-    const order=snap.data();
-    if(order.restaurantId&&order.restaurantId!==restProfile.uid){
-      rToast('⚠️ This order does not belong to your restaurant.');
-      if(btn){btn.disabled=false;btn.textContent='Submit Refund';}
-      return;
-    }
-    if(order.status==='refund_initiated'||order.status==='refunded'){
-      rToast('⚠️ Refund already initiated for this order.');
-      if(btn){btn.disabled=false;btn.textContent='Submit Refund';}
-      return;
-    }
-    const now=new Date();
-    const amount=order.amount||0;
-    const destLabel=dest==='wallet'?'LinkUp Wallet':'Bank Account';
-    await window._resSetDoc(window._resDoc(window._resDb,'counters','rq_'+orderId),
-      {status:'refund_initiated',refundBy:'restaurant',refundDest:dest,refundReason:reason,refundInitiatedAt:now,refundAmount:amount},{merge:true});
-    await window._resSetDoc(window._resDoc(window._resDb,'counters','rstatus_'+orderId),
-      {type:'rstatus',orderId,status:'refund_initiated',refundBy:'restaurant',refundDest:dest,refundReason:reason,refundAmount:amount,updatedAt:now,restaurantId:restProfile.uid},{merge:true});
-    if(order.walletToken){
-      await window._resSetDoc(window._resDoc(window._resDb,'counters','notif_refund_'+orderId),
-        {type:'refund_notification',walletToken:order.walletToken,orderId,amount,dest,reason,
-         initiatedBy:'restaurant',restaurantName:restProfile.name||'Restaurant',
-         message:`Refund of ₹${amount} initiated by ${restProfile.name||'restaurant'} — amount will reflect in ${destLabel} within 3–5 business days`,
-         createdAt:now,read:false});
-    }
-    rToast('✅ Refund initiated for order '+orderId);
+  await processRefund(orderId,dest,reason,()=>{
     document.getElementById('rfOrderId').value='';
     document.getElementById('rfReason').value='';
     renderRefunds();
-    if(btn){btn.disabled=false;btn.textContent='Submit Refund';}
-  }catch(e){
-    rToast('⚠️ Failed: '+e.message);
-    if(btn){btn.disabled=false;btn.textContent='Submit Refund';}
-  }
+  });
+  if(btn){btn.disabled=false;btn.textContent='Submit Refund';}
 }
 
 // ── HISTORY ────────────────────────────────────────────────
