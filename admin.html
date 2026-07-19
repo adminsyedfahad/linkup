@@ -1738,24 +1738,46 @@ async function addRider(){
   if(!name){toast('⚠️ Enter rider name.','#f59e0b');return;}
   if(!rawPhone){toast('⚠️ Enter phone number.','#f59e0b');return;}
   if(!pass||pass.length<6){toast('⚠️ Password must be at least 6 characters.','#f59e0b');return;}
-  if(!window._db){toast('Not connected.','#ef4444');return;}
+  if(!window._db||!window._auth?.currentUser){toast('Not connected — please refresh.','#ef4444');return;}
   btn.disabled=true; btn.textContent='Creating…';
-  // Strip non-digits for the email username so it's always valid
   const phone=rawPhone.replace(/[^0-9+]/g,'');
   const email=phone.replace(/\D/g,'')+'@linkup.rider';
   try{
-    // Use Firebase Auth REST API — doesn't disturb the current admin SDK session
-    const resp=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${ADMIN_API_KEY}`,{
+    // Step 1: Capture admin token NOW — the signUp REST call below can trigger an SDK auth
+    // state refresh, potentially replacing currentUser with the new rider's account.
+    // Saving the token first guarantees we always write Firestore as the admin.
+    const adminToken=await window._auth.currentUser.getIdToken();
+
+    // Step 2: Create Firebase Auth account via REST API
+    const authResp=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${ADMIN_API_KEY}`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({email,password:pass,returnSecureToken:true})
     });
-    const data=await resp.json();
-    if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
-    const uid=data.localId;
-    await window._fbSetDoc(window._fbDoc(window._db,'riders',uid),{
-      name,phone:rawPhone,active:true,createdAt:new Date()
-    });
+    const authData=await authResp.json();
+    if(authData.error) throw new Error(authData.error.message||JSON.stringify(authData.error));
+    const uid=authData.localId;
+
+    // Step 3: Write riders/{uid} via Firestore REST API using the saved admin token.
+    // This bypasses the SDK auth state entirely, so it works even if the SDK swapped
+    // currentUser after the signUp call above.
+    const fsResp=await fetch(
+      `https://firestore.googleapis.com/v1/projects/food-app-linkup/databases/(default)/documents/riders/${uid}`,
+      {
+        method:'PATCH',
+        headers:{'Authorization':'Bearer '+adminToken,'Content-Type':'application/json'},
+        body:JSON.stringify({fields:{
+          name:        {stringValue:name},
+          email:       {stringValue:email},
+          phone:       {stringValue:rawPhone},
+          active:      {booleanValue:true},
+          createdAt:   {timestampValue:new Date().toISOString()}
+        }})
+      }
+    );
+    const fsData=await fsResp.json();
+    if(fsData.error) throw new Error('Firestore: '+fsData.error.message);
+
     document.getElementById('newRiderName').value='';
     document.getElementById('newRiderPhone').value='';
     document.getElementById('newRiderPass').value='';
