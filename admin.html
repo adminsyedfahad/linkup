@@ -311,6 +311,11 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 
 /* CUSTOMER REVIEWS */
 .rev-header{margin-bottom:4px;}
+.rev-tabs{display:flex;gap:6px;margin:14px 0 18px;flex-wrap:wrap;}
+.rev-tab{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;
+  border:1px solid var(--border);color:var(--muted);background:var(--card);transition:all .15s;white-space:nowrap;}
+.rev-tab.active{background:rgba(255,140,0,.12);border-color:rgba(255,140,0,.35);color:var(--orange);}
+.rev-tab:hover:not(.active){color:var(--text);border-color:rgba(255,140,0,.25);}
 /* Rating overview — App Store style */
 .rev-overview{display:flex;align-items:center;gap:28px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin:16px 0;}
 .rev-score-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:80px;}
@@ -627,21 +632,53 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;">⭐ Customer Reviews</h2>
         <p style="margin:0;color:var(--muted);font-size:13px;">Live ratings submitted by customers after delivery</p>
       </div>
-      <div class="rev-overview" id="revStats">
-        <div class="rev-score-left">
-          <div class="rev-big-num" id="revAvg">—</div>
-          <div class="rev-big-stars" id="revAvgStars">★★★★★</div>
-          <div class="rev-big-count"><span id="revTotal">0</span> reviews</div>
-        </div>
-        <div class="rev-bars">
-          <div class="rev-bar-row"><span class="rev-bar-lbl">5</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev5bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev5">0</span></div>
-          <div class="rev-bar-row"><span class="rev-bar-lbl">4</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev4bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev4">0</span></div>
-          <div class="rev-bar-row"><span class="rev-bar-lbl">3</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev3bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev3">0</span></div>
-          <div class="rev-bar-row"><span class="rev-bar-lbl">2</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev2bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev2">0</span></div>
-          <div class="rev-bar-row"><span class="rev-bar-lbl">1</span><div class="rev-bar-track"><div class="rev-bar-fill rev-bar-fill-low" id="rev1bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev1">0</span></div>
-        </div>
+      <!-- Tabs -->
+      <div class="rev-tabs">
+        <div class="rev-tab active" id="revt-linkup" onclick="switchRevTab('linkup')">📱 LinkUp Reviews</div>
+        <div class="rev-tab" id="revt-rider" onclick="switchRevTab('rider')">🛵 Rider Reviews</div>
+        <div class="rev-tab" id="revt-rest" onclick="switchRevTab('rest')">🍽️ Restaurant Reviews</div>
       </div>
-      <div id="revList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
+      <!-- Pane: LinkUp Reviews (existing) -->
+      <div id="revPane-linkup">
+        <div class="rev-overview" id="revStats">
+          <div class="rev-score-left">
+            <div class="rev-big-num" id="revAvg">—</div>
+            <div class="rev-big-stars" id="revAvgStars">★★★★★</div>
+            <div class="rev-big-count"><span id="revTotal">0</span> reviews</div>
+          </div>
+          <div class="rev-bars">
+            <div class="rev-bar-row"><span class="rev-bar-lbl">5</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev5bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev5">0</span></div>
+            <div class="rev-bar-row"><span class="rev-bar-lbl">4</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev4bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev4">0</span></div>
+            <div class="rev-bar-row"><span class="rev-bar-lbl">3</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev3bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev3">0</span></div>
+            <div class="rev-bar-row"><span class="rev-bar-lbl">2</span><div class="rev-bar-track"><div class="rev-bar-fill" id="rev2bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev2">0</span></div>
+            <div class="rev-bar-row"><span class="rev-bar-lbl">1</span><div class="rev-bar-track"><div class="rev-bar-fill rev-bar-fill-low" id="rev1bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="rev1">0</span></div>
+          </div>
+        </div>
+        <div id="revList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
+      </div>
+      <!-- Pane: Rider Reviews (inline) -->
+      <div id="revPane-rider" style="display:none;">
+        <div class="rev-overview" id="revRiderOverview">
+          <div class="rev-score-left">
+            <div class="rev-big-num" id="revRiderAvg">—</div>
+            <div class="rev-big-stars" id="revRiderStars">★★★★★</div>
+            <div class="rev-big-count"><span id="revRiderTotal">0</span> reviews</div>
+          </div>
+          <div class="rev-bars">
+            <div class="rev-bar-row"><span class="rev-bar-lbl">5</span><div class="rev-bar-track"><div class="rev-bar-fill" id="revR5bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="revR5">0</span></div>
+            <div class="rev-bar-row"><span class="rev-bar-lbl">4</span><div class="rev-bar-track"><div class="rev-bar-fill" id="revR4bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="revR4">0</span></div>
+            <div class="rev-bar-row"><span class="rev-bar-lbl">3</span><div class="rev-bar-track"><div class="rev-bar-fill" id="revR3bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="revR3">0</span></div>
+            <div class="rev-bar-row"><span class="rev-bar-lbl">2</span><div class="rev-bar-track"><div class="rev-bar-fill" id="revR2bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="revR2">0</span></div>
+            <div class="rev-bar-row"><span class="rev-bar-lbl">1</span><div class="rev-bar-track"><div class="rev-bar-fill rev-bar-fill-low" id="revR1bar" style="width:0%"></div></div><span class="rev-bar-cnt" id="revR1">0</span></div>
+          </div>
+        </div>
+        <div id="revRiderSummary" style="margin-bottom:18px;"></div>
+        <div id="revRiderList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
+      </div>
+      <!-- Pane: Restaurant Reviews (new) -->
+      <div id="revPane-rest" style="display:none;">
+        <div id="revRestContent"></div>
+      </div>
     </div>
 
     <!-- RIDER RATINGS -->
@@ -1235,6 +1272,7 @@ function loadRestaurants(){
   _restRatingsUnsub=window._fbSnap(window._fbCol(window._db,'ratings'),snap=>{
     _restRatings=snap.docs.map(d=>d.data()).filter(r=>typeof r.rating==='number');
     if(document.getElementById('sec-restaurants')?.classList.contains('on')) renderRestaurantsManagement();
+    if(_curRevTab==='rest') renderRestReviews();
   },()=>{});
 }
 
@@ -1837,6 +1875,141 @@ function revRowClick(rid, safePhone, safeName, safeOid){
 
 let _cxReviewsCache=[];
 
+// ── REVIEW TABS ────────────────────────────────
+let _curRevTab='linkup';
+
+function switchRevTab(tab){
+  _curRevTab=tab;
+  ['linkup','rider','rest'].forEach(t=>{
+    const pane=document.getElementById('revPane-'+t);
+    const btn=document.getElementById('revt-'+t);
+    if(pane) pane.style.display=(t===tab)?'':'none';
+    if(btn) btn.classList.toggle('active',t===tab);
+  });
+  if(tab==='rider') loadRiderReviewsTab();
+  if(tab==='rest') renderRestReviews();
+}
+
+async function loadRiderReviewsTab(){
+  const listEl=document.getElementById('revRiderList');
+  if(_riderRatingsCache.length){ renderRiderReviewsTab(_riderRatingsCache); return; }
+  if(listEl) listEl.innerHTML='<p style="color:var(--muted);text-align:center;padding:30px 0;">⏳ Loading…</p>';
+  if(!window._db) return;
+  try{
+    const snap=await window._fbGetDocs(window._fbCol(window._db,'riderRatings'));
+    const all=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||''));
+    _riderRatingsCache=all;
+    renderRiderReviewsTab(all);
+  }catch(e){
+    if(listEl) listEl.innerHTML='<p style="color:#ef4444;text-align:center;padding:30px 0;">⚠️ Could not load rider ratings.</p>';
+  }
+}
+
+function renderRiderReviewsTab(all){
+  const total=all.length;
+  const avgEl=document.getElementById('revRiderAvg');
+  const starsEl=document.getElementById('revRiderStars');
+  const totalEl=document.getElementById('revRiderTotal');
+  if(totalEl) totalEl.textContent=total;
+  if(total){
+    const avg=all.reduce((s,r)=>s+(r.rating||0),0)/total;
+    if(avgEl) avgEl.textContent=avg.toFixed(1);
+    const ar=Math.round(avg);
+    if(starsEl) starsEl.textContent='★'.repeat(ar)+'☆'.repeat(5-ar);
+    [5,4,3,2,1].forEach(n=>{
+      const cnt=all.filter(r=>r.rating===n).length;
+      const c=document.getElementById('revR'+n); if(c) c.textContent=cnt;
+      const b=document.getElementById('revR'+n+'bar'); if(b) b.style.width=Math.round((cnt/total)*100)+'%';
+    });
+  }else{
+    if(avgEl) avgEl.textContent='—';
+    if(starsEl) starsEl.textContent='★★★★★';
+    [5,4,3,2,1].forEach(n=>{ const c=document.getElementById('revR'+n);if(c)c.textContent='0'; const b=document.getElementById('revR'+n+'bar');if(b)b.style.width='0%'; });
+  }
+  // Per-rider summary cards
+  const summaryEl=document.getElementById('revRiderSummary');
+  const byRider={};
+  all.forEach(r=>{ if(!r.riderUid) return; if(!byRider[r.riderUid]) byRider[r.riderUid]={name:r.riderName||r.riderUid,total:0,sum:0}; byRider[r.riderUid].total++; byRider[r.riderUid].sum+=(r.rating||0); });
+  const riderEntries=Object.entries(byRider).sort((a,b)=>(b[1].sum/b[1].total)-(a[1].sum/a[1].total));
+  if(summaryEl){
+    summaryEl.innerHTML=riderEntries.length?`<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">${riderEntries.map(([uid,rd])=>{
+      const avg=rd.sum/rd.total,ar=Math.round(avg),ini=(rd.name||'?').charAt(0).toUpperCase();
+      return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--odim);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--orange);flex-shrink:0;">${ini}</div>
+        <div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;">${rd.name}</div><div style="font-size:13px;color:#f59e0b;margin-top:1px;">${'★'.repeat(ar)}${'☆'.repeat(5-ar)}</div></div>
+        <div style="text-align:right;"><div style="font-size:20px;font-weight:800;">${avg.toFixed(1)}</div><div style="font-size:10px;color:var(--muted);">${rd.total} review${rd.total!==1?'s':''}</div></div>
+      </div>`;
+    }).join('')}</div>`:'';
+  }
+  // List
+  const listEl=document.getElementById('revRiderList');
+  if(!listEl) return;
+  if(!all.length){ listEl.innerHTML='<p style="color:var(--muted);text-align:center;padding:40px 0;">No rider ratings yet.</p>'; return; }
+  listEl.innerHTML=all.map(r=>{
+    const filled='★'.repeat(r.rating||0);
+    const empty=`<span style="color:var(--border)">${'★'.repeat(5-(r.rating||0))}</span>`;
+    const date=r.ratedAt?new Date(r.ratedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
+    return `<div class="rev-row">
+      <span class="rev-dot"></span>
+      <span class="rev-row-name">${r.riderName||'Rider'}</span>
+      <span class="rev-row-oid" style="margin-left:6px;">${r.orderId||''}</span>
+      <span class="rev-row-stars" style="margin-left:auto;">${filled}${empty}</span>
+      <span class="rev-row-date">${date}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderRestReviews(){
+  const el=document.getElementById('revRestContent');
+  if(!el) return;
+  const ratings=_restRatings.filter(r=>typeof r.rating==='number');
+  if(!ratings.length){
+    el.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted);"><div style="font-size:44px;margin-bottom:12px;">🍽️</div><p>No restaurant reviews yet.</p></div>';
+    return;
+  }
+  // Group by restaurantId
+  const groups={};
+  ratings.forEach(r=>{ const rid=r.restaurantId||'default'; if(!groups[rid]) groups[rid]={ratings:[]}; groups[rid].ratings.push(r); });
+  el.innerHTML=Object.entries(groups).map(([rid,g])=>{
+    const rest=allRestaurants.find(r=>r.uid===rid||r._id==='rest_'+rid);
+    const restName=rest?.name||(rid==='default'?'Restaurant':rid);
+    const total=g.ratings.length;
+    const avg=(g.ratings.reduce((s,r)=>s+r.rating,0)/total).toFixed(1);
+    const ar=Math.round(avg);
+    const reviewsHtml=g.ratings.sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||'')).map(r=>{
+      const date=r.ratedAt?new Date(r.ratedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';
+      const filled='★'.repeat(r.rating);
+      const empty=`<span style="color:var(--border)">${'★'.repeat(5-r.rating)}</span>`;
+      return `<div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px;">${r.customerName||'Customer'}</div>
+          <div style="font-size:13px;color:#f59e0b;">${filled}${empty}</div>
+          ${r.comment?`<div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5;">"${r.comment}"</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:10px;color:var(--muted);">${date}</div>
+          ${r.amount?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">₹${r.amount}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;">
+      <div style="padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--odim);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🍽️</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:700;">${restName}</div>
+          <div style="font-size:13px;color:#f59e0b;margin-top:2px;">${'★'.repeat(ar)}${'☆'.repeat(5-ar)} <span style="color:var(--muted);">${avg} avg</span></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:22px;font-weight:800;color:var(--orange);">${avg}</div>
+          <div style="font-size:11px;color:var(--muted);">${total} review${total!==1?'s':''}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">tap to expand</div>
+        </div>
+      </div>
+      <div style="display:none;">${reviewsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
 // ── RIDER RATINGS ─────────────────────────────
 let _riderRatingsUnsub=null, _riderRatingsCache=[];
 const _SEEN_RR_KEY='lu_admin_seen_rr';
@@ -1869,6 +2042,7 @@ async function loadRiderRatings(){
       .sort((a,b)=>(b.ratedAt||'').localeCompare(a.ratedAt||''));
     _riderRatingsCache=all;
     renderRiderRatings(all);
+    if(_curRevTab==='rider') renderRiderReviewsTab(all);
   },err=>console.error('[RiderRatings] onSnapshot error:',err.code,err.message));
 }
 

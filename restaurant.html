@@ -315,16 +315,51 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
 .review-comment{font-size:13px;margin-bottom:6px;line-height:1.5;}
 .review-meta{font-size:11px;color:var(--muted);}
 
+/* ── ONLINE TOGGLE BUTTON (header/topbar) ───────── */
+.sb-online-btn{display:inline-flex;align-items:center;gap:5px;margin-top:7px;
+  padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;
+  cursor:pointer;border:none;font-family:'Poppins',sans-serif;transition:all .2s;white-space:nowrap;}
+.sb-online-btn.online{background:rgba(34,197,94,.15);color:#22c55e;}
+.sb-online-btn.online:hover{background:rgba(34,197,94,.26);}
+.sb-online-btn.offline{background:rgba(239,68,68,.12);color:#ef4444;}
+.sb-online-btn.offline:hover{background:rgba(239,68,68,.22);}
+
+/* ── TONE OPTION BUTTONS ────────────────────────── */
+.tone-opt{padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:var(--card);
+  color:var(--muted);font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.tone-opt.active{background:var(--odim);border-color:rgba(255,140,0,.35);color:var(--orange);}
+.tone-opt:hover:not(.active){border-color:var(--orange);color:var(--text);}
+
 /* ── LIGHT THEME ────────────────────────────────── */
 html.light{
-  --bg:#f0f0f8;--surface:#ffffff;--card:#ffffff;--border:#dcdce8;
-  --text:#1a1a2e;--muted:#5c5c75;
+  --bg:#f0f0f8;--surface:#ffffff;--card:#f7f7fc;--border:#d8d8e8;
+  --text:#1a1a2e;--muted:#4a4a62;
 }
 html.light body{background:var(--bg);}
 html.light #rLogin{background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,.06) 0%,transparent 60%),#f0f0f8;}
-html.light .lb{box-shadow:0 4px 24px rgba(0,0,0,.06);}
-html.light .lf input,html.light .mo-field input,html.light .mo-field textarea,html.light .mo-field select{background:#f4f4fc;color:var(--text);}
+html.light .lb{box-shadow:0 4px 24px rgba(0,0,0,.08);}
+html.light .lf input,html.light .mo-field input,html.light .mo-field textarea,html.light .mo-field select{background:#ffffff;color:var(--text);border-color:var(--border);}
+html.light .lf label,html.light .mo-field label{color:var(--muted);}
 html.light .bnav-item{color:var(--muted);}
+html.light .rni{color:var(--muted);}
+html.light .rni:hover{background:rgba(255,140,0,.08);color:var(--text);}
+html.light .res-sb{background:#fff;border-right-color:var(--border);}
+html.light .res-topbar{background:#fff;border-bottom-color:var(--border);}
+html.light .res-bnav{background:#fff;border-top-color:var(--border);}
+html.light .oc,.html.light .profile-card,.html.light .earn-card{box-shadow:0 1px 4px rgba(0,0,0,.06);}
+html.light .prow{border-bottom-color:rgba(0,0,0,.07);}
+html.light .mo-close:hover{background:rgba(0,0,0,.06);}
+html.light .mo-btn.secondary{background:rgba(0,0,0,.06);color:var(--muted);}
+html.light #rToast{background:#1a1a2e;color:#fff;border-color:#1a1a2e;}
+html.light .oc-pay{background:var(--border);}
+html.light .ftab{background:var(--card);}
+html.light .cat-tab{background:var(--card);}
+html.light .rlogout:hover{background:rgba(239,68,68,.1);color:#ef4444;}
+html.light .earn-card.hl{background:linear-gradient(135deg,rgba(255,140,0,.07),var(--card));}
+html.light input::placeholder,html.light textarea::placeholder{color:#aaa;}
+html.light .sec-hdr h2{color:var(--text);}
+html.light .mi-icnbtn{background:#fff;border-color:var(--border);}
+html.light .sb-online-btn.online{background:rgba(34,197,94,.18);}
 </style>
 </head>
 <body>
@@ -360,7 +395,7 @@ html.light .bnav-item{color:var(--muted);}
     <div class="res-sb-logo">
       <div class="rsl-brand">LINKUP</div>
       <div class="rsl-name" id="sbRestName">Restaurant</div>
-      <div class="rsl-status" id="sbIsOpen"></div>
+      <button class="sb-online-btn online" id="sbIsOpen" onclick="toggleIsOpenFromHeader()">🟢 Online</button>
     </div>
     <div class="res-sb-nav">
       <div class="rni active" id="rn-orders" onclick="showSec('orders')">
@@ -400,7 +435,7 @@ html.light .bnav-item{color:var(--muted);}
         <div class="tb-name" id="tbRestName">Restaurant</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <div class="tb-status" id="tbIsOpen"></div>
+        <button class="sb-online-btn online" id="tbIsOpen" onclick="toggleIsOpenFromHeader()" style="margin-top:0;font-size:11px;padding:4px 10px;">🟢 Online</button>
         <button onclick="toggleTheme()" id="tbThemeBtn" style="background:none;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:13px;cursor:pointer;color:var(--muted);transition:all .15s;" title="Toggle theme">🌙</button>
       </div>
     </div>
@@ -495,18 +530,6 @@ html.light .bnav-item{color:var(--muted);}
         <h2>⚙️ Restaurant Profile</h2>
         <p>Your restaurant settings</p>
       </div>
-      <!-- isOpen toggle -->
-      <div class="isopen-wrap" id="isOpenWrap">
-        <div class="isopen-left">
-          <h3 id="isOpenTitle">🟢 Restaurant Open</h3>
-          <p id="isOpenSub">Customers can place orders</p>
-          <div class="isopen-badge open" id="isOpenBadge">ONLINE</div>
-        </div>
-        <label class="big-toggle">
-          <input type="checkbox" id="isOpenToggle" onchange="toggleIsOpen(this.checked)">
-          <span class="bt-sl"></span>
-        </label>
-      </div>
       <!-- Info -->
       <div class="profile-card" id="profileInfo">
         <h3>Restaurant Info</h3>
@@ -520,6 +543,18 @@ html.light .bnav-item{color:var(--muted);}
         <h3>Account</h3>
         <div class="prow"><span class="pr-lbl">Email</span><span class="pr-val" id="piEmail">—</span></div>
         <div class="prow" style="border:none;"><span class="pr-lbl">Role</span><span class="pr-val" style="color:var(--orange);">Restaurant</span></div>
+      </div>
+      <div class="profile-card">
+        <h3>Notifications</h3>
+        <div style="margin-bottom:10px;">
+          <div class="pr-lbl" style="margin-bottom:8px;">Alert Tone</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="toneOptions">
+            <button class="tone-opt" id="tone-ascending" onclick="setResTone('ascending')">🎵 Ascending</button>
+            <button class="tone-opt" id="tone-tripleBeep" onclick="setResTone('tripleBeep')">📳 Triple Beep</button>
+            <button class="tone-opt" id="tone-alert" onclick="setResTone('alert')">🚨 Alert</button>
+          </div>
+        </div>
+        <button onclick="previewResTone()" style="padding:8px 18px;background:var(--odim);border:1px solid rgba(255,140,0,.3);border-radius:8px;color:var(--orange);font-family:'Poppins',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s;">▶ Preview Tone</button>
       </div>
     </div>
 
@@ -688,6 +723,7 @@ function showResApp(){
   document.getElementById('piEmail').textContent=restProfile?.email||'—';
   updateIsOpenUI(restProfile?.isOpen!==false);
   renderProfile();
+  updateToneUI();
 }
 
 function cleanupResApp(){
@@ -1134,24 +1170,20 @@ function renderProfile(){
   document.getElementById('piClose').textContent=restProfile.closeTime||'—';
   document.getElementById('piEmail').textContent=restProfile.email||'—';
   updateIsOpenUI(restProfile.isOpen!==false);
+  updateToneUI();
 }
 
 function updateIsOpenUI(isOpen){
-  const toggle=document.getElementById('isOpenToggle');
-  const title=document.getElementById('isOpenTitle');
-  const sub=document.getElementById('isOpenSub');
-  const badge=document.getElementById('isOpenBadge');
-  const sbStatus=document.getElementById('sbIsOpen');
-  const tbStatus=document.getElementById('tbIsOpen');
-  if(toggle) toggle.checked=isOpen;
-  if(title) title.textContent=isOpen?'🟢 Restaurant Open':'🔴 Restaurant Closed';
-  if(sub) sub.textContent=isOpen?'Customers can place orders':'Not accepting orders';
-  if(badge){
-    badge.textContent=isOpen?'ONLINE':'OFFLINE';
-    badge.className='isopen-badge '+(isOpen?'open':'closed');
-  }
-  if(sbStatus) sbStatus.textContent=isOpen?'🟢 Online':'🔴 Offline';
-  if(tbStatus) tbStatus.textContent=isOpen?'🟢':'🔴';
+  [document.getElementById('sbIsOpen'),document.getElementById('tbIsOpen')].forEach(btn=>{
+    if(!btn) return;
+    btn.textContent=isOpen?'🟢 Online':'🔴 Offline';
+    btn.className=btn.className.replace(/\b(online|offline)\b/g,'')+(isOpen?' online':' offline');
+  });
+}
+
+function toggleIsOpenFromHeader(){
+  const cur=restProfile?.isOpen!==false;
+  toggleIsOpen(!cur);
 }
 
 async function toggleIsOpen(val){
@@ -1168,6 +1200,8 @@ async function toggleIsOpen(val){
 }
 
 // ── SOUND ──────────────────────────────────────────────────
+let _resNotifTone=localStorage.getItem('res_notif_tone')||'ascending';
+
 function _playOsc(ctx,freq,type,vol,dur,delay){
   const o=ctx.createOscillator(),g=ctx.createGain();
   o.connect(g);g.connect(ctx.destination);
@@ -1177,12 +1211,42 @@ function _playOsc(ctx,freq,type,vol,dur,delay){
   g.gain.exponentialRampToValueAtTime(0.001,t+dur);
   o.start(t);o.stop(t+dur+0.02);
 }
-function playNewOrderSound(){
+
+function playResTone(id){
   try{
     _ensureAudio();
-    if(!_resAC||_resAC.state==='suspended') return;
-    for(let i=0;i<3;i++) _playOsc(_resAC,1400,'square',0.6,0.13,i*0.23);
+    if(!_resAC) return;
+    if(_resAC.state==='suspended') _resAC.resume().then(()=>playResTone(id));
+    if(id==='tripleBeep'){
+      for(let i=0;i<3;i++) _playOsc(_resAC,1400,'square',0.65,0.13,i*0.23);
+    }else if(id==='ascending'){
+      [880,1108,1400].forEach((f,i)=>_playOsc(_resAC,f,'square',0.65,0.16,i*0.22));
+    }else if(id==='alert'){
+      for(let i=0;i<3;i++) _playOsc(_resAC,880,'sawtooth',0.55,0.18,i*0.26);
+    }
   }catch(e){}
+}
+
+function playNewOrderSound(){
+  try{ playResTone(_resNotifTone); }catch(e){}
+}
+
+function setResTone(tone){
+  _resNotifTone=tone;
+  localStorage.setItem('res_notif_tone',tone);
+  updateToneUI();
+  playResTone(tone);
+}
+
+function previewResTone(){
+  _ensureAudio();
+  playResTone(_resNotifTone);
+}
+
+function updateToneUI(){
+  document.querySelectorAll('.tone-opt').forEach(b=>{
+    b.classList.toggle('active',b.id==='tone-'+_resNotifTone);
+  });
 }
 
 // ── REVIEWS ────────────────────────────────────────────────
