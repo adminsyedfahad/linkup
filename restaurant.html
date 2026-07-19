@@ -124,42 +124,91 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
 .ftab .tc{background:var(--orange);color:#000;font-size:9px;padding:1px 5px;border-radius:6px;margin-left:5px;display:none;}
 .ftab .tc.on{display:inline;}
 
-/* ── ORDER CARDS ────────────────────────────────── */
-.orders-list{display:flex;flex-direction:column;gap:12px;}
-.oc{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s;}
-.oc.new-order{border-color:rgba(255,140,0,.5);animation:ocPulse 2s ease 3;}
-@keyframes ocPulse{0%,100%{box-shadow:none;}50%{box-shadow:0 0 16px rgba(255,140,0,.25);}}
-.oc-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;}
-.oc-id{font-weight:800;font-size:13px;color:var(--orange);}
-.oc-hdr-right{display:flex;align-items:center;gap:8px;}
-.oc-time{font-size:11px;color:var(--muted);}
-.os-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.3px;}
-.os-badge.placed{background:rgba(255,140,0,.15);color:var(--orange);}
-.os-badge.accepted{background:rgba(59,130,246,.15);color:var(--blue);}
-.os-badge.preparing{background:rgba(245,158,11,.15);color:var(--yellow);}
-.os-badge.ready_for_pickup{background:rgba(34,197,94,.15);color:var(--green);}
-.os-badge.delivered{background:rgba(34,197,94,.1);color:#6ee7b7;}
-.os-badge.rejected,.os-badge.cancelled{background:rgba(239,68,68,.1);color:var(--red);}
-.oc-cust{display:flex;align-items:center;gap:12px;padding:0 14px 6px;font-size:12px;color:var(--muted);}
-.oc-addr{padding:0 14px 6px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.oc-items{padding:8px 14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.oi-row{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;}
-.oi-name{flex:1;font-weight:600;}
-.oi-qty{color:var(--muted);font-size:12px;}
-.oi-price{font-weight:700;color:var(--text);}
-.oc-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;}
-.oc-total{font-size:18px;font-weight:800;color:var(--orange);}
-.oc-pay{font-size:11px;color:var(--muted);background:var(--border);padding:2px 8px;border-radius:5px;}
-.oc-actions{padding:10px 14px;background:rgba(255,140,0,.03);}
-.oa-row{display:flex;gap:8px;}
-.oa-btn{flex:1;padding:11px 8px;border:none;border-radius:10px;font-family:'Poppins',sans-serif;
-  font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s;}
-.oa-btn:active{opacity:.75;}
-.oa-btn.accept{background:var(--green);color:#000;}
-.oa-btn.reject{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.25);}
-.oa-btn.prepare{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3);}
-.oa-btn.ready{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);}
-.oa-status{font-size:12px;color:var(--muted);text-align:center;padding:6px;}
+/* ── ORDERS REDESIGN ─────────────────────────────── */
+.ord-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.ord-select{padding:8px 34px 8px 12px;border-radius:10px;border:1.5px solid var(--border);
+  background:var(--surface);color:var(--text);font-family:'Poppins',sans-serif;font-size:12px;
+  font-weight:600;cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888899' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;background-size:12px 8px;
+  transition:border-color .2s;}
+.ord-select:hover,.ord-select:focus{border-color:var(--orange);}
+.ord-count{margin-left:auto;font-size:12px;font-weight:700;color:var(--muted);
+  background:var(--card);border:1px solid var(--border);padding:6px 14px;border-radius:20px;white-space:nowrap;}
+/* ── Table */
+.ord-table-wrap{border-radius:14px;border:1px solid var(--border);overflow:hidden;
+  background:var(--surface);box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.ord-table{width:100%;border-collapse:collapse;}
+.ord-th{padding:11px 14px;text-align:left;font-size:10px;font-weight:800;color:var(--muted);
+  letter-spacing:1px;text-transform:uppercase;background:var(--card);
+  border-bottom:1.5px solid var(--border);white-space:nowrap;}
+.ord-td{padding:13px 14px;vertical-align:middle;border-bottom:1px solid var(--border);}
+.ord-table tbody tr:last-child .ord-td{border-bottom:none;}
+.ord-table tbody tr{transition:background .15s;}
+.ord-table tbody tr:hover .ord-td{background:rgba(255,140,0,.03);}
+.ord-table tbody tr.ord-row-new .ord-td{animation:ordNewPulse 2s ease 3;}
+@keyframes ordNewPulse{0%,100%{background:transparent;}50%{background:rgba(255,140,0,.08);}}
+/* Cell helpers */
+.ord-id{font-weight:800;color:var(--orange);font-size:12px;letter-spacing:.4px;display:block;}
+.ord-time{font-size:10px;color:var(--muted);margin-top:3px;display:block;}
+.ord-cust-name{font-weight:700;font-size:12px;display:block;}
+.ord-cust-ph{font-size:10px;color:var(--muted);margin-top:2px;display:block;}
+.ord-item-line{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;}
+.ord-item-more{font-size:10px;color:var(--orange);margin-top:2px;}
+.ord-amt-val{font-weight:800;font-size:15px;display:block;}
+.ord-pay-lbl{font-size:10px;color:var(--muted);margin-top:2px;display:block;}
+/* Status badges */
+.ord-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:800;
+  padding:4px 10px;border-radius:20px;letter-spacing:.3px;white-space:nowrap;}
+.ord-badge.pending{background:rgba(245,158,11,.15);color:#d97706;}
+.ord-badge.preparing{background:rgba(59,130,246,.15);color:#3b82f6;}
+.ord-badge.ready{background:rgba(34,197,94,.15);color:#16a34a;}
+.ord-badge.delivered{background:rgba(34,197,94,.1);color:#6ee7b7;}
+.ord-badge.rejected,.ord-badge.cancelled{background:rgba(239,68,68,.1);color:#ef4444;}
+/* Prep time */
+.ord-prep-val{font-size:12px;font-weight:700;color:var(--muted);}
+.ord-prep-val.done{color:var(--green);}
+.ord-prep-val.running{color:var(--yellow);}
+/* Action buttons */
+.ord-act-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.ord-act-btn{padding:7px 11px;border:none;border-radius:8px;font-family:'Poppins',sans-serif;
+  font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.ord-act-btn:active{transform:scale(.96);}
+.ord-act-btn.accept{background:#22c55e;color:#000;}
+.ord-act-btn.accept:hover{background:#16a34a;}
+.ord-act-btn.reject{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.2);}
+.ord-act-btn.reject:hover{background:rgba(239,68,68,.22);}
+.ord-act-btn.markready{background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.2);}
+.ord-act-btn.markready:hover{background:rgba(59,130,246,.22);}
+.ord-act-done{font-size:11px;color:var(--muted);}
+.ord-empty-cell{text-align:center;padding:52px 20px;color:var(--muted);}
+.ord-ei{font-size:40px;margin-bottom:10px;}
+.ord-et{font-size:13px;font-weight:600;}
+/* Mobile cards */
+.ord-m-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  overflow:hidden;transition:border-color .2s;margin-bottom:10px;}
+.ord-m-card.ord-row-new{border-color:rgba(255,140,0,.4);animation:ordNewPulse 2s ease 3;}
+.ord-m-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;border-bottom:1px solid var(--border);background:var(--card);}
+.ord-m-id{font-weight:800;font-size:13px;color:var(--orange);display:block;}
+.ord-m-time{font-size:10px;color:var(--muted);margin-top:2px;display:block;}
+.ord-m-body{padding:10px 14px;}
+.ord-m-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;}
+.ord-m-lbl{color:var(--muted);font-weight:600;font-size:11px;}
+.ord-m-val{font-weight:700;font-size:12px;}
+.ord-m-items{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 14px;}
+.ord-m-item{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;}
+.ord-m-item-n{font-weight:600;}
+.ord-m-item-p{color:var(--muted);}
+.ord-m-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;}
+.ord-m-total{font-size:18px;font-weight:800;color:var(--orange);}
+.ord-m-pay{font-size:11px;color:var(--muted);background:var(--card);border:1px solid var(--border);
+  padding:2px 8px;border-radius:5px;}
+.ord-m-actions{padding:10px 14px;display:flex;gap:8px;background:rgba(255,140,0,.02);}
+.ord-m-actions .ord-act-btn{flex:1;padding:10px 8px;font-size:12px;text-align:center;}
+@media(max-width:768px){.ord-table-wrap{display:none;}}
+@media(min-width:769px){.ord-cards{display:none;}}
+/* ── GENERIC EMPTY STATE */
 .empty-state{text-align:center;padding:48px 20px;color:var(--muted);}
 .empty-state .ei{font-size:44px;margin-bottom:12px;}
 
@@ -393,6 +442,17 @@ html.light input::placeholder,html.light textarea::placeholder{color:#9999bb;}
 html.light .sb-status-lbl.online{color:#16a34a;}
 html.light .sb-status-lbl.offline{color:#dc2626;}
 html.light .mini-sl{background:#d0d0e4;}
+html.light .ord-select{background-color:#fff;color:#111128;}
+html.light .ord-table-wrap{box-shadow:0 2px 16px rgba(0,0,0,.06);}
+html.light .ord-table tbody tr:hover .ord-td{background:rgba(255,140,0,.04);}
+html.light .ord-m-card{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.05);}
+html.light .ord-m-hdr{background:#f4f4fc;}
+html.light .ord-m-pay{background:#f4f4fc;border-color:#d0d0e4;}
+html.light .ord-badge.pending{background:rgba(245,158,11,.12);color:#92400e;}
+html.light .ord-badge.preparing{background:rgba(59,130,246,.1);color:#1d4ed8;}
+html.light .ord-badge.ready{background:rgba(34,197,94,.12);color:#15803d;}
+html.light .ord-badge.rejected,html.light .ord-badge.cancelled{background:rgba(239,68,68,.08);color:#b91c1c;}
+html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
 </style>
 </head>
 <body>
@@ -484,18 +544,43 @@ html.light .mini-sl{background:#d0d0e4;}
 
     <!-- ORDERS -->
     <div class="sec on" id="sec-orders">
-      <div class="sec-hdr">
-        <h2>📦 Orders</h2>
-        <p>Real-time order management</p>
+      <div class="ord-toolbar">
+        <select class="ord-select" id="ordStatusSel" onchange="setOrderFilter(this.value)">
+          <option value="all">All Orders</option>
+          <option value="pending">Pending</option>
+          <option value="preparing">Preparing</option>
+          <option value="ready">Ready</option>
+        </select>
+        <select class="ord-select" id="ordDateSel" onchange="setOrderDateFilter(this.value)">
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="week">Last 7 Days</option>
+        </select>
+        <div class="ord-count" id="ordCount">0 orders</div>
       </div>
-      <div class="ftabs">
-        <div class="ftab active" id="ft-pending" onclick="setOrderFilter('pending')">
-          Pending <span class="tc" id="pendingTc">0</span>
-        </div>
-        <div class="ftab" id="ft-active" onclick="setOrderFilter('active')">Active</div>
-        <div class="ftab" id="ft-done" onclick="setOrderFilter('done')">Done</div>
+      <!-- Desktop table -->
+      <div class="ord-table-wrap">
+        <table class="ord-table">
+          <colgroup>
+            <col style="width:110px"><col style="width:130px"><col><col style="width:80px">
+            <col style="width:110px"><col style="width:88px"><col style="width:185px">
+          </colgroup>
+          <thead><tr>
+            <th class="ord-th">Order</th>
+            <th class="ord-th">Customer</th>
+            <th class="ord-th">Items</th>
+            <th class="ord-th">Amount</th>
+            <th class="ord-th">Status</th>
+            <th class="ord-th">Prep Time</th>
+            <th class="ord-th">Actions</th>
+          </tr></thead>
+          <tbody id="ordTableBody">
+            <tr><td colspan="7" class="ord-empty-cell"><div class="ord-ei">📦</div><div class="ord-et">Loading orders…</div></td></tr>
+          </tbody>
+        </table>
       </div>
-      <div class="orders-list" id="ordersList">
+      <!-- Mobile cards -->
+      <div class="ord-cards" id="ordCards">
         <div class="empty-state"><div class="ei">📦</div><p>Loading orders…</p></div>
       </div>
     </div>
@@ -636,7 +721,8 @@ let restProfile=null;
 let rMenu={categories:[]};
 let allOrders=[];
 let _ordersUnsub=null;
-let _orderFilter='pending';
+let _orderFilter='all';
+let _orderDateFilter='today';
 let _earnFilter='today';
 let _histFilter='today';
 let _currentCatId=null;
@@ -837,84 +923,159 @@ function getTs(o){
 
 function setOrderFilter(f){
   _orderFilter=f;
-  ['pending','active','done'].forEach(x=>{
-    const el=document.getElementById('ft-'+x);
-    if(el) el.classList.toggle('active',x===f);
-  });
   renderOrders();
 }
 
+function setOrderDateFilter(f){
+  _orderDateFilter=f;
+  renderOrders();
+}
+
+function _matchDate(o){
+  const ts=getTs(o);
+  if(!ts) return true;
+  const d=new Date(ts);
+  const now=new Date();
+  if(_orderDateFilter==='today') return d.toDateString()===now.toDateString();
+  if(_orderDateFilter==='yesterday'){
+    const y=new Date(now);y.setDate(y.getDate()-1);
+    return d.toDateString()===y.toDateString();
+  }
+  const w=new Date(now);w.setDate(w.getDate()-7);
+  return d>=w;
+}
+
+function _prepTime(o){
+  const ac=o.acceptedAt;
+  if(!ac) return null;
+  const start=ac.toDate?ac.toDate():new Date(ac);
+  if(isNaN(start)) return null;
+  const rd=o.readyAt;
+  if(rd){
+    const end=rd.toDate?rd.toDate():new Date(rd);
+    const mins=Math.max(0,Math.round((end-start)/60000));
+    return {done:true,mins};
+  }
+  const mins=Math.max(0,Math.round((Date.now()-start)/60000));
+  return {done:false,mins};
+}
+
+function _ordBadge(status){
+  const cls={placed:'pending',accepted:'preparing',preparing:'preparing',
+    ready_for_pickup:'ready',delivered:'delivered',rejected:'rejected',
+    cancelled:'cancelled',delivery_failed:'rejected'}[status]||'';
+  const lbl={placed:'Pending',accepted:'Accepted',preparing:'Preparing',
+    ready_for_pickup:'Ready',delivered:'Delivered',rejected:'Rejected',
+    cancelled:'Cancelled',delivery_failed:'Failed'}[status]||status;
+  return {cls,lbl};
+}
+
 function renderOrders(){
-  const pending=allOrders.filter(o=>o.status==='placed');
-  const active=allOrders.filter(o=>['accepted','preparing','ready_for_pickup'].includes(o.status));
-  const done=allOrders.filter(o=>['delivered','rejected','cancelled','delivery_failed'].includes(o.status));
-  // Update pending count badge
-  const pc=pending.length;
-  const ptc=document.getElementById('pendingTc');
-  if(ptc){ptc.textContent=pc;ptc.classList.toggle('on',pc>0);}
+  const placed=allOrders.filter(o=>o.status==='placed');
+  const pc=placed.length;
   const rnoc=document.getElementById('rnoc');
   if(rnoc){rnoc.textContent=pc;rnoc.classList.toggle('on',pc>0);}
   const bnoc=document.getElementById('bnoCount');
   if(bnoc){bnoc.textContent=pc;bnoc.classList.toggle('on',pc>0);}
-  // Get orders for current filter
-  let orders;
-  if(_orderFilter==='pending') orders=pending;
-  else if(_orderFilter==='active') orders=active;
-  else orders=done.slice(0,50);
-  const el=document.getElementById('ordersList');
+
+  let orders=allOrders.filter(o=>{
+    if(!_matchDate(o)) return false;
+    if(_orderFilter==='pending') return o.status==='placed';
+    if(_orderFilter==='preparing') return ['accepted','preparing'].includes(o.status);
+    if(_orderFilter==='ready') return o.status==='ready_for_pickup';
+    return true;
+  });
+
+  const cntEl=document.getElementById('ordCount');
+  if(cntEl) cntEl.textContent=orders.length+' order'+(orders.length!==1?'s':'');
+
+  const tbody=document.getElementById('ordTableBody');
+  const cards=document.getElementById('ordCards');
   if(!orders.length){
-    const msgs={pending:'No pending orders right now',active:'No orders being prepared',done:'No completed orders'};
-    const icons={pending:'😴',active:'🍳',done:'📋'};
-    el.innerHTML=`<div class="empty-state"><div class="ei">${icons[_orderFilter]||'📦'}</div><p>${msgs[_orderFilter]||'No orders'}</p></div>`;
+    const emptyHtml=`<tr><td colspan="7" class="ord-empty-cell"><div class="ord-ei">📦</div><div class="ord-et">No orders found</div></td></tr>`;
+    const emptyCard=`<div class="empty-state"><div class="ei">📦</div><p>No orders found</p></div>`;
+    if(tbody) tbody.innerHTML=emptyHtml;
+    if(cards) cards.innerHTML=emptyCard;
     return;
   }
-  el.innerHTML=orders.map(o=>renderOrderCard(o)).join('');
+  if(tbody) tbody.innerHTML=orders.map(o=>renderOrderRow(o)).join('');
+  if(cards) cards.innerHTML=orders.map(o=>renderOrderMobileCard(o)).join('');
 }
 
-function renderOrderCard(o){
+function renderOrderRow(o){
   const status=o.status||'placed';
   const orderId=o.orderId||o._id;
   const d=new Date(getTs(o));
   const time=isNaN(d)?'':d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  const items=Array.isArray(o.cartItems)
-    ?o.cartItems.map(i=>`<div class="oi-row"><span class="oi-name">${i.name}</span><span class="oi-qty">×${i.qty}</span><span class="oi-price">₹${(i.price*i.qty)||''}</span></div>`).join('')
-    :Array.isArray(o.items)?o.items.map(i=>`<div class="oi-row"><span class="oi-name">${i}</span></div>`).join('')
-    :'';
-  const badgeMap={placed:'placed',accepted:'accepted',preparing:'preparing',
-    ready_for_pickup:'ready_for_pickup',delivered:'delivered',rejected:'rejected',cancelled:'cancelled'};
-  const labelMap={placed:'🔔 New',accepted:'✓ Accepted',preparing:'🍳 Preparing',
-    ready_for_pickup:'✅ Ready',delivered:'✓ Delivered',rejected:'✕ Rejected',cancelled:'✕ Cancelled'};
-  const badge=`<span class="os-badge ${badgeMap[status]||''}">${labelMap[status]||status}</span>`;
-  const isNew=status==='placed'?'oc new-order':'oc';
+  const shortId='LU-'+(orderId||'').slice(-5).toUpperCase();
+  const {cls,lbl}=_ordBadge(status);
+  const cartItems=Array.isArray(o.cartItems)?o.cartItems:[];
+  const itemLines=cartItems.slice(0,2).map(i=>`<div class="ord-item-line">×${i.qty} ${i.name}</div>`).join('');
+  const moreItems=cartItems.length>2?`<div class="ord-item-more">+${cartItems.length-2} more</div>`:'';
+  const pt=_prepTime(o);
+  const prepHtml=pt
+    ?`<span class="ord-prep-val ${pt.done?'done':'running'}">${pt.mins}m</span>`
+    :`<span class="ord-prep-val">—</span>`;
+  let actHtml='<span class="ord-act-done">'+lbl+'</span>';
+  if(status==='placed'){
+    actHtml=`<div class="ord-act-row">
+      <button class="ord-act-btn accept" onclick="orderAction('${orderId}','accept')">✓ Accept</button>
+      <button class="ord-act-btn reject" onclick="orderAction('${orderId}','reject')">✕ Reject</button>
+    </div>`;
+  }else if(status==='accepted'||status==='preparing'){
+    actHtml=`<div class="ord-act-row">
+      <button class="ord-act-btn markready" onclick="orderAction('${orderId}','ready')">✅ Mark Ready</button>
+    </div>`;
+  }else if(status==='ready_for_pickup'){
+    actHtml=`<span class="ord-act-done">⏳ Awaiting rider</span>`;
+  }
+  const rowCls=status==='placed'?' class="ord-row-new"':'';
+  return `<tr${rowCls} id="oc-${orderId}">
+    <td class="ord-td"><span class="ord-id">${shortId}</span><span class="ord-time">${time}</span></td>
+    <td class="ord-td"><span class="ord-cust-name">${o.customerName||'—'}</span>${o.phone?`<span class="ord-cust-ph">📞 ${o.phone}</span>`:''}</td>
+    <td class="ord-td"><div>${itemLines}${moreItems}</div></td>
+    <td class="ord-td"><span class="ord-amt-val">₹${o.amount||0}</span><span class="ord-pay-lbl">${o.payMethod||''}</span></td>
+    <td class="ord-td"><span class="ord-badge ${cls}">${lbl}</span></td>
+    <td class="ord-td">${prepHtml}</td>
+    <td class="ord-td">${actHtml}</td>
+  </tr>`;
+}
+
+function renderOrderMobileCard(o){
+  const status=o.status||'placed';
+  const orderId=o.orderId||o._id;
+  const d=new Date(getTs(o));
+  const time=isNaN(d)?'':d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const shortId='LU-'+(orderId||'').slice(-5).toUpperCase();
+  const {cls,lbl}=_ordBadge(status);
+  const cartItems=Array.isArray(o.cartItems)?o.cartItems:[];
+  const itemsHtml=cartItems.map(i=>`<div class="ord-m-item"><span class="ord-m-item-n">×${i.qty} ${i.name}</span><span class="ord-m-item-p">₹${(i.price*i.qty)||''}</span></div>`).join('');
+  const pt=_prepTime(o);
+  const prepStr=pt?`${pt.mins}m ${pt.done?'prep time':'elapsed'}`:'—';
   let actions='';
   if(status==='placed'){
-    actions=`<div class="oc-actions"><div class="oa-row">
-      <button class="oa-btn accept" onclick="orderAction('${orderId}','accept')">✓ Accept & Prepare</button>
-      <button class="oa-btn reject" onclick="orderAction('${orderId}','reject')">✕ Reject</button>
-    </div></div>`;
-  }else if(status==='preparing'){
-    actions=`<div class="oc-actions"><div class="oa-row">
-      <button class="oa-btn ready" onclick="orderAction('${orderId}','ready')">✅ Ready for Pickup</button>
-    </div></div>`;
-  }else if(status==='ready_for_pickup'){
-    actions=`<div class="oc-actions"><div class="oa-status">⏳ Awaiting rider pickup</div></div>`;
+    actions=`<button class="ord-act-btn accept" onclick="orderAction('${orderId}','accept')">✓ Accept</button>
+      <button class="ord-act-btn reject" onclick="orderAction('${orderId}','reject')">✕ Reject</button>`;
+  }else if(status==='accepted'||status==='preparing'){
+    actions=`<button class="ord-act-btn markready" onclick="orderAction('${orderId}','ready')">✅ Mark Ready</button>`;
   }
-  return `<div class="${isNew}" id="oc-${orderId}">
-    <div class="oc-hdr">
-      <span class="oc-id">${orderId}</span>
-      <div class="oc-hdr-right"><span class="oc-time">${time}</span>${badge}</div>
+  const cardCls='ord-m-card'+(status==='placed'?' ord-row-new':'');
+  return `<div class="${cardCls}" id="oc-${orderId}">
+    <div class="ord-m-hdr">
+      <div><span class="ord-m-id">${shortId}</span><span class="ord-m-time">${time}</span></div>
+      <span class="ord-badge ${cls}">${lbl}</span>
     </div>
-    <div class="oc-cust">
-      <span>👤 ${o.customerName||'—'}</span>
-      ${o.phone?`<span>📞 ${o.phone}</span>`:''}
+    <div class="ord-m-body">
+      <div class="ord-m-row"><span class="ord-m-lbl">Customer</span><span class="ord-m-val">👤 ${o.customerName||'—'}</span></div>
+      ${o.phone?`<div class="ord-m-row"><span class="ord-m-lbl">Phone</span><span class="ord-m-val">📞 ${o.phone}</span></div>`:''}
+      <div class="ord-m-row"><span class="ord-m-lbl">Prep Time</span><span class="ord-m-val">${prepStr}</span></div>
     </div>
-    ${o.address?`<div class="oc-addr">📍 ${o.address}</div>`:''}
-    <div class="oc-items">${items}</div>
-    <div class="oc-footer">
-      <span class="oc-total">₹${o.amount||0}</span>
-      <span class="oc-pay">${o.payMethod||'—'}</span>
+    ${itemsHtml?`<div class="ord-m-items">${itemsHtml}</div>`:''}
+    <div class="ord-m-footer">
+      <span class="ord-m-total">₹${o.amount||0}</span>
+      <span class="ord-m-pay">${o.payMethod||'—'}</span>
     </div>
-    ${actions}
+    ${actions?`<div class="ord-m-actions">${actions}</div>`:''}
   </div>`;
 }
 
@@ -926,9 +1087,12 @@ async function orderAction(orderId,action){
   const rqRef=window._resDoc(window._resDb,'counters','rq_'+orderId);
   const rsRef=window._resDoc(window._resDb,'counters','rstatus_'+orderId);
   const now=new Date();
+  const extra={};
+  if(action==='accept') extra.acceptedAt=now;
+  if(action==='ready') extra.readyAt=now;
   try{
     await Promise.all([
-      window._resSetDoc(rqRef,{status:newStatus,restaurantUpdatedAt:now},{merge:true}),
+      window._resSetDoc(rqRef,{status:newStatus,restaurantUpdatedAt:now,...extra},{merge:true}),
       window._resSetDoc(rsRef,{type:'rstatus',orderId,status:newStatus,updatedAt:now,restaurantId:restProfile.uid},{merge:true})
     ]);
     rToast(action==='accept'?'🍳 Order accepted — now preparing!'
