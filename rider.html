@@ -392,8 +392,14 @@ html.light .rh-gear{background:rgba(0,0,0,.05);}
 .rh-status-dd.open{display:block;}
 .rh-status-opt{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text);transition:background .1s;}
 .rh-status-opt:active{background:rgba(255,140,0,.1);}
-html.light .rh-status-btn{background:rgba(0,0,0,.05);}
-html.light .rh-status-dd{background:#fff;}
+html.light .rh-status-btn{background:rgba(0,0,0,.06);border-color:#c8c8de;color:#1a1a2e;}
+html.light .rh-status-dd{background:#fff;border-color:#c8c8de;box-shadow:0 8px 24px rgba(0,0,0,.15);}
+html.light .rh-status-opt{color:#1a1a2e;}
+html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
+.rh-status-dot.available{background:#16a34a;box-shadow:0 0 5px rgba(22,163,74,.5);}
+.rh-status-dot.break{background:#d97706;box-shadow:0 0 5px rgba(217,119,6,.5);}
+.rh-status-dot.finished{background:#6b7280;}
+.rh-status-dot.none{background:#6b7280;}
 
 /* Toggle switch */
 .sw-toggle{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;}
@@ -575,17 +581,22 @@ html.light .rh-status-dd{background:#fff;}
           </div>
         </div>
         <div class="stg-sec" id="myPrivacySec" style="display:none;">
-          <div class="stg-sec-title">🔒 Privacy & Credentials</div>
-          <div class="stg-sub" style="margin-bottom:14px;">Your login details for this account</div>
-          <div class="stg-row" style="margin-bottom:10px;">
-            <div class="stg-lbl">Username (Email)</div>
-            <div id="privacyEmail" style="font-size:12px;font-weight:600;color:var(--text);word-break:break-all;text-align:right;max-width:65%;"></div>
+          <div class="stg-sec-title" onclick="togglePrivacySection()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
+            <span>🔒 Privacy & Credentials</span>
+            <span id="privacySectionArrow" style="font-size:11px;color:var(--muted);">▼</span>
           </div>
-          <div class="stg-row">
-            <div class="stg-lbl">Password</div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span id="privacyPassDisplay" style="font-size:14px;font-weight:700;letter-spacing:2px;">••••••••</span>
-              <button id="privacyPassToggle" onclick="togglePrivacyPass()" style="padding:5px 10px;background:rgba(255,255,255,.06);border:1.5px solid var(--border);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit;">Show</button>
+          <div id="privacySectionBody" style="display:none;margin-top:14px;">
+            <div class="stg-sub" style="margin-bottom:14px;">Your login details for this account</div>
+            <div class="stg-row" style="margin-bottom:10px;">
+              <div class="stg-lbl">Username (Email)</div>
+              <div id="privacyEmail" style="font-size:12px;font-weight:600;color:var(--text);word-break:break-all;text-align:right;max-width:65%;"></div>
+            </div>
+            <div class="stg-row">
+              <div class="stg-lbl">Password</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span id="privacyPassDisplay" style="font-size:14px;font-weight:700;letter-spacing:2px;">••••••••</span>
+                <button id="privacyPassToggle" onclick="togglePrivacyPass()" style="padding:5px 10px;background:rgba(255,255,255,.06);border:1.5px solid var(--border);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit;">Show</button>
+              </div>
             </div>
           </div>
         </div>
@@ -690,6 +701,7 @@ document.addEventListener('touchstart',_ensureRiderAudio,{passive:true});
 
 // GPS
 let _gpsWatchId=null, _wakeLock=null;
+let _statusGpsWatchId=null, _lastStatusGpsWriteAt=0;
 let _lastGpsWriteAt=0, _lastGpsUpdateAt=0;
 let _lastRiderLat=null, _lastRiderLng=null;
 let _gpsTickInterval=null, _currentToken=null;
@@ -799,7 +811,7 @@ function showApp(){
 }
 function cleanupOnLogout(){
   if(_ordersUnsub){_ordersUnsub();_ordersUnsub=null;}
-  stopGPS(); destroyMap();
+  stopStatusGPS(); stopGPS(); destroyMap();
   myOrders=[];deliveredToday=[];currentOrder=null;riderProfile=null;
   _isStatusUpdating=false;
 }
@@ -1282,12 +1294,62 @@ function stopGPS(){
   updateGpsBar(false);
 }
 
-async function writeGPS(token,lat,lng){
-  if(!token||!window._rdb) return;
+// Status-based GPS (writes rider location to counters/rs_{uid} for admin live map)
+function startStatusGPS(){
+  if(_statusGpsWatchId!==null||!navigator.geolocation) return;
+  _statusGpsWatchId=navigator.geolocation.watchPosition(
+    pos=>{
+      _lastRiderLat=pos.coords.latitude;
+      _lastRiderLng=pos.coords.longitude;
+      _lastGpsUpdateAt=Date.now();
+      const now=Date.now();
+      if(now-_lastStatusGpsWriteAt>=GPS_THROTTLE_MS){
+        _lastStatusGpsWriteAt=now;
+        writeStatusLocation(_lastRiderLat,_lastRiderLng);
+      }
+      if(_gpsWatchId===null) updateGpsBar(true);
+    },
+    ()=>{if(_gpsWatchId===null) updateGpsBar(false);},
+    {enableHighAccuracy:true,maximumAge:2000,timeout:15000}
+  );
+  if(_gpsWatchId===null) updateGpsBar(true);
+}
+
+function stopStatusGPS(){
+  if(_statusGpsWatchId!==null){
+    navigator.geolocation.clearWatch(_statusGpsWatchId);
+    _statusGpsWatchId=null;
+  }
+  if(_gpsWatchId===null) updateGpsBar(false);
+}
+
+async function writeStatusLocation(lat,lng){
+  if(!riderProfile?.uid||!window._rdb) return;
   try{
-    await window._rfUpdate(window._rfDoc(window._rdb,'orderTracking',token),
-      {riderLocation:{lat,lng,updatedAt:new Date().toISOString()}});
+    await window._rfSetDoc(
+      window._rfDoc(window._rdb,'counters','rs_'+riderProfile.uid),
+      {lastLocation:{lat,lng,updatedAt:new Date().toISOString()}},
+      {merge:true}
+    );
   }catch(e){}
+}
+
+async function writeGPS(token,lat,lng){
+  if(!window._rdb) return;
+  if(token){
+    try{
+      await window._rfUpdate(window._rfDoc(window._rdb,'orderTracking',token),
+        {riderLocation:{lat,lng,updatedAt:new Date().toISOString()}});
+    }catch(e){}
+  }
+  // Always keep counters location fresh for admin map
+  if(riderProfile?.uid){
+    const now=Date.now();
+    if(now-_lastStatusGpsWriteAt>=GPS_THROTTLE_MS){
+      _lastStatusGpsWriteAt=now;
+      writeStatusLocation(lat,lng);
+    }
+  }
 }
 
 function updateGpsBar(on,msg){
@@ -1492,6 +1554,12 @@ async function saveRiderStatus(newStatus){
     }
     await window._rfSetDoc(ref,Object.assign({},cur,update),{merge:true});
     updateStatusButton(newStatus);
+    // GPS auto-control
+    if(newStatus==='available'){
+      startStatusGPS();
+    }else{
+      stopStatusGPS();
+    }
     const label={available:'🟢 You are Available',break:'🟡 On Break',finished:'🔴 Shift Ended'};
     rToast(label[newStatus]||newStatus);
   }catch(e){rToast('❌ Status update failed: '+fmtFbErr(e),4000);}
@@ -1509,6 +1577,14 @@ function toggleToneSection(){
 }
 
 // ── PRIVACY SECTION ────────────────────────────────────
+function togglePrivacySection(){
+  const body=document.getElementById('privacySectionBody');
+  const arrow=document.getElementById('privacySectionArrow');
+  if(!body) return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  if(arrow) arrow.textContent=open?'▼':'▲';
+}
 let _privacyPassVisible=false;
 function loadPrivacySection(){
   const sec=document.getElementById('myPrivacySec');
@@ -1519,8 +1595,13 @@ function loadPrivacySection(){
   _privacyPassVisible=false;
   const disp=document.getElementById('privacyPassDisplay');
   const btn=document.getElementById('privacyPassToggle');
-  if(disp) disp.textContent='••••••••';
+  if(disp){disp.textContent='••••••••';disp.style.letterSpacing='2px';}
   if(btn) btn.textContent='Show';
+  // Always start collapsed
+  const body=document.getElementById('privacySectionBody');
+  const arrow=document.getElementById('privacySectionArrow');
+  if(body) body.style.display='none';
+  if(arrow) arrow.textContent='▼';
 }
 function togglePrivacyPass(){
   _privacyPassVisible=!_privacyPassVisible;

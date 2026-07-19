@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LinkUp Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot, query, orderBy, where, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
@@ -712,6 +714,17 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         </div>
       </div>
       <div class="rdr-info-block" id="rdrInfoBlock"></div>
+      <!-- LIVE MAP -->
+      <div style="position:relative;margin-bottom:16px;">
+        <div id="rdrMap" style="height:260px;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:var(--card);"></div>
+        <div id="rdrMapNoLoc" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.55);border-radius:12px;align-items:center;justify-content:center;">
+          <span style="color:#fff;font-size:13px;font-weight:700;">📡 Location unavailable</span>
+        </div>
+        <div style="position:absolute;top:10px;right:10px;z-index:1000;display:flex;gap:6px;">
+          <button id="rdrTileNormal" onclick="setRdrMapTile('normal')" style="padding:5px 11px;background:rgba(255,255,255,.92);border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:#333;box-shadow:0 2px 6px rgba(0,0,0,.3);">Map</button>
+          <button id="rdrTileSat" onclick="setRdrMapTile('satellite')" style="padding:5px 11px;background:rgba(255,255,255,.3);border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);">Satellite</button>
+        </div>
+      </div>
       <div class="rdr-date-filter">
         <button class="rdr-date-btn active" data-f="today" onclick="setRdrFilter('today')">Today</button>
         <button class="rdr-date-btn" data-f="yesterday" onclick="setRdrFilter('yesterday')">Yesterday</button>
@@ -852,7 +865,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 // ── STATE ──────────────────────────────────────
 let allOrders=[], isInit=true, unsub=null, dispatchOrderId=null, newCnt=0;
 let allRiders=[], allRidersAdmin=[], _ridersUnsub=null;
-let _riderStatusCache={}, _riderStatusFilter='all';
+let _riderStatusCache={}, _riderStatusFilter='all', _riderStatusUnsubs=[];
 let _currentRiderUid=null, _rdrFilter='today', _rdrLiveInterval=null, _rdrStatusData={};
 const ADMIN_API_KEY='AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas';
 let _visitorTotal='—', _visitorToday='—', _visitorUnsub=null;
@@ -1062,6 +1075,7 @@ function loadRiders(){
     const all=snap.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     allRidersAdmin=all;
     allRiders=all.filter(r=>r.active!==false);
+    subscribeRiderStatuses();
     afr();
     if(document.getElementById('sec-riders')?.classList.contains('on')) renderRidersManagement();
   },err=>console.warn('[Admin] riders:',err));
@@ -1226,7 +1240,7 @@ function renderTable(orders){
       <td><div class="cname">${o.customerName||'—'}</div><div class="cphone">${o.phone||''}</div></td>
       <td><div class="iline" title="${its}">${sh}</div>${totalQty?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">${totalQty} item${totalQty>1?'s':''}</div>`:''}</td>
       <td class="amt">₹${(o.amount||0).toLocaleString('en-IN')}</td>
-      <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span>${o.riderName?`<div style="font-size:9px;color:var(--muted);margin-top:3px;">🛵 ${o.riderName}</div>`:''}</td>
+      <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span>${o.riderName?`<div style="font-size:9px;color:var(--muted);margin-top:3px;">${(()=>{const rs=o.assignedRiderUid?(_riderStatusCache[o.assignedRiderUid]?.status||null):null;return rs==='available'?'🟢 ':rs==='break'?'🟡 ':rs==='finished'?'🔴 ':''})()}🛵 ${o.riderName}</div>`:''}</td>
       <td class="tcol">${fmtTime12(dispAt)}</td>
       <td class="tcol">${fmtTime12(delAt)}${dur?`<div class="tdur">${dur}</div>`:''}</td>
       <td class="ac" onclick="event.stopPropagation()">${actBtns(o._id,st)}</td>
@@ -1458,7 +1472,7 @@ function openOrderDetail(id){
       ${!['delivered','cancelled','delivery_failed'].includes(st)?`<div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
         <select id="riderSelect" style="flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;font-family:inherit;outline:none;">
           <option value="">— ${o.riderName?'Re-assign':'Select'} Rider —</option>
-          ${allRiders.map(r=>`<option value="${r.uid}" data-name="${r.name||''}" data-phone="${r.phone||''}">${r.name||r.uid}${r.area?' — '+r.area:''}${r.phone?' · '+r.phone:''}</option>`).join('')}
+          ${allRiders.filter(r=>{const st=_riderStatusCache[r.uid]?.status||null;return !st||st==='available';}).map(r=>`<option value="${r.uid}" data-name="${r.name||''}" data-phone="${r.phone||''}">${r.name||r.uid}${r.area?' — '+r.area:''}${r.phone?' · '+r.phone:''}</option>`).join('')}
         </select>
         <button onclick="assignRider('${o._id}','${o.trackingToken||''}')" style="padding:7px 14px;background:var(--orange);color:#000;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;">Assign</button>
       </div>`:''}
@@ -1927,13 +1941,31 @@ function renderRidersManagement(){
 }
 
 async function loadRiderStatuses(){
+  // One-time initial fetch then subscribe
+  subscribeRiderStatuses();
+}
+
+function subscribeRiderStatuses(){
+  // Unsubscribe old listeners
+  _riderStatusUnsubs.forEach(u=>u());
+  _riderStatusUnsubs=[];
   if(!window._db||!allRidersAdmin.length) return;
-  await Promise.all(allRidersAdmin.map(r=>
-    window._fbGetDoc(window._fbDoc(window._db,'counters','rs_'+r.uid))
-      .then(s=>{if(s.exists()) _riderStatusCache[r.uid]=s.data();})
-      .catch(()=>{})
-  ));
-  if(document.getElementById('sec-riders')?.classList.contains('on')) renderRidersManagement();
+  allRidersAdmin.forEach(r=>{
+    const unsub=window._fbSnap(window._fbDoc(window._db,'counters','rs_'+r.uid),snap=>{
+      if(snap.exists()) _riderStatusCache[r.uid]=snap.data();
+      else delete _riderStatusCache[r.uid];
+      // Re-render riders list if section is open
+      if(document.getElementById('sec-riders')?.classList.contains('on')) renderRidersManagement();
+      // Update rider detail live data if this rider's detail page is open
+      if(_currentRiderUid===r.uid&&document.getElementById('sec-rider-detail')?.classList.contains('on')){
+        _rdrStatusData=_riderStatusCache[r.uid]||{};
+        updateRdrMapLocation();
+      }
+      // Re-render orders table to refresh rider availability badges
+      afr();
+    },()=>{});
+    _riderStatusUnsubs.push(unsub);
+  });
 }
 
 function setRiderFilter(f){
@@ -1942,24 +1974,78 @@ function setRiderFilter(f){
 }
 
 // ── RIDER DETAIL FULL PAGE ─────────────────────────────
+let _rdrMap=null, _rdrMapMarker=null, _rdrMapTileLayer=null, _rdrCurrentTile='normal';
+const RDR_TILES={
+  normal:{url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',attr:'© OpenStreetMap contributors'},
+  satellite:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',attr:'Tiles © Esri'}
+};
+
+function initRdrMap(){
+  const el=document.getElementById('rdrMap');
+  if(!el||!window.L) return;
+  if(_rdrMap){_rdrMap.remove();_rdrMap=null;_rdrMapMarker=null;_rdrMapTileLayer=null;}
+  _rdrMap=L.map('rdrMap',{zoomControl:true,scrollWheelZoom:true}).setView([17.4,78.45],13);
+  _rdrMapTileLayer=L.tileLayer(RDR_TILES.normal.url,{attribution:RDR_TILES.normal.attr,maxZoom:19}).addTo(_rdrMap);
+  _rdrCurrentTile='normal';
+  document.getElementById('rdrTileNormal').style.background='rgba(255,255,255,.92)';
+  document.getElementById('rdrTileNormal').style.color='#333';
+  document.getElementById('rdrTileSat').style.background='rgba(255,255,255,.3)';
+  document.getElementById('rdrTileSat').style.color='#fff';
+  setTimeout(()=>_rdrMap?.invalidateSize(),300);
+}
+
+function destroyRdrMap(){
+  if(_rdrMap){_rdrMap.remove();_rdrMap=null;_rdrMapMarker=null;_rdrMapTileLayer=null;}
+}
+
+function setRdrMapTile(type){
+  if(!_rdrMap||!window.L||_rdrCurrentTile===type) return;
+  if(_rdrMapTileLayer) _rdrMap.removeLayer(_rdrMapTileLayer);
+  _rdrMapTileLayer=L.tileLayer(RDR_TILES[type].url,{attribution:RDR_TILES[type].attr,maxZoom:19}).addTo(_rdrMap);
+  _rdrCurrentTile=type;
+  const norm=document.getElementById('rdrTileNormal');
+  const sat=document.getElementById('rdrTileSat');
+  if(norm){norm.style.background=type==='normal'?'rgba(255,255,255,.92)':'rgba(255,255,255,.3)';norm.style.color=type==='normal'?'#333':'#fff';}
+  if(sat){sat.style.background=type==='satellite'?'rgba(255,255,255,.92)':'rgba(255,255,255,.3)';sat.style.color=type==='satellite'?'#333':'#fff';}
+}
+
+function updateRdrMapLocation(){
+  if(!_rdrMap||!window.L) return;
+  const loc=_rdrStatusData?.lastLocation;
+  const noLoc=document.getElementById('rdrMapNoLoc');
+  if(!loc?.lat||!loc?.lng){
+    if(noLoc){noLoc.style.display='flex';}
+    return;
+  }
+  if(noLoc) noLoc.style.display='none';
+  const ll=[loc.lat,loc.lng];
+  if(!_rdrMapMarker){
+    const icon=L.divIcon({
+      html:'<div style="font-size:24px;line-height:1;">🛵</div>',
+      className:'',iconSize:[28,28],iconAnchor:[14,14]
+    });
+    _rdrMapMarker=L.marker(ll,{icon}).addTo(_rdrMap);
+    _rdrMap.setView(ll,15,{animate:true});
+  }else{
+    _rdrMapMarker.setLatLng(ll);
+  }
+}
+
 async function openRiderPage(uid){
   if(_rdrLiveInterval){clearInterval(_rdrLiveInterval);_rdrLiveInterval=null;}
   const r=allRidersAdmin.find(x=>x.uid===uid);
   if(!r||!window._db) return;
   _currentRiderUid=uid;
   _rdrFilter='today';
-  try{
-    const snap=await window._fbGetDoc(window._fbDoc(window._db,'counters','rs_'+uid));
-    _rdrStatusData=snap.exists()?snap.data():{};
-  }catch(e){_rdrStatusData={};}
+  // Use cached status data (kept live by subscribeRiderStatuses)
+  _rdrStatusData=_riderStatusCache[uid]||{};
   document.getElementById('rdrName').textContent=r.name||'Rider';
   document.getElementById('mtitle').textContent=r.name||'Rider Detail';
   document.getElementById('rdrInfoBlock').innerHTML=`
     <div class="rdm-detail-row"><span class="rdm-detail-lbl">Email</span><span class="rdm-detail-val">${r.email||'—'}</span></div>
     <div class="rdm-detail-row"><span class="rdm-detail-lbl">Phone</span><span class="rdm-detail-val">${r.phone||'—'}</span></div>
     <div class="rdm-detail-row"><span class="rdm-detail-lbl">Area</span><span class="rdm-detail-val">${r.area||'Not set'}</span></div>
-    <div class="rdm-detail-row"><span class="rdm-detail-lbl">Account</span><span class="rdm-detail-val"><span class="rdm-badge ${r.active===true?'active':'inactive'}">${r.active===true?'Active':'Inactive'}</span></span></div>
-    <div class="rdm-detail-row" style="border:none;"><span class="rdm-detail-lbl">Created</span><span class="rdm-detail-val">${r.createdAt?new Date(r.createdAt).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}</span></div>
+    <div class="rdm-detail-row" style="border:none;"><span class="rdm-detail-lbl">Account</span><span class="rdm-detail-val"><span class="rdm-badge ${r.active===true?'active':'inactive'}">${r.active===true?'Active':'Inactive'}</span></span></div>
   `;
   document.querySelectorAll('.rdr-date-btn').forEach(b=>b.classList.toggle('active',b.dataset.f==='today'));
   document.getElementById('rdrCustomDatesRow').style.display='none';
@@ -1967,10 +2053,13 @@ async function openRiderPage(uid){
   renderRdrOrders();
   _rdrLiveInterval=setInterval(updateRdrLive,1000);
   showSec('rider-detail');
+  // Init map after section is visible
+  setTimeout(()=>{initRdrMap();updateRdrMapLocation();},150);
 }
 
 function backFromRiderDetail(){
   if(_rdrLiveInterval){clearInterval(_rdrLiveInterval);_rdrLiveInterval=null;}
+  destroyRdrMap();
   _currentRiderUid=null;
   showSec('riders');
 }
