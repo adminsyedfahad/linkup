@@ -3240,6 +3240,79 @@ const RESTAURANTS=[
   {id:6,name:"Spice Garden",cuisine:"Indian & Chinese",rating:"4.7",time:"25-35 min",img:"https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400",tag:"Popular",cats:["chicken","biryani"],lat:17.4399,lng:78.3910},
 ];
 
+// ── LIVE RESTAURANTS (Firestore) ──────────────────
+let _liveRestaurants=[];
+function loadLiveRestaurants(){
+  if(!window._fbSnap||!window._db) return;
+  const q=window._fbQuery(window._fbCol(window._db,'counters'),window._fbWhere('type','==','restaurant'));
+  window._fbSnap(q,snap=>{
+    _liveRestaurants=snap.docs.map(d=>({...d.data()})).filter(r=>r.active!==false&&r.uid);
+    renderRestaurants();
+    renderHomeRestaurants();
+  },()=>{});
+}
+window.addEventListener('firebaseReady',loadLiveRestaurants);
+if(window._fbReady) loadLiveRestaurants();
+
+async function openLiveRestDetail(uid){
+  const r=_liveRestaurants.find(x=>x.uid===uid);
+  if(!r) return;
+  document.getElementById('rdHero').style.backgroundImage=`url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800')`;
+  document.getElementById('rdHeroName').textContent=r.name||'Restaurant';
+  document.getElementById('rdHeroBadge').textContent=r.isOpen!==false?'🟢 Open':'🔴 Closed';
+  document.getElementById('rdRating').textContent='🍽️ Local';
+  document.getElementById('rdTime').textContent=`⏰ ${r.openTime||'09:00'}–${r.closeTime||'22:00'}`;
+  document.getElementById('rdCuisine').textContent=r.address||'Local Restaurant';
+  const ov=document.getElementById('rdOverlay');
+  ov.style.display='block';
+  document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>ov.classList.add('visible'));
+  const strip=document.getElementById('rdItemsStrip');
+  strip.innerHTML='<div class="rd-empty" style="padding:24px;text-align:center;">Loading menu…</div>';
+  try{
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'counters','menu_'+uid));
+    if(snap.exists()){
+      const cats=snap.data().categories||[];
+      const items=cats.flatMap(c=>(c.items||[]).map(i=>({...i,catName:c.name})));
+      if(items.length){
+        strip.innerHTML='';
+        items.slice(0,12).forEach(item=>{
+          const card=document.createElement('div');
+          card.className='rd-mini';
+          card.innerHTML=`
+            <div class="rd-mini-img" style="background:#1a1a26;display:flex;align-items:center;justify-content:center;font-size:28px;">🍽️</div>
+            <div class="rd-mini-body">
+              <div class="rd-mini-name">${item.name}</div>
+              ${item.desc?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;line-height:1.3;">${item.desc}</div>`:''}
+              <div class="rd-mini-price">₹${item.price}</div>
+              <button class="rd-mini-add">+ Add</button>
+            </div>`;
+          card.querySelector('.rd-mini-add').onclick=e=>{
+            e.stopPropagation();
+            addLiveItemToCart(item.name,Number(item.price)||0,uid);
+          };
+          strip.appendChild(card);
+        });
+      }else{
+        strip.innerHTML='<div class="rd-empty">Menu coming soon! 🍽️</div>';
+      }
+    }else{
+      strip.innerHTML='<div class="rd-empty">Menu not available yet.</div>';
+    }
+  }catch(e){
+    strip.innerHTML='<div class="rd-empty">Could not load menu.</div>';
+  }
+}
+
+function addLiveItemToCart(name,price,restUid){
+  const key='live_'+restUid+'_'+name;
+  const existing=cart.find(c=>c.id===key);
+  if(existing){existing.qty++;}
+  else{cart.push({id:key,name,price,qty:1,cat:'live',img:''});}
+  updateCartUI();
+  showToast(name+' added! 🛒');
+}
+
 const TRACK_STATUS_ORDER=['placed','accepted','preparing','picked_up','on_the_way','delivered'];
 const TRACK_STEP_META=[
   {status:'placed',    icon:'🧾', title:'Order Placed'},
@@ -3924,7 +3997,7 @@ function renderHomeRestaurants(){
   strip.innerHTML=RESTAURANTS.map(r=>`
     <div class="home-rest-mini" onclick="openRestDetail(${r.id})">
       <div class="home-rest-mini-img" style="background-image:url('${r.img}')">
-        <div class="home-rest-mini-tag">${r.tag}</div>
+        <div class="home-rest-mini-tag">${r.tag||''}</div>
       </div>
       <div class="home-rest-mini-body">
         <div class="home-rest-mini-name">${r.name}</div>
@@ -3934,6 +4007,23 @@ function renderHomeRestaurants(){
         </div>
       </div>
     </div>`).join('');
+  // Live restaurants from Firestore
+  _liveRestaurants.forEach(r=>{
+    const d=document.createElement('div');
+    d.className='home-rest-mini';
+    d.innerHTML=`
+      <div class="home-rest-mini-img" style="background:#13131a;display:flex;align-items:center;justify-content:center;font-size:32px;">🍽️
+        <div class="home-rest-mini-tag">${r.isOpen!==false?'Open':'Closed'}</div>
+      </div>
+      <div class="home-rest-mini-body">
+        <div class="home-rest-mini-name">${r.name}</div>
+        <div class="rest-badge-row">
+          <span class="rb ${r.isOpen!==false?'rb-rating':'rb-time'}">${r.isOpen!==false?'🟢 Open':'🔴 Closed'}</span>
+        </div>
+      </div>`;
+    d.onclick=()=>openLiveRestDetail(r.uid);
+    strip.appendChild(d);
+  });
 }
 function renderRestaurants(){
   const grid=document.getElementById('restGrid');grid.innerHTML='';
@@ -3952,6 +4042,24 @@ function renderRestaurants(){
         </div>
       </div>`;
     d.onclick=()=>openRestDetail(r.id);
+    grid.appendChild(d);
+  });
+  // Live restaurants from Firestore
+  _liveRestaurants.forEach(r=>{
+    const d=document.createElement('div');d.className='rest-card';
+    d.innerHTML=`
+      <div class="rest-img" style="background:#13131a;display:flex;align-items:center;justify-content:center;font-size:48px;">🍽️
+        <div class="rest-tag">${r.isOpen!==false?'Open':'Closed'}</div>
+      </div>
+      <div class="rest-body">
+        <div class="rest-name">${r.name}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">${r.address||'Local Restaurant'}</div>
+        <div class="rest-badge-row">
+          <span class="rb ${r.isOpen!==false?'rb-rating':'rb-time'}">${r.isOpen!==false?'🟢 Open':'🔴 Closed'}</span>
+          <span class="rb rb-time">⏰ ${r.openTime||'09:00'}–${r.closeTime||'22:00'}</span>
+        </div>
+      </div>`;
+    d.onclick=()=>openLiveRestDetail(r.uid);
     grid.appendChild(d);
   });
 }

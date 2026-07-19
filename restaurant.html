@@ -784,24 +784,33 @@ function setupResAuth(){
       }
       // Restaurant user
       try{
-        const snap=await window._resGetDoc(window._resDoc(window._resDb,'counters','rest_'+uid));
-        if(!snap.exists()){
-          await window._resSignOut(window._resAuth);
-          showResLogin('❌ Restaurant account not found. Contact admin.');
-          return;
+        let profileData=null;
+        // Primary: restaurants/{uid}
+        try{
+          const rSnap=await window._resGetDoc(window._resDoc(window._resDb,'restaurants',uid));
+          if(rSnap.exists()) profileData=rSnap.data();
+        }catch(e){}
+        // Fallback: counters/rest_{uid} (always open-read)
+        if(!profileData){
+          const cSnap=await window._resGetDoc(window._resDoc(window._resDb,'counters','rest_'+uid));
+          if(!cSnap.exists()){
+            await window._resSignOut(window._resAuth);
+            showResLogin('❌ Restaurant account not found. Contact admin.');
+            return;
+          }
+          profileData=cSnap.data();
         }
-        const data=snap.data();
-        if(data.role!=='restaurant'){
+        if(profileData.role!=='restaurant'){
           await window._resSignOut(window._resAuth);
           showResLogin('❌ Access denied. Only restaurant accounts can login here.');
           return;
         }
-        if(data.active===false){
+        if(profileData.active===false){
           await window._resSignOut(window._resAuth);
           showResLogin('❌ Restaurant account is deactivated. Contact admin.');
           return;
         }
-        restProfile={uid,...data};
+        restProfile={uid,...profileData};
         showResApp();
         subscribeOrders();
         loadMenu();
@@ -1115,8 +1124,13 @@ async function loadMenu(){
 async function saveMenu(){
   if(!window._resDb||!restProfile?.uid) return;
   try{
-    await window._resSetDoc(window._resDoc(window._resDb,'counters','menu_'+restProfile.uid),
-      {type:'menu',uid:restProfile.uid,...rMenu});
+    const menuDoc={type:'menu',uid:restProfile.uid,...rMenu};
+    await window._resSetDoc(window._resDoc(window._resDb,'counters','menu_'+restProfile.uid),menuDoc);
+    // Also sync menu categories to restaurants/{uid} for customer app
+    try{
+      await window._resSetDoc(window._resDoc(window._resDb,'restaurants',restProfile.uid),
+        {menuCategories:rMenu.categories||[]},{merge:true});
+    }catch(e){}
   }catch(e){rToast('⚠️ Save failed: '+e.message);}
 }
 
