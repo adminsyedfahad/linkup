@@ -379,6 +379,21 @@ html.light #gpsBar{background:#070710;}
 }
 .rh-gear:active{background:rgba(255,140,0,.12);border-color:var(--orange);}
 html.light .rh-gear{background:rgba(0,0,0,.05);}
+/* Status dropdown button */
+.rh-status{position:relative;flex-shrink:0;}
+.rh-status-btn{display:flex;align-items:center;gap:5px;padding:6px 10px;background:rgba(255,255,255,.06);border:1.5px solid var(--border);border-radius:9px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text);font-family:inherit;transition:border-color .15s,background .15s;white-space:nowrap;}
+.rh-status-btn:active{background:rgba(255,140,0,.08);border-color:var(--orange);}
+.rh-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background .2s;}
+.rh-status-dot.available{background:#22c55e;box-shadow:0 0 5px rgba(34,197,94,.5);}
+.rh-status-dot.break{background:#f59e0b;box-shadow:0 0 5px rgba(245,158,11,.5);}
+.rh-status-dot.finished{background:#94a3b8;}
+.rh-status-dot.none{background:var(--muted2);}
+.rh-status-dd{position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:6px;z-index:300;min-width:160px;display:none;box-shadow:0 8px 28px rgba(0,0,0,.5);}
+.rh-status-dd.open{display:block;}
+.rh-status-opt{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text);transition:background .1s;}
+.rh-status-opt:active{background:rgba(255,140,0,.1);}
+html.light .rh-status-btn{background:rgba(0,0,0,.05);}
+html.light .rh-status-dd{background:#fff;}
 
 /* Toggle switch */
 .sw-toggle{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;}
@@ -449,6 +464,18 @@ html.light .rh-gear{background:rgba(0,0,0,.05);}
       <span class="rh-title">Wheels</span>
     </div>
     <span id="rNameEl"></span>
+    <div class="rh-status" id="rhStatusWrap" style="display:none;">
+      <button class="rh-status-btn" onclick="toggleStatusDropdown(event)">
+        <span class="rh-status-dot none" id="rhStatusDot"></span>
+        <span id="rhStatusLabel">Status</span>
+        <span style="font-size:9px;color:var(--muted);margin-left:2px;">▼</span>
+      </button>
+      <div class="rh-status-dd" id="rhStatusDd">
+        <div class="rh-status-opt" onclick="pickStatus('available')">🟢 Available</div>
+        <div class="rh-status-opt" onclick="pickStatus('break')">🟡 On Break</div>
+        <div class="rh-status-opt" onclick="pickStatus('finished')">🔴 Finished</div>
+      </div>
+    </div>
     <button class="rh-gear" onclick="showSettings()" title="Settings">⚙️</button>
     <button class="rh-out" onclick="rDoLogout()">Sign Out</button>
   </div>
@@ -537,20 +564,30 @@ html.light .rh-gear{background:rgba(0,0,0,.05);}
             <span style="color:var(--muted);font-size:12px;">Loading…</span>
           </div>
         </div>
-        <div class="stg-sec" id="myStatusSec">
-          <div class="stg-sec-title">🔄 My Status</div>
-          <div class="stg-sub" style="margin-bottom:12px;">Update your availability for receiving orders</div>
-          <select id="statusSel" class="l-inp" style="margin:0;width:100%;padding:12px 14px;font-size:14px;appearance:auto;-webkit-appearance:auto;" onchange="saveRiderStatus(this.value)">
-            <option value="available">🟢 Available</option>
-            <option value="break">🟡 On Break</option>
-            <option value="finished">🔴 Finished</option>
-          </select>
-          <div id="statusShiftInfo" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;"></div>
-        </div>
         <div class="stg-sec">
-          <div class="stg-sec-title">🔔 New Order Alert Tone</div>
-          <div class="stg-sub" style="margin-bottom:14px;font-size:11px;color:var(--muted);">Plays when you receive a new assignment</div>
-          <div id="toneList"></div>
+          <div class="stg-sec-title" onclick="toggleToneSection()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
+            <span>🔔 New Order Alert Tone</span>
+            <span id="toneSectionArrow" style="font-size:11px;color:var(--muted);">▼</span>
+          </div>
+          <div id="toneSectionBody" style="display:none;margin-top:12px;">
+            <div class="stg-sub" style="margin-bottom:14px;font-size:11px;color:var(--muted);">Plays when you receive a new assignment</div>
+            <div id="toneList"></div>
+          </div>
+        </div>
+        <div class="stg-sec" id="myPrivacySec" style="display:none;">
+          <div class="stg-sec-title">🔒 Privacy & Credentials</div>
+          <div class="stg-sub" style="margin-bottom:14px;">Your login details for this account</div>
+          <div class="stg-row" style="margin-bottom:10px;">
+            <div class="stg-lbl">Username (Email)</div>
+            <div id="privacyEmail" style="font-size:12px;font-weight:600;color:var(--text);word-break:break-all;text-align:right;max-width:65%;"></div>
+          </div>
+          <div class="stg-row">
+            <div class="stg-lbl">Password</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="privacyPassDisplay" style="font-size:14px;font-weight:700;letter-spacing:2px;">••••••••</span>
+              <button id="privacyPassToggle" onclick="togglePrivacyPass()" style="padding:5px 10px;background:rgba(255,255,255,.06);border:1.5px solid var(--border);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit;">Show</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -753,8 +790,11 @@ function showApp(){
   const el=document.getElementById('rNameEl');
   if(riderProfile?.isAdmin){
     el.innerHTML='<span class="rh-badge">🔧 Test Mode</span>';
+    document.getElementById('rhStatusWrap').style.display='none';
   }else{
     el.className='rh-name'; el.textContent=riderProfile?.nickname||riderProfile?.name||'';
+    document.getElementById('rhStatusWrap').style.display='block';
+    loadRiderStatus();
   }
 }
 function cleanupOnLogout(){
@@ -1321,7 +1361,7 @@ function showSettings(){
   if(themeToggle) themeToggle.checked=document.documentElement.classList.contains('light');
   renderToneList();
   loadRiderOwnRating();
-  loadRiderStatus();
+  loadPrivacySection();
 }
 function showOrdersFromSettings(){
   if(_riderRatingsUnsub){_riderRatingsUnsub();_riderRatingsUnsub=null;}
@@ -1385,28 +1425,43 @@ async function saveRiderArea(){
 
 // ── RIDER STATUS (stored in counters/rs_{uid} — open write rule) ──────────
 async function loadRiderStatus(){
-  const sec=document.getElementById('myStatusSec');
-  const sel=document.getElementById('statusSel');
-  const info=document.getElementById('statusShiftInfo');
-  if(riderProfile?.isAdmin||!riderProfile?.uid||!window._rdb){if(sec)sec.style.display='none';return;}
-  if(sec) sec.style.display='block';
+  if(riderProfile?.isAdmin||!riderProfile?.uid||!window._rdb) return;
   try{
     const snap=await window._rfGetDoc(window._rfDoc(window._rdb,'counters','rs_'+riderProfile.uid));
     if(snap.exists()){
       const d=snap.data();
-      if(sel&&d.status) sel.value=d.status;
-      if(info&&d.shiftStart){
-        const now=Date.now();
-        const shiftMs=(d.shiftEnd?new Date(d.shiftEnd).getTime():now)-new Date(d.shiftStart).getTime();
-        let breakMs=d.totalBreakMs||0;
-        if(!d.shiftEnd&&d.status==='break'&&d.breakStart) breakMs+=now-new Date(d.breakStart).getTime();
-        const workMs=Math.max(0,shiftMs-breakMs);
-        const fmtM=ms=>{const m=Math.round(ms/60000);return m<60?`${m}m`:`${Math.floor(m/60)}h ${m%60}m`;};
-        const startStr=new Date(d.shiftStart).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-        info.textContent=`Shift: ${startStr} · Work: ${fmtM(workMs)} · Break: ${fmtM(breakMs)}`;
-      }else if(info) info.textContent='';
+      updateStatusButton(d.status||null);
+    }else{
+      updateStatusButton(null);
     }
   }catch(e){console.warn('[Wheels] loadRiderStatus:',e);}
+}
+
+function updateStatusButton(s){
+  const dot=document.getElementById('rhStatusDot');
+  const lbl=document.getElementById('rhStatusLabel');
+  if(!dot||!lbl) return;
+  dot.className='rh-status-dot '+(s||'none');
+  lbl.textContent=s==='available'?'Available':s==='break'?'Break':s==='finished'?'Finished':'Status';
+}
+
+function toggleStatusDropdown(e){
+  if(e) e.stopPropagation();
+  const dd=document.getElementById('rhStatusDd');
+  if(!dd) return;
+  const isOpen=dd.classList.contains('open');
+  dd.classList.toggle('open',!isOpen);
+  if(!isOpen){
+    setTimeout(()=>document.addEventListener('click',function _close(){
+      document.getElementById('rhStatusDd')?.classList.remove('open');
+      document.removeEventListener('click',_close);
+    }),0);
+  }
+}
+
+function pickStatus(s){
+  document.getElementById('rhStatusDd')?.classList.remove('open');
+  saveRiderStatus(s);
 }
 
 async function saveRiderStatus(newStatus){
@@ -1436,10 +1491,45 @@ async function saveRiderStatus(newStatus){
       }
     }
     await window._rfSetDoc(ref,Object.assign({},cur,update),{merge:true});
+    updateStatusButton(newStatus);
     const label={available:'🟢 You are Available',break:'🟡 On Break',finished:'🔴 Shift Ended'};
     rToast(label[newStatus]||newStatus);
-    loadRiderStatus();
   }catch(e){rToast('❌ Status update failed: '+fmtFbErr(e),4000);}
+}
+
+// ── COLLAPSIBLE TONE SECTION ───────────────────────────
+function toggleToneSection(){
+  const body=document.getElementById('toneSectionBody');
+  const arrow=document.getElementById('toneSectionArrow');
+  if(!body) return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'block';
+  if(arrow) arrow.textContent=open?'▼':'▲';
+  if(!open) renderToneList();
+}
+
+// ── PRIVACY SECTION ────────────────────────────────────
+let _privacyPassVisible=false;
+function loadPrivacySection(){
+  const sec=document.getElementById('myPrivacySec');
+  const emailEl=document.getElementById('privacyEmail');
+  if(riderProfile?.isAdmin){if(sec)sec.style.display='none';return;}
+  if(sec) sec.style.display='block';
+  if(emailEl) emailEl.textContent=riderProfile?.email||'—';
+  _privacyPassVisible=false;
+  const disp=document.getElementById('privacyPassDisplay');
+  const btn=document.getElementById('privacyPassToggle');
+  if(disp) disp.textContent='••••••••';
+  if(btn) btn.textContent='Show';
+}
+function togglePrivacyPass(){
+  _privacyPassVisible=!_privacyPassVisible;
+  const disp=document.getElementById('privacyPassDisplay');
+  const btn=document.getElementById('privacyPassToggle');
+  const pass=riderProfile?._pass;
+  if(disp) disp.textContent=_privacyPassVisible?(pass||'Contact admin to view password'):'••••••••';
+  if(disp) disp.style.letterSpacing=_privacyPassVisible?'normal':'2px';
+  if(btn) btn.textContent=_privacyPassVisible?'Hide':'Show';
 }
 
 // ── AUDIO TONES ────────────────────────────────────────
