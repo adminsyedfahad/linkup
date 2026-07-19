@@ -4314,6 +4314,19 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         estimatedDeliveryTime: null,
         deliveryTime: null,
         createdAt:    now
+      }),
+      // Mirror to counters/rq_* for restaurant panel (open read/write)
+      window._fbSetDoc(window._fbDoc(window._db,'counters','rq_'+orderId),{
+        type:'orderqueue',
+        orderId, trackingToken,
+        customerName: name, phone, email: email||'', address,
+        items: order.items,
+        cartItems: cart.length?cart.map(c=>({name:c.name,price:c.price,qty:c.qty})):itemDetails,
+        amount: total,
+        payMethod,
+        status: 'placed',
+        createdAt: now,
+        restaurantId: 'default'
       })
     ]).catch(e=>console.warn('Firestore background write error:',e));
   }

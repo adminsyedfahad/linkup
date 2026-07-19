@@ -1,4 +1,4 @@
-const CACHE = 'linkup-admin-v10';
+const CACHE = 'linkup-admin-v11';
 const STATIC = ['/admin.html'];
 
 self.addEventListener('install', e => {

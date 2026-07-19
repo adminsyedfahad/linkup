@@ -452,6 +452,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
     <button class="mnb" id="mnw" onclick="showSec('wallet')">💰 Refunds</button>
     <button class="mnb" id="mnr" onclick="showSec('reviews')">⭐ Reviews</button>
     <button class="mnb" id="mnri" onclick="showSec('riders')">👤 Riders</button>
+    <button class="mnb" id="mnrest" onclick="showSec('restaurants')">🍽️ Restaurants</button>
     <button class="mnb" id="mnst" onclick="showSec('settings')">⚙️ Settings</button>
     <button class="mnb" onclick="doLogout()">⏻</button>
   </div>
@@ -483,6 +484,9 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
       </div>
       <div class="ni" id="nri" onclick="showSec('riders')">
         <span class="ico">👤</span> Rider Mgmt
+      </div>
+      <div class="ni" id="nrest" onclick="showSec('restaurants')">
+        <span class="ico">🍽️</span> Restaurants
       </div>
       <div class="ni" id="nst" onclick="showSec('settings')">
         <span class="ico">⚙️</span> Settings
@@ -686,6 +690,45 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
       <div class="ref-block">
         <h3>🛵 All Riders</h3>
         <div id="riderMgmtList"><p style="color:var(--muted);text-align:center;padding:20px 0;">Loading…</p></div>
+      </div>
+    </div>
+
+    <!-- RESTAURANT MANAGEMENT -->
+    <div class="sec" id="sec-restaurants">
+      <div class="ref-block">
+        <h3>➕ Add New Restaurant</h3>
+        <div class="ref-field">
+          <label class="ref-lbl">Restaurant Name</label>
+          <input class="ref-input" id="newRestName" placeholder="e.g. Spice Garden" autocomplete="off">
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Address</label>
+          <input class="ref-input" id="newRestAddr" placeholder="Full address" autocomplete="off">
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Phone</label>
+          <input class="ref-input" id="newRestPhone" type="tel" placeholder="+91 XXXXX XXXXX" autocomplete="off">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="ref-field">
+            <label class="ref-lbl">Opens At</label>
+            <input class="ref-input" id="newRestOpen" type="time" value="09:00">
+          </div>
+          <div class="ref-field">
+            <label class="ref-lbl">Closes At</label>
+            <input class="ref-input" id="newRestClose" type="time" value="22:00">
+          </div>
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Password</label>
+          <input class="ref-input" id="newRestPass" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
+        </div>
+        <button class="ref-btn" id="addRestBtn" onclick="addRestaurant()">Create Restaurant Account</button>
+        <div id="addRestMsg" style="margin-top:12px;font-size:13px;display:none;line-height:1.6;"></div>
+      </div>
+      <div class="ref-block">
+        <h3>🍽️ All Restaurants</h3>
+        <div id="restMgmtList"><p style="color:var(--muted);text-align:center;padding:20px 0;">Loading…</p></div>
       </div>
     </div>
 
@@ -1022,6 +1065,8 @@ function showApp(email){
   startListener();
   loadRiders();
   loadVisitorStats();
+  startRstatusListener();
+  loadRestaurants();
 }
 
 async function doLogin(){
@@ -1053,8 +1098,10 @@ async function doLogin(){
 async function doLogout(){
   if(unsub){unsub();unsub=null;}
   if(_ridersUnsub){_ridersUnsub();_ridersUnsub=null;}
+  if(_rstatusUnsub){_rstatusUnsub();_rstatusUnsub=null;}
+  if(_restUnsub){_restUnsub();_restUnsub=null;}
   try{await window._fbSignOut(window._auth);}catch(e){}
-  allOrders=[];allRiders=[];isInit=true;newCnt=0;showLogin();
+  allOrders=[];allRiders=[];isInit=true;newCnt=0;allRestaurants=[];showLogin();
 }
 
 function setupAuth(){
@@ -1121,11 +1168,135 @@ function startListener(){
         updBadge();beep();
         toast(`🔔 ${added.length} new order${added.length>1?'s':''} received!`);
       }
+      // Sync delivery status back to counters/rq_* for restaurant earnings
+      snap.docChanges().filter(c=>c.type!=='removed').forEach(c=>{
+        const d=c.doc.data();
+        if(d.status==='delivered'||d.status==='rejected'||d.status==='cancelled'){
+          const oid=c.doc.id;
+          window._fbSetDoc(window._fbDoc(window._db,'counters','rq_'+oid),
+            {status:d.status},{merge:true}).catch(()=>{});
+        }
+      });
     }
     document.getElementById('ldot').style.display='block';
     document.getElementById('llbl').style.display='block';
     renderStats(); afr();
   },err=>console.warn('Listener error:',err));
+}
+
+// ── RESTAURANT STATUS PROPAGATION ──────────────
+let _rstatusUnsub=null;
+function startRstatusListener(){
+  if(_rstatusUnsub){_rstatusUnsub();_rstatusUnsub=null;}
+  if(!window._db) return;
+  const q=window._fbQuery(window._fbCol(window._db,'counters'),window._fbWhere('type','==','rstatus'));
+  _rstatusUnsub=window._fbSnap(q,snap=>{
+    snap.docChanges().forEach(c=>{
+      if(c.type==='removed') return;
+      const rs=c.doc.data();
+      const oid=rs.orderId;
+      const st=rs.status;
+      if(!oid||!st) return;
+      const allowed=['accepted','preparing','ready_for_pickup','rejected'];
+      if(!allowed.includes(st)) return;
+      // Propagate to orders/{orderId}
+      const order=allOrders.find(o=>o._id===oid||o.orderId===oid);
+      if(order&&order.status===st) return; // already in sync
+      window._fbUpdate(window._fbDoc(window._db,'orders',oid),{
+        status:st,
+        statusHistory:window._fbArrUnion({status:st,time:new Date(),by:'restaurant'})
+      }).catch(()=>{});
+      // Also update orderTracking
+      const token=order?.trackingToken;
+      if(token){
+        window._fbUpdate(window._fbDoc(window._db,'orderTracking',token),{
+          status:st,
+          statusHistory:window._fbArrUnion({status:st,time:new Date()})
+        }).catch(()=>{});
+      }
+    });
+  },()=>{});
+}
+
+// ── RESTAURANTS ────────────────────────────────
+let allRestaurants=[], _restUnsub=null;
+
+function loadRestaurants(){
+  if(_restUnsub){_restUnsub();_restUnsub=null;}
+  if(!window._db) return;
+  const q=window._fbQuery(window._fbCol(window._db,'counters'),window._fbWhere('type','==','restaurant'));
+  _restUnsub=window._fbSnap(q,snap=>{
+    allRestaurants=snap.docs.map(d=>({_id:d.id,...d.data()}));
+    if(document.getElementById('sec-restaurants')?.classList.contains('on')) renderRestaurantsManagement();
+  },()=>{});
+}
+
+function renderRestaurantsManagement(){
+  const el=document.getElementById('restMgmtList');
+  if(!el) return;
+  if(!allRestaurants.length){
+    el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px 0;">No restaurants added yet.</p>';
+    return;
+  }
+  el.innerHTML=allRestaurants.map(r=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--odim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🍽️</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;">${r.name||'—'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${r.email||''} · ${r.phone||''}</div>
+        <div style="font-size:11px;color:var(--muted);">${r.address||''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;${r.isOpen!==false?'background:rgba(34,197,94,.12);color:#22c55e;':'background:rgba(239,68,68,.1);color:#ef4444;'}">${r.isOpen!==false?'Online':'Offline'}</span>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">${r.active===false?'Inactive':'Active'}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function addRestaurant(){
+  const name=document.getElementById('newRestName').value.trim();
+  const address=document.getElementById('newRestAddr').value.trim();
+  const phone=document.getElementById('newRestPhone').value.trim();
+  const openTime=document.getElementById('newRestOpen').value||'09:00';
+  const closeTime=document.getElementById('newRestClose').value||'22:00';
+  const pass=document.getElementById('newRestPass').value;
+  const btn=document.getElementById('addRestBtn');
+  const msg=document.getElementById('addRestMsg');
+  msg.style.display='none';
+  if(!name){toast('⚠️ Enter restaurant name.','#f59e0b');return;}
+  if(!pass||pass.length<6){toast('⚠️ Password must be at least 6 characters.','#f59e0b');return;}
+  if(!window._db||!window._auth?.currentUser){toast('Not connected — please refresh.','#ef4444');return;}
+  btn.disabled=true; btn.textContent='Creating…';
+  const emailUser=name.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const email=(emailUser||'rest'+Date.now())+'@linkup.restaurant';
+  try{
+    const adminToken=await window._auth.currentUser.getIdToken();
+    // Create Firebase Auth account via REST
+    const authResp=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${ADMIN_API_KEY}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass,returnSecureToken:true})
+    });
+    const authData=await authResp.json();
+    if(authData.error) throw new Error(authData.error.message||JSON.stringify(authData.error));
+    const uid=authData.localId;
+    // Write to counters/rest_{uid} (open write, no admin token needed)
+    await window._fbSetDoc(window._fbDoc(window._db,'counters','rest_'+uid),{
+      type:'restaurant',role:'restaurant',uid,name,address,phone,openTime,closeTime,
+      email,_pass:pass,active:true,isOpen:true,createdAt:new Date()
+    });
+    document.getElementById('newRestName').value='';
+    document.getElementById('newRestAddr').value='';
+    document.getElementById('newRestPhone').value='';
+    document.getElementById('newRestPass').value='';
+    msg.style.display='block'; msg.style.color='var(--green)';
+    msg.innerHTML=`✅ <strong>${name}</strong> created!<br>
+      <span style="font-family:monospace;font-size:12px;background:var(--bg);padding:5px 10px;border-radius:6px;display:inline-block;margin-top:6px;">Login: ${email}</span>`;
+    toast('✅ Restaurant '+name+' created!','#22c55e');
+  }catch(e){
+    msg.style.display='block'; msg.style.color='#ef4444';
+    msg.textContent='❌ '+(e.message||'Failed to create restaurant');
+    toast('❌ '+(e.message||'Failed'),'#ef4444');
+  }finally{btn.disabled=false;btn.textContent='Create Restaurant Account';}
 }
 
 function updBadge(){
@@ -1508,15 +1679,16 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',riders:'nri','rider-detail':'nri',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',riders:'nri','rider-detail':'nri',restaurants:'nrest',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
   document.getElementById('mnw').classList.toggle('active',name==='wallet');
   document.getElementById('mnr').classList.toggle('active',name==='reviews');
   document.getElementById('mnri').classList.toggle('active',name==='riders'||name==='rider-detail');
+  document.getElementById('mnrest').classList.toggle('active',name==='restaurants');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',riders:'Rider Management','rider-detail':'Rider Detail',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
   if(name==='reviews'){ loadReviews(); }
@@ -1862,7 +2034,8 @@ async function addRider(){
           phone:       {stringValue:rawPhone},
           active:      {booleanValue:true},
           createdAt:   {timestampValue:new Date().toISOString()},
-          _pass:       {stringValue:pass}
+          _pass:       {stringValue:pass},
+          role:        {stringValue:'rider'}
         }})
       }
     );
