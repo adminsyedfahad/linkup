@@ -954,6 +954,11 @@ body{
 .order-pay-badge.cod{background:rgba(34,197,94,0.15);color:var(--green);}
 .order-pay-badge.online{background:rgba(59,130,246,0.15);color:var(--blue);}
 .track-order-btn{margin-top:10px;width:100%;padding:9px;background:transparent;border:1px solid var(--orange);color:var(--orange);border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Poppins',sans-serif;}
+.refund-info-badge{display:flex;align-items:flex-start;gap:8px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:8px 10px;margin-top:8px;}
+.refund-info-badge-icon{font-size:16px;flex-shrink:0;}
+.refund-info-badge-body{font-size:11px;line-height:1.5;}
+.refund-info-badge-title{font-weight:700;color:#3b82f6;font-size:12px;}
+.refund-info-badge-sub{color:var(--muted);}
 .track-order-btn:hover{background:var(--orange);color:#000;}
 /* ── ORDER DETAIL SHEET ── */
 .od-section-title{font-size:11px;font-weight:700;color:var(--orange);letter-spacing:1.5px;text-transform:uppercase;margin:14px 0 8px;}
@@ -3265,6 +3270,42 @@ function loadLiveRestaurants(){
 window.addEventListener('firebaseReady',loadLiveRestaurants);
 if(window._fbReady) loadLiveRestaurants();
 
+// ── REFUND NOTIFICATIONS (customer) ──────────────────
+let _refundNotifsUnsub=null;
+function loadRefundNotifications(){
+  if(!window._fbSnap||!window._db||!walletToken) return;
+  if(_refundNotifsUnsub){_refundNotifsUnsub();_refundNotifsUnsub=null;}
+  const q=window._fbQuery(
+    window._fbCol(window._db,'counters'),
+    window._fbWhere('type','==','refund_notification'),
+    window._fbWhere('walletToken','==',walletToken)
+  );
+  _refundNotifsUnsub=window._fbSnap(q,snap=>{
+    let updated=false;
+    snap.docs.forEach(d=>{
+      const n=d.data();
+      const order=orderHistory.find(o=>o.id===n.orderId);
+      if(order){
+        order.refundBy=n.initiatedBy||'restaurant';
+        order.refundDest=n.dest;
+        order.refundReason=n.reason;
+        order.refundAmount=n.amount;
+        if(!['refunded'].includes(order.status)){
+          order.status='refund_initiated';
+          order.statusLabel='Refund Initiated 💸';
+        }
+        updated=true;
+      }
+    });
+    if(updated){
+      localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
+      renderOrders();
+    }
+  },()=>{});
+}
+window.addEventListener('firebaseReady',loadRefundNotifications);
+if(window._fbReady) loadRefundNotifications();
+
 async function openLiveRestDetail(uid){
   const r=_liveRestaurants.find(x=>x.uid===uid);
   if(!r) return;
@@ -4107,9 +4148,7 @@ function handleSearch(){
   const restSec=document.getElementById('homeRestSection');
   const oaSec=document.getElementById('orderAgainSection');
   if(!q){hideRestSearch();filter('all');return;}
-  if(restSec)restSec.style.display='none';
-  if(oaSec)oaSec.style.display='none';
-  // Restaurant name search
+  // Restaurant name search → dropdown only
   const restMatches=_liveRestaurants.filter(r=>(r.name||'').toLowerCase().includes(q));
   const staticMatches=RESTAURANTS.filter(r=>r.name.toLowerCase().includes(q));
   const drop=document.getElementById('restSearchDrop');
@@ -4117,20 +4156,43 @@ function handleSearch(){
     const items=[
       ...staticMatches.map(r=>`<div class="rest-search-item" onmousedown="openRestDetail(${r.id})">
         <span class="rest-search-icon">🏪</span>
-        <div class="rest-search-info"><div class="rest-search-name">${r.name}</div><div class="rest-search-sub">${r.cuisine}</div></div>
+        <div class="rest-search-info">
+          <div class="rest-search-name">${r.name}</div>
+          <div class="rest-search-sub">${r.cuisine} &nbsp;·&nbsp; <span style="color:#22c55e;font-weight:700;">🟢 Open</span></div>
+        </div>
         <span class="rest-search-arrow">›</span></div>`),
-      ...restMatches.map(r=>`<div class="rest-search-item" onmousedown="openLiveRestDetail('${r.uid}')">
-        <span class="rest-search-icon">🏪</span>
-        <div class="rest-search-info"><div class="rest-search-name">${r.name}</div><div class="rest-search-sub">${r.address||'Local Restaurant'} · ${r.isOpen!==false?'🟢 Open':'🔴 Closed'}</div></div>
-        <span class="rest-search-arrow">›</span></div>`)
+      ...restMatches.map(r=>{
+        const isOpen=r.isOpen!==false;
+        return `<div class="rest-search-item" onmousedown="openLiveRestDetail('${r.uid}')">
+          <span class="rest-search-icon">🏪</span>
+          <div class="rest-search-info">
+            <div class="rest-search-name">${r.name}</div>
+            <div class="rest-search-sub">${r.address||'Local Restaurant'} &nbsp;·&nbsp; <span style="${isOpen?'color:#22c55e':'color:#ef4444'};font-weight:700;">${isOpen?'🟢 Open':'🔴 Closed'}</span></div>
+          </div>
+          <span class="rest-search-arrow">›</span></div>`;
+      })
     ];
     drop.innerHTML=items.join('');
     drop.style.display='block';
   }else if(drop){drop.style.display='none';}
+  // Food item search
   let results=ITEMS.filter(i=>i.active&&(i.name.toLowerCase().includes(q)||i.cat.includes(q)));
   results=applyVeg(results);
-  document.getElementById('sectionTitle').textContent=`🔍 Results for "${q}"${vegOnly?' 🌿':''}`;
-  renderGrid(results);
+  if(!results.length){
+    // No food matches — keep showing popular items; restaurant results are in the dropdown
+    if(restSec)restSec.style.display='none';
+    if(oaSec)oaSec.style.display='none';
+    const hasRestResults=restMatches.length||staticMatches.length;
+    document.getElementById('sectionTitle').textContent=hasRestResults
+      ?'🏪 Restaurant results — see dropdown above ↑'
+      :`🔍 No results for "${q}"`;
+    renderGrid([]);
+  }else{
+    if(restSec)restSec.style.display='none';
+    if(oaSec)oaSec.style.display='none';
+    document.getElementById('sectionTitle').textContent=`🔍 Results for "${q}"${vegOnly?' 🌿':''}`;
+    renderGrid(results);
+  }
 }
 function hideRestSearch(){
   const drop=document.getElementById('restSearchDrop');
@@ -4501,6 +4563,24 @@ function renderOrders(){
         rateBtn=`<span style="font-size:12px;color:var(--muted);margin-left:8px;">${stars} Rated</span>`;
       }
     }
+    const isRefundInitiated=o.status==='refund_initiated'||o.refundBy;
+    const refundBadgeHtml=isRefundInitiated?`
+      <div class="refund-info-badge">
+        <span class="refund-info-badge-icon">💸</span>
+        <div class="refund-info-badge-body">
+          <div class="refund-info-badge-title">Refund ${o.refundBy==='admin'?'by LinkUp':o.refundBy==='restaurant'?'by Restaurant':'Initiated'}</div>
+          <div class="refund-info-badge-sub">₹${(o.refundAmount||o.total||0)} · ${o.refundDest==='wallet'?'LinkUp Wallet':o.refundDest==='bank'?'Bank Account':'—'}</div>
+          ${o.refundReason?`<div class="refund-info-badge-sub">${o.refundReason}</div>`:''}
+        </div>
+      </div>`:
+      (o.status==='refunded'?`
+      <div class="refund-info-badge" style="background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.2);">
+        <span class="refund-info-badge-icon">✅</span>
+        <div class="refund-info-badge-body">
+          <div class="refund-info-badge-title" style="color:#22c55e;">Refunded ${o.refundBy==='admin'?'by LinkUp':o.refundBy==='restaurant'?'by Restaurant':''}</div>
+          <div class="refund-info-badge-sub">₹${(o.refundAmount||o.total||0)} · ${o.refundDest==='wallet'?'LinkUp Wallet':o.refundDest==='bank'?'Bank Account':'—'}</div>
+        </div>
+      </div>`:'');
     return `
     <div class="order-card">
       <div class="order-header">
@@ -4511,6 +4591,7 @@ function renderOrders(){
       <div class="order-total">Total: ₹${o.total}</div>
       <span class="order-pay-badge ${o.payMethod&&o.payMethod.includes('COD')?'cod':'online'}">${o.payMethod||'COD'}</span>
       <div style="font-size:11px;color:var(--muted);margin-top:4px;">${o.date||''} ${o.time}</div>
+      ${refundBadgeHtml}
       <div style="margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <button class="track-order-btn" style="flex:1;" onclick="openTracking('${o.id}',${o.eta||24},'${o.trackingToken||''}')">🗺️ Track</button>
         <button class="od-details-btn" onclick="openOrderDetail('${o.id}')">📋 Details</button>
@@ -4563,6 +4644,21 @@ function openOrderDetail(orderId){
     <div class="od-row od-meta"><span>💳 Payment</span><span>${o.payMethod||'COD'}</span></div>
     <div class="od-row od-meta"><span>🕐 Placed</span><span>${o.date||''} ${o.time||''}</span></div>
     <div class="od-row od-meta"><span>🔖 Order ID</span><span style="font-size:11px;">${o.id}</span></div>
+    ${(o.refundBy||o.status==='refund_initiated'||o.status==='refunded')?`
+    <div class="od-divider"></div>
+    <div class="od-section-title">Refund Info</div>
+    <div class="refund-info-badge" style="${o.status==='refunded'?'background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.2);':''}">
+      <span class="refund-info-badge-icon">${o.status==='refunded'?'✅':'💸'}</span>
+      <div class="refund-info-badge-body">
+        <div class="refund-info-badge-title" style="${o.status==='refunded'?'color:#22c55e;':'color:#3b82f6;'}">
+          ${o.status==='refunded'?'Refunded':'Refund Initiated'} ${o.refundBy==='admin'?'by LinkUp':o.refundBy==='restaurant'?'by Restaurant':''}
+        </div>
+        <div class="refund-info-badge-sub">Amount: ₹${(o.refundAmount||o.total||0).toLocaleString('en-IN')}</div>
+        <div class="refund-info-badge-sub">To: ${o.refundDest==='wallet'?'💳 LinkUp Wallet':o.refundDest==='bank'?'🏦 Bank Account':'—'}</div>
+        ${o.refundReason?`<div class="refund-info-badge-sub">Reason: ${o.refundReason}</div>`:''}
+        <div class="refund-info-badge-sub" style="font-size:10px;margin-top:2px;">Amount will reflect within 3–5 business days (bank) or instantly (wallet)</div>
+      </div>
+    </div>`:''}
     <div style="margin-top:18px;">
       ${cancelHtml}
       <button class="od-help-btn" onclick="closeOrderDetail();openPsheet('help')">❓ Help & Support</button>
