@@ -353,6 +353,16 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .rdm-badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;}
 .rdm-badge.active{background:rgba(34,197,94,.14);color:#22c55e;}
 .rdm-badge.inactive{background:rgba(239,68,68,.12);color:#ef4444;}
+.rdm-badge.available{background:rgba(34,197,94,.14);color:#22c55e;}
+.rdm-badge.onbreak{background:rgba(245,158,11,.14);color:#f59e0b;}
+.rdm-badge.finished{background:rgba(100,116,139,.14);color:#94a3b8;}
+.rdm-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.rdm-filter-btn{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:'Poppins',sans-serif;transition:all .15s;}
+.rdm-filter-btn.active{border-color:var(--orange);background:rgba(255,140,0,.1);color:var(--orange);}
+.rdm-detail-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.rdm-detail-row:last-child{border-bottom:none;}
+.rdm-detail-lbl{color:var(--muted);font-weight:600;flex-shrink:0;}
+.rdm-detail-val{font-weight:700;text-align:right;word-break:break-all;}
 .rdm-toggle{padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Poppins',sans-serif;transition:opacity .15s;white-space:nowrap;}
 .rdm-toggle:hover{opacity:.75;}
 .rdm-toggle.deactivate{background:rgba(239,68,68,.1);color:#ef4444;}
@@ -776,12 +786,24 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<!-- RIDER DETAIL MODAL -->
+<div class="mo" id="riderDetailMo" onclick="if(event.target===this)closeRiderDetail()">
+  <div class="mb" style="width:min(420px,94vw);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h3 id="rdDetailTitle" style="margin:0;font-size:16px;font-weight:800;">Rider Profile</h3>
+      <button class="odp-close" onclick="closeRiderDetail()">✕</button>
+    </div>
+    <div id="rdDetailBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="tst"></div>
 
 <script>
 // ── STATE ──────────────────────────────────────
 let allOrders=[], isInit=true, unsub=null, dispatchOrderId=null, newCnt=0;
 let allRiders=[], allRidersAdmin=[], _ridersUnsub=null;
+let _riderStatusCache={}, _riderStatusFilter='all';
 const ADMIN_API_KEY='AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas';
 let _visitorTotal='—', _visitorToday='—', _visitorUnsub=null;
 const ADMIN='adminlinkup@gmail.com';
@@ -1437,6 +1459,8 @@ function showSec(name){
   if(name==='rider-ratings'){ loadRiderRatings(); }
   if(name==='riders'){
     if(!_riderRatingsCache.length) loadRiderRatings();
+    _riderStatusFilter='all';
+    loadRiderStatuses();
     renderRidersManagement();
   }
 }
@@ -1799,8 +1823,16 @@ async function addRider(){
 function renderRidersManagement(){
   const el=document.getElementById('riderMgmtList');
   if(!el) return;
+  const statusLabels={available:'🟢 Available',break:'🟡 Break',finished:'🔴 Finished'};
+  const statusClass={available:'available',break:'onbreak',finished:'finished'};
+  const filterBtns=`<div class="rdm-filter">
+    <button class="rdm-filter-btn${_riderStatusFilter==='all'?' active':''}" data-f="all" onclick="setRiderFilter('all')">All (${allRidersAdmin.length})</button>
+    <button class="rdm-filter-btn${_riderStatusFilter==='available'?' active':''}" data-f="available" onclick="setRiderFilter('available')">🟢 Available</button>
+    <button class="rdm-filter-btn${_riderStatusFilter==='break'?' active':''}" data-f="break" onclick="setRiderFilter('break')">🟡 Break</button>
+    <button class="rdm-filter-btn${_riderStatusFilter==='finished'?' active':''}" data-f="finished" onclick="setRiderFilter('finished')">🔴 Finished</button>
+  </div>`;
   if(!allRidersAdmin.length){
-    el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px 0;">No riders found. Add one above.</p>';
+    el.innerHTML=filterBtns+'<p style="color:var(--muted);text-align:center;padding:20px 0;">No riders found. Add one above.</p>';
     return;
   }
   const ratingMap={};
@@ -1810,7 +1842,11 @@ function renderRidersManagement(){
     ratingMap[r.riderUid].sum+=(r.rating||0);
     ratingMap[r.riderUid].count++;
   });
-  el.innerHTML=allRidersAdmin.map(r=>{
+  let filtered=allRidersAdmin;
+  if(_riderStatusFilter!=='all'){
+    filtered=allRidersAdmin.filter(r=>(_riderStatusCache[r.uid]?.status||null)===_riderStatusFilter);
+  }
+  const cards=filtered.map(r=>{
     const ini=(r.name||'?').charAt(0).toUpperCase();
     const isActive=r.active===true;
     const rd=ratingMap[r.uid];
@@ -1818,20 +1854,85 @@ function renderRidersManagement(){
     const starsHtml=rd&&rd.count
       ?`<span class="rdm-stars">${'★'.repeat(ar)}<span style="color:var(--border)">${'★'.repeat(5-ar)}</span></span> ${(rd.sum/rd.count).toFixed(1)} · ${rd.count} review${rd.count!==1?'s':''}`
       :`<span style="color:var(--muted);">No ratings yet</span>`;
-    return `<div class="rdm-card">
+    const st=_riderStatusCache[r.uid]?.status||null;
+    const stBadge=st?`<span class="rdm-badge ${statusClass[st]||''}">${statusLabels[st]||st}</span>`:'';
+    const safeName=(r.name||'').replace(/'/g,'\\\'');
+    return `<div class="rdm-card" onclick="openRiderDetail('${r.uid}')" style="cursor:pointer;">
       <div class="rdm-avatar">${ini}</div>
       <div class="rdm-info">
         <div class="rdm-name">${r.name||'Unknown'}</div>
         <div class="rdm-phone">${r.phone||'No phone'}</div>
         <div class="rdm-rating">${starsHtml}</div>
+        ${stBadge?`<div style="margin-top:5px;">${stBadge}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0;">
         <span class="rdm-badge ${isActive?'active':'inactive'}">${isActive?'Active':'Inactive'}</span>
-        <button class="rdm-toggle ${isActive?'deactivate':'activate'}" onclick="toggleRiderActive('${r.uid}',${isActive})">${isActive?'Deactivate':'Activate'}</button>
-        <button class="rdm-toggle deactivate" style="opacity:.7;" onclick="removeRider('${r.uid}','${(r.name||'').replace(/'/g,'\\\'')}')" >🗑 Remove</button>
+        <button class="rdm-toggle ${isActive?'deactivate':'activate'}" onclick="event.stopPropagation();toggleRiderActive('${r.uid}',${isActive})">${isActive?'Deactivate':'Activate'}</button>
+        <button class="rdm-toggle deactivate" style="opacity:.7;" onclick="event.stopPropagation();removeRider('${r.uid}','${safeName}')">🗑 Remove</button>
       </div>
     </div>`;
   }).join('');
+  el.innerHTML=filterBtns+(filtered.length?cards:`<p style="color:var(--muted);text-align:center;padding:20px 0;">No ${_riderStatusFilter} riders.</p>`);
+}
+
+async function loadRiderStatuses(){
+  if(!window._db||!allRidersAdmin.length) return;
+  await Promise.all(allRidersAdmin.map(r=>
+    window._fbGetDoc(window._fbDoc(window._db,'counters','rs_'+r.uid))
+      .then(s=>{if(s.exists()) _riderStatusCache[r.uid]=s.data();})
+      .catch(()=>{})
+  ));
+  if(document.getElementById('sec-riders')?.classList.contains('on')) renderRidersManagement();
+}
+
+function setRiderFilter(f){
+  _riderStatusFilter=f;
+  renderRidersManagement();
+}
+
+async function openRiderDetail(uid){
+  const r=allRidersAdmin.find(x=>x.uid===uid);
+  if(!r) return;
+  let sd={};
+  try{
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'counters','rs_'+uid));
+    if(snap.exists()) sd=snap.data();
+  }catch(e){}
+  const fmtMs=ms=>{const m=Math.round(ms/60000);return m<60?`${m}m`:`${Math.floor(m/60)}h ${m%60}m`;};
+  const fmtDt=s=>s?new Date(s).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}):'—';
+  let shiftMs=0, breakMs=sd.totalBreakMs||0;
+  if(sd.shiftStart){
+    const end=sd.shiftEnd?new Date(sd.shiftEnd):new Date();
+    shiftMs=end-new Date(sd.shiftStart);
+    if(!sd.shiftEnd&&sd.status==='break'&&sd.breakStart) breakMs+=(Date.now()-new Date(sd.breakStart).getTime());
+  }
+  const workMs=Math.max(0,shiftMs-breakMs);
+  const stLabels={available:'🟢 Available',break:'🟡 On Break',finished:'🔴 Finished'};
+  const stClass={available:'available',break:'onbreak',finished:'finished'};
+  const st=sd.status||null;
+  const rows=[
+    {lbl:'Email',val:r.email||'—'},
+    {lbl:'Phone',val:r.phone||'—'},
+    {lbl:'Area',val:r.area||'—'},
+    {lbl:'Status',val:st?`<span class="rdm-badge ${stClass[st]||'inactive'}">${stLabels[st]||st}</span>`:'<span style="color:var(--muted)">Not set</span>',html:true},
+    {lbl:'Created',val:fmtDt(r.createdAt)},
+    {lbl:'Shift Start',val:fmtDt(sd.shiftStart)},
+    {lbl:'Shift End',val:fmtDt(sd.shiftEnd)},
+    {lbl:'Work Time',val:sd.shiftStart?fmtMs(workMs):'—'},
+    {lbl:'Break Time',val:sd.shiftStart?fmtMs(breakMs):'—'},
+    {lbl:'Status Changed',val:fmtDt(sd.statusAt)},
+  ];
+  document.getElementById('rdDetailTitle').textContent=r.name||'Rider Profile';
+  document.getElementById('rdDetailBody').innerHTML=rows.map(row=>`
+    <div class="rdm-detail-row">
+      <span class="rdm-detail-lbl">${row.lbl}</span>
+      <span class="rdm-detail-val">${row.html?row.val:String(row.val)}</span>
+    </div>`).join('');
+  document.getElementById('riderDetailMo').classList.add('on');
+}
+
+function closeRiderDetail(){
+  document.getElementById('riderDetailMo').classList.remove('on');
 }
 
 async function toggleRiderActive(uid, currentActive){

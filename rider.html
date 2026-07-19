@@ -23,7 +23,7 @@ import{getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}
 const cfg={apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",authDomain:"food-app-linkup.firebaseapp.com",
   projectId:"food-app-linkup",storageBucket:"food-app-linkup.firebasestorage.app",
   messagingSenderId:"957073867036",appId:"1:957073867036:web:9ae4e4f2fd728d71777ad9"};
-const app=initializeApp(cfg),db=getFirestore(app),auth=getAuth(app);
+const app=initializeApp(cfg,'wheels'),db=getFirestore(app),auth=getAuth(app);
 window._rdb=db; window._rauth=auth;
 window._rfDoc=doc; window._rfGetDoc=getDoc; window._rfSetDoc=setDoc;
 window._rfSnap=onSnapshot; window._rfUpdate=updateDoc;
@@ -536,6 +536,16 @@ html.light .rh-gear{background:rgba(0,0,0,.05);}
           <div id="riderRatingDisplay" style="min-height:28px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
             <span style="color:var(--muted);font-size:12px;">Loading…</span>
           </div>
+        </div>
+        <div class="stg-sec" id="myStatusSec">
+          <div class="stg-sec-title">🔄 My Status</div>
+          <div class="stg-sub" style="margin-bottom:12px;">Update your availability for receiving orders</div>
+          <select id="statusSel" class="l-inp" style="margin:0;width:100%;padding:12px 14px;font-size:14px;appearance:auto;-webkit-appearance:auto;" onchange="saveRiderStatus(this.value)">
+            <option value="available">🟢 Available</option>
+            <option value="break">🟡 On Break</option>
+            <option value="finished">🔴 Finished</option>
+          </select>
+          <div id="statusShiftInfo" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;"></div>
         </div>
         <div class="stg-sec">
           <div class="stg-sec-title">🔔 New Order Alert Tone</div>
@@ -1311,6 +1321,7 @@ function showSettings(){
   if(themeToggle) themeToggle.checked=document.documentElement.classList.contains('light');
   renderToneList();
   loadRiderOwnRating();
+  loadRiderStatus();
 }
 function showOrdersFromSettings(){
   if(_riderRatingsUnsub){_riderRatingsUnsub();_riderRatingsUnsub=null;}
@@ -1370,6 +1381,65 @@ async function saveRiderArea(){
     riderProfile.area=area;
     rToast('✅ Area saved! Admin will see it in the assignment dropdown.');
   }catch(e){rToast(fmtFbErr(e),4000);}
+}
+
+// ── RIDER STATUS (stored in counters/rs_{uid} — open write rule) ──────────
+async function loadRiderStatus(){
+  const sec=document.getElementById('myStatusSec');
+  const sel=document.getElementById('statusSel');
+  const info=document.getElementById('statusShiftInfo');
+  if(riderProfile?.isAdmin||!riderProfile?.uid||!window._rdb){if(sec)sec.style.display='none';return;}
+  if(sec) sec.style.display='block';
+  try{
+    const snap=await window._rfGetDoc(window._rfDoc(window._rdb,'counters','rs_'+riderProfile.uid));
+    if(snap.exists()){
+      const d=snap.data();
+      if(sel&&d.status) sel.value=d.status;
+      if(info&&d.shiftStart){
+        const now=Date.now();
+        const shiftMs=(d.shiftEnd?new Date(d.shiftEnd).getTime():now)-new Date(d.shiftStart).getTime();
+        let breakMs=d.totalBreakMs||0;
+        if(!d.shiftEnd&&d.status==='break'&&d.breakStart) breakMs+=now-new Date(d.breakStart).getTime();
+        const workMs=Math.max(0,shiftMs-breakMs);
+        const fmtM=ms=>{const m=Math.round(ms/60000);return m<60?`${m}m`:`${Math.floor(m/60)}h ${m%60}m`;};
+        const startStr=new Date(d.shiftStart).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        info.textContent=`Shift: ${startStr} · Work: ${fmtM(workMs)} · Break: ${fmtM(breakMs)}`;
+      }else if(info) info.textContent='';
+    }
+  }catch(e){console.warn('[Wheels] loadRiderStatus:',e);}
+}
+
+async function saveRiderStatus(newStatus){
+  if(riderProfile?.isAdmin||!riderProfile?.uid||!window._rdb) return;
+  const uid=riderProfile.uid;
+  const now=new Date().toISOString();
+  const ref=window._rfDoc(window._rdb,'counters','rs_'+uid);
+  try{
+    const snap=await window._rfGetDoc(ref);
+    const cur=snap.exists()?snap.data():{};
+    const prev=cur.status||null;
+    const update={status:newStatus,statusAt:now,uid};
+    if(newStatus==='available'){
+      if(!cur.shiftStart||cur.shiftEnd){
+        update.shiftStart=now; update.shiftEnd=null; update.totalBreakMs=0; update.breakStart=null;
+      } else if(prev==='break'&&cur.breakStart){
+        update.totalBreakMs=(cur.totalBreakMs||0)+(Date.now()-new Date(cur.breakStart).getTime());
+        update.breakStart=null;
+      }
+    } else if(newStatus==='break'){
+      if(prev!=='break') update.breakStart=now;
+    } else if(newStatus==='finished'){
+      update.shiftEnd=now;
+      if(prev==='break'&&cur.breakStart){
+        update.totalBreakMs=(cur.totalBreakMs||0)+(Date.now()-new Date(cur.breakStart).getTime());
+        update.breakStart=null;
+      }
+    }
+    await window._rfSetDoc(ref,Object.assign({},cur,update),{merge:true});
+    const label={available:'🟢 You are Available',break:'🟡 On Break',finished:'🔴 Shift Ended'};
+    rToast(label[newStatus]||newStatus);
+    loadRiderStatus();
+  }catch(e){rToast('❌ Status update failed: '+fmtFbErr(e),4000);}
 }
 
 // ── AUDIO TONES ────────────────────────────────────────
