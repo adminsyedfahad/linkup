@@ -11,15 +11,18 @@ import{getFirestore,collection,onSnapshot,query,where,doc,setDoc,getDoc,getDocs,
   from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import{getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}
   from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import{getStorage,ref,uploadBytes,getDownloadURL}
+  from"https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
 const cfg={apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",authDomain:"food-app-linkup.firebaseapp.com",
   projectId:"food-app-linkup",storageBucket:"food-app-linkup.firebasestorage.app",
   messagingSenderId:"957073867036",appId:"1:957073867036:web:9ae4e4f2fd728d71777ad9"};
-const app=initializeApp(cfg,'restaurant'),db=getFirestore(app),auth=getAuth(app);
-window._resDb=db; window._resAuth=auth;
+const app=initializeApp(cfg,'restaurant'),db=getFirestore(app),auth=getAuth(app),storage=getStorage(app);
+window._resDb=db; window._resAuth=auth; window._resStorage=storage;
 window._resSignIn=signInWithEmailAndPassword; window._resSignOut=signOut; window._resOnAuth=onAuthStateChanged;
 window._resSnap=onSnapshot; window._resQuery=query; window._resCol=collection; window._resWhere=where;
 window._resDoc=doc; window._resGetDoc=getDoc; window._resSetDoc=setDoc; window._resGetDocs=getDocs;
 window._resUpdate=updateDoc;
+window._resStorageRef=ref; window._resUploadBytes=uploadBytes; window._resGetDownloadURL=getDownloadURL;
 window._resReady=true; window.dispatchEvent(new Event('resReady'));
 </script>
 <style>
@@ -254,6 +257,52 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
   font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;}
 .item-add-btn:hover{border-color:var(--orange);color:var(--orange);}
 .empty-menu{text-align:center;padding:40px 20px;color:var(--muted);}
+
+/* ── MENU ITEM IMAGE ─────────────────────────────── */
+.mi-img{width:64px;height:64px;border-radius:10px;background-size:cover;background-position:center;flex-shrink:0;border:1px solid var(--border);}
+.mi-img-empty{background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--muted);}
+.mo-photo-row{display:flex;align-items:center;gap:10px;margin-top:4px;}
+.mo-photo-preview{width:72px;height:72px;border-radius:10px;background-size:cover;background-position:center;border:1px solid var(--border);flex-shrink:0;}
+.mo-photo-empty{background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--muted);}
+.mo-photo-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--card);border:1px solid var(--border);border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text);transition:border-color .15s;}
+.mo-photo-btn:hover{border-color:var(--orange);color:var(--orange);}
+.mo-photo-fname{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;}
+
+/* ── ORDER DETAIL MODAL ──────────────────────────── */
+#ordDetailBg{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.65);backdrop-filter:blur(2px);}
+#ordDetailBg.on{display:flex;align-items:flex-end;justify-content:center;}
+@media(min-width:600px){#ordDetailBg.on{align-items:center;}}
+.ord-detail-sheet{background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px 20px 32px;}
+@media(min-width:600px){.ord-detail-sheet{border-radius:18px;margin:16px;}}
+.od-title{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.od-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);padding:2px 6px;}
+.od-row{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);}
+.od-row:last-child{border-bottom:none;}
+.od-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;min-width:90px;padding-top:1px;}
+.od-val{font-size:13px;font-weight:600;color:var(--text);text-align:right;flex:1;}
+.od-addr{font-size:12px;font-weight:500;}
+.od-divider{border-top:1px solid var(--border);margin:10px 0;}
+.od-items-head{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.od-items{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.od-item-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);}
+.od-item-row:last-child{border-bottom:none;}
+.od-item-name{font-size:13px;color:var(--text);}
+.od-item-price{font-size:13px;font-weight:700;color:var(--text);}
+.od-total .od-lbl{font-size:13px;font-weight:800;color:var(--text);}
+.od-total-val{font-size:18px;font-weight:800;color:var(--orange);}
+html.light .ord-detail-sheet{background:#fff;}
+html.light .od-items{background:#f4f4fc;}
+
+/* ── REFUNDS ─────────────────────────────────────── */
+.refund-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.refund-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.refund-id{font-size:11px;font-weight:700;color:var(--muted);min-width:70px;}
+.refund-info{flex:1;}
+.refund-reason{font-size:12px;color:var(--muted);}
+.refund-right{text-align:right;}
+.refund-amt{font-size:15px;font-weight:800;color:#ef4444;}
+.refund-date{font-size:10px;color:var(--muted);margin-top:2px;}
+html.light .refund-item{background:#fff;}
 
 /* ── EARNINGS ───────────────────────────────────── */
 .earn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
@@ -614,17 +663,30 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
       </div>
       <div class="ftabs">
         <div class="ftab active" id="ef-today" onclick="setEarnFilter('today')">Today</div>
-        <div class="ftab" id="ef-week" onclick="setEarnFilter('week')">This Week</div>
+        <div class="ftab" id="ef-yesterday" onclick="setEarnFilter('yesterday')">Yesterday</div>
+        <div class="ftab" id="ef-week" onclick="setEarnFilter('week')">Last 7 Days</div>
         <div class="ftab" id="ef-month" onclick="setEarnFilter('month')">This Month</div>
+        <div class="ftab" id="ef-custom" onclick="setEarnFilter('custom')">Custom</div>
+        <div class="ftab" id="ef-refunds" onclick="setEarnFilter('refunds')">Refunds</div>
       </div>
-      <div class="earn-grid" id="earnGrid">
-        <div class="earn-card hl"><div class="earn-lbl">Revenue</div><div class="earn-val orange" id="eRevenue">₹0</div><div class="earn-sub" id="eRevSub">delivered orders</div></div>
-        <div class="earn-card"><div class="earn-lbl">Orders</div><div class="earn-val" id="eOrders">0</div><div class="earn-sub">completed</div></div>
-        <div class="earn-card"><div class="earn-lbl">Commission (20%)</div><div class="earn-val red" id="eComm">₹0</div><div class="earn-sub">LinkUp fee</div></div>
-        <div class="earn-card"><div class="earn-lbl">Net Earnings</div><div class="earn-val green" id="eNet">₹0</div><div class="earn-sub">your take-home</div></div>
+      <div id="earnCustomDateRow" style="display:none;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <input type="date" id="eFromDate" style="padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+        <input type="date" id="eToDate" style="padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+        <button onclick="renderEarnings()" style="padding:8px 14px;background:var(--odim);border:1px solid rgba(255,140,0,.3);border-radius:8px;color:var(--orange);font-family:'Poppins',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">Apply</button>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:12px;color:var(--muted);">
-        💡 Revenue is calculated from orders with <strong style="color:var(--text);">delivered</strong> status. Commission of 20% is deducted by LinkUp.
+      <div id="earnStatsSection">
+        <div class="earn-grid" id="earnGrid">
+          <div class="earn-card hl"><div class="earn-lbl">Revenue</div><div class="earn-val orange" id="eRevenue">₹0</div><div class="earn-sub" id="eRevSub">delivered orders</div></div>
+          <div class="earn-card"><div class="earn-lbl">Orders</div><div class="earn-val" id="eOrders">0</div><div class="earn-sub">completed</div></div>
+          <div class="earn-card"><div class="earn-lbl">Commission (20%)</div><div class="earn-val red" id="eComm">₹0</div><div class="earn-sub">LinkUp fee</div></div>
+          <div class="earn-card"><div class="earn-lbl">Net Earnings</div><div class="earn-val green" id="eNet">₹0</div><div class="earn-sub">your take-home</div></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:12px;color:var(--muted);">
+          💡 Revenue is calculated from orders with <strong style="color:var(--text);">delivered</strong> status. Commission of 20% is deducted by LinkUp.
+        </div>
+      </div>
+      <div id="earnRefundsSection" style="display:none;">
+        <div id="refundList" class="refund-list"></div>
       </div>
     </div>
 
@@ -720,6 +782,17 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
 </div>
 
 <div id="rToast"></div>
+
+<!-- ORDER DETAIL MODAL -->
+<div id="ordDetailBg" onclick="if(event.target===this)closeOrderDetail()">
+  <div class="ord-detail-sheet">
+    <div class="od-title">
+      <span id="odTitle">Order Details</span>
+      <button class="od-close" onclick="closeOrderDetail()">✕</button>
+    </div>
+    <div id="odBody"></div>
+  </div>
+</div>
 
 <script>
 // ── STATE ──────────────────────────────────────────────────
@@ -1035,18 +1108,18 @@ function renderOrderRow(o){
   let actHtml='<span class="ord-act-done">'+lbl+'</span>';
   if(status==='placed'){
     actHtml=`<div class="ord-act-row">
-      <button class="ord-act-btn accept" onclick="orderAction('${orderId}','accept')">✓ Accept</button>
-      <button class="ord-act-btn reject" onclick="orderAction('${orderId}','reject')">✕ Reject</button>
+      <button class="ord-act-btn accept" onclick="event.stopPropagation();orderAction('${orderId}','accept')">✓ Accept</button>
+      <button class="ord-act-btn reject" onclick="event.stopPropagation();orderAction('${orderId}','reject')">✕ Reject</button>
     </div>`;
   }else if(status==='accepted'||status==='preparing'){
     actHtml=`<div class="ord-act-row">
-      <button class="ord-act-btn markready" onclick="orderAction('${orderId}','ready')">✅ Mark Ready</button>
+      <button class="ord-act-btn markready" onclick="event.stopPropagation();orderAction('${orderId}','ready')">✅ Mark Ready</button>
     </div>`;
   }else if(status==='ready_for_pickup'){
     actHtml=`<span class="ord-act-done">⏳ Awaiting rider</span>`;
   }
   const rowCls=status==='placed'?' class="ord-row-new"':'';
-  return `<tr${rowCls} id="oc-${orderId}">
+  return `<tr${rowCls} id="oc-${orderId}" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
     <td class="ord-td"><span class="ord-id">${shortId}</span><span class="ord-time">${time}</span></td>
     <td class="ord-td"><span class="ord-cust-name">${o.customerName||'—'}</span>${o.phone?`<span class="ord-cust-ph">📞 ${o.phone}</span>`:''}</td>
     <td class="ord-td"><div>${itemLines}${moreItems}</div></td>
@@ -1077,16 +1150,16 @@ function renderOrderMobileCard(o){
   }
   const cardCls='ord-m-card'+(status==='placed'?' ord-row-new':'');
   return `<div class="${cardCls}" id="oc-${orderId}">
-    <div class="ord-m-hdr">
+    <div class="ord-m-hdr" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
       <div><span class="ord-m-id">${shortId}</span><span class="ord-m-time">${time}</span></div>
       <span class="ord-badge ${cls}">${lbl}</span>
     </div>
-    <div class="ord-m-body">
+    <div class="ord-m-body" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
       <div class="ord-m-row"><span class="ord-m-lbl">Customer</span><span class="ord-m-val">👤 ${o.customerName||'—'}</span></div>
       ${o.phone?`<div class="ord-m-row"><span class="ord-m-lbl">Phone</span><span class="ord-m-val">📞 ${o.phone}</span></div>`:''}
       <div class="ord-m-row"><span class="ord-m-lbl">Prep Time</span><span class="ord-m-val">${prepStr}</span></div>
     </div>
-    ${itemsHtml?`<div class="ord-m-items">${itemsHtml}</div>`:''}
+    ${itemsHtml?`<div class="ord-m-items" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">${itemsHtml}</div>`:''}
     <div class="ord-m-footer">
       <span class="ord-m-total">₹${o.amount||0}</span>
       <span class="ord-m-pay">${o.payMethod||'—'}</span>
@@ -1094,6 +1167,38 @@ function renderOrderMobileCard(o){
     ${actions?`<div class="ord-m-actions">${actions}</div>`:''}
   </div>`;
 }
+
+function openOrderDetail(orderId){
+  const o=allOrders.find(x=>(x.orderId||x._id)===orderId);
+  if(!o) return;
+  const d=new Date(getTs(o));
+  const dateStr=isNaN(d)?'—':d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const shortId='LU-'+(orderId||'').slice(-5).toUpperCase();
+  const cartItems=Array.isArray(o.cartItems)?o.cartItems:[];
+  const itemRows=cartItems.map(i=>`<div class="od-item-row">
+    <span class="od-item-name">×${i.qty||1} ${i.name}</span>
+    <span class="od-item-price">₹${((i.price||0)*(i.qty||1)).toLocaleString('en-IN')}</span>
+  </div>`).join('');
+  const {cls,lbl}=_ordBadge(o.status||'placed');
+  document.getElementById('odTitle').textContent='Order '+shortId;
+  document.getElementById('odBody').innerHTML=`
+    <div class="od-row"><span class="od-lbl">Order ID</span><span class="od-val" style="font-family:monospace;">${shortId}</span></div>
+    <div class="od-row"><span class="od-lbl">Date & Time</span><span class="od-val">${dateStr}</span></div>
+    <div class="od-row"><span class="od-lbl">Customer</span><span class="od-val">👤 ${o.customerName||'—'}</span></div>
+    ${o.phone?`<div class="od-row"><span class="od-lbl">Phone</span><span class="od-val">📞 ${o.phone}</span></div>`:''}
+    ${o.address?`<div class="od-row"><span class="od-lbl">Address</span><span class="od-val od-addr">📍 ${o.address}</span></div>`:''}
+    <div class="od-divider"></div>
+    <div class="od-items-head">Items</div>
+    <div class="od-items">${itemRows||'<div class="od-item-row"><span class="od-item-name">—</span><span class="od-item-price"></span></div>'}</div>
+    <div class="od-divider"></div>
+    <div class="od-row od-total"><span class="od-lbl" style="font-size:13px;font-weight:800;color:var(--text);">Total</span><span class="od-val od-total-val">₹${(o.amount||0).toLocaleString('en-IN')}</span></div>
+    <div class="od-row"><span class="od-lbl">Payment</span><span class="od-val">${o.payMethod||'—'}</span></div>
+    ${o.riderName?`<div class="od-row"><span class="od-lbl">Rider</span><span class="od-val">🛵 ${o.riderName}${o.riderPhone?` · ${o.riderPhone}`:''}</span></div>`:''}
+    <div class="od-row"><span class="od-lbl">Status</span><span class="od-val"><span class="ord-badge ${cls}">${lbl}</span></span></div>
+  `;
+  document.getElementById('ordDetailBg').classList.add('on');
+}
+function closeOrderDetail(){document.getElementById('ordDetailBg').classList.remove('on');}
 
 async function orderAction(orderId,action){
   stopOrderSound();
@@ -1216,7 +1321,11 @@ function renderMenuUI(){
 }
 
 function renderMenuItem(catId,item){
+  const imgHtml=item.image
+    ?`<div class="mi-img" style="background-image:url('${item.image}')"></div>`
+    :`<div class="mi-img mi-img-empty">🍽️</div>`;
   return `<div class="mi ${item.available===false?'unavail':''}">
+    ${imgHtml}
     <div class="mi-info">
       <div class="mi-name">${item.name}</div>
       ${item.description?`<div class="mi-desc">${item.description}</div>`:''}
@@ -1298,6 +1407,9 @@ function openItemModal(catId,editItemId=null){
   const cat=(rMenu.categories||[]).find(c=>c.id===catId);
   const item=editItemId&&cat?(cat.items||[]).find(i=>i.id===editItemId):null;
   document.getElementById('moTitle').textContent=item?'Edit Item':'Add Item';
+  const imgPreview=item?.image
+    ?`<div class="mo-photo-preview" id="moPhotoPreview" style="background-image:url('${item.image}')"></div>`
+    :`<div class="mo-photo-preview mo-photo-empty" id="moPhotoPreview">🍽️</div>`;
   document.getElementById('moBody').innerHTML=`
     <div class="mo-field"><label>Item Name</label>
       <input id="moItemName" type="text" placeholder="e.g. Chicken Biryani" value="${item?.name||''}"></div>
@@ -1305,6 +1417,16 @@ function openItemModal(catId,editItemId=null){
       <input id="moItemPrice" type="number" placeholder="0" min="0" step="1" value="${item?.price||''}"></div>
     <div class="mo-field"><label>Description (optional)</label>
       <textarea id="moItemDesc" placeholder="Brief description…">${item?.description||''}</textarea></div>
+    <div class="mo-field"><label>Photo (optional)</label>
+      <div class="mo-photo-row">
+        ${imgPreview}
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <label class="mo-photo-btn">📷 Choose Photo<input type="file" id="moItemPhoto" accept="image/*" onchange="previewItemPhoto(this)" style="display:none"></label>
+          <span class="mo-photo-fname" id="moPhotoFname">${item?.image?'Current photo':'No file chosen'}</span>
+        </div>
+      </div>
+      <input type="hidden" id="moItemExistingImage" value="${item?.image||''}">
+    </div>
     <div class="mo-foot">
       <button class="mo-btn secondary" onclick="closeMo()">Cancel</button>
       <button class="mo-btn primary" onclick="saveItem('${catId}','${editItemId||''}')">Save</button>
@@ -1312,23 +1434,56 @@ function openItemModal(catId,editItemId=null){
   document.getElementById('moBg').classList.add('on');
   setTimeout(()=>document.getElementById('moItemName')?.focus(),100);
 }
+function previewItemPhoto(input){
+  const file=input.files?.[0];
+  if(!file) return;
+  document.getElementById('moPhotoFname').textContent=file.name;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const prev=document.getElementById('moPhotoPreview');
+    if(prev){prev.style.backgroundImage=`url('${e.target.result}')`;prev.textContent='';prev.classList.remove('mo-photo-empty');}
+  };
+  reader.readAsDataURL(file);
+}
 function openEditItemModal(catId,itemId){openItemModal(catId,itemId);}
 
-function saveItem(catId,editItemId){
+async function saveItem(catId,editItemId){
   const name=(document.getElementById('moItemName')?.value||'').trim();
   const price=parseFloat(document.getElementById('moItemPrice')?.value)||0;
   const description=(document.getElementById('moItemDesc')?.value||'').trim();
   if(!name){rToast('⚠️ Enter item name.');return;}
   const cat=(rMenu.categories||[]).find(c=>c.id===catId);
   if(!cat){rToast('⚠️ Category not found.');return;}
-  if(editItemId){
-    const item=(cat.items||[]).find(i=>i.id===editItemId);
-    if(item){Object.assign(item,{name,price,description});}
-  }else{
-    if(!cat.items) cat.items=[];
-    cat.items.push({id:genId(),name,price,description,available:true});
+  const fileInput=document.getElementById('moItemPhoto');
+  const file=fileInput?.files?.[0];
+  const existingImage=document.getElementById('moItemExistingImage')?.value||'';
+  const saveBtn=document.querySelector('#moBody .mo-btn.primary');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving…';}
+  try{
+    let imageUrl=existingImage;
+    if(file&&window._resStorage&&restProfile?.uid){
+      const targetId=editItemId||genId();
+      const storRef=window._resStorageRef(window._resStorage,`restaurant-menu/${restProfile.uid}/${targetId}`);
+      await window._resUploadBytes(storRef,file);
+      imageUrl=await window._resGetDownloadURL(storRef);
+      if(!editItemId){
+        if(!cat.items) cat.items=[];
+        cat.items.push({id:targetId,name,price,description,available:true,image:imageUrl});
+        saveMenu(); closeMo(); renderMenuUI(); return;
+      }
+    }
+    if(editItemId){
+      const item=(cat.items||[]).find(i=>i.id===editItemId);
+      if(item) Object.assign(item,{name,price,description,...(imageUrl?{image:imageUrl}:{})});
+    }else{
+      if(!cat.items) cat.items=[];
+      cat.items.push({id:genId(),name,price,description,available:true,...(imageUrl?{image:imageUrl}:{})});
+    }
+    saveMenu(); closeMo(); renderMenuUI();
+  }catch(e){
+    rToast('⚠️ Save failed: '+e.message);
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save';}
   }
-  saveMenu(); closeMo(); renderMenuUI();
 }
 
 function closeMo(){
@@ -1338,19 +1493,37 @@ function closeMo(){
 // ── EARNINGS ───────────────────────────────────────────────
 function setEarnFilter(f){
   _earnFilter=f;
-  ['today','week','month'].forEach(x=>document.getElementById('ef-'+x)?.classList.toggle('active',x===f));
-  renderEarnings();
+  ['today','yesterday','week','month','custom','refunds'].forEach(x=>document.getElementById('ef-'+x)?.classList.toggle('active',x===f));
+  const customRow=document.getElementById('earnCustomDateRow');
+  if(customRow) customRow.style.display=f==='custom'?'flex':'none';
+  const statsSection=document.getElementById('earnStatsSection');
+  const refundsSection=document.getElementById('earnRefundsSection');
+  if(statsSection) statsSection.style.display=f==='refunds'?'none':'block';
+  if(refundsSection) refundsSection.style.display=f==='refunds'?'block':'none';
+  if(f==='refunds') renderRefunds();
+  else if(f!=='custom') renderEarnings();
 }
 
 function renderEarnings(){
   const now=new Date();
   const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  const yesterdayStart=todayStart-86400000;
   const weekStart=todayStart-6*86400000;
   const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
-  const cutoff=_earnFilter==='today'?todayStart:_earnFilter==='week'?weekStart:monthStart;
+  let from,to;
+  if(_earnFilter==='today'){from=todayStart;to=Date.now();}
+  else if(_earnFilter==='yesterday'){from=yesterdayStart;to=todayStart-1;}
+  else if(_earnFilter==='week'){from=weekStart;to=Date.now();}
+  else if(_earnFilter==='month'){from=monthStart;to=Date.now();}
+  else if(_earnFilter==='custom'){
+    const fd=document.getElementById('eFromDate')?.value;
+    const td=document.getElementById('eToDate')?.value;
+    from=fd?new Date(fd).getTime():weekStart;
+    to=td?new Date(td).getTime()+86399999:Date.now();
+  }else{from=todayStart;to=Date.now();}
   const filtered=allOrders.filter(o=>{
     const ts=getTs(o);
-    return ts>=cutoff&&o.status==='delivered';
+    return ts>=from&&ts<=to&&o.status==='delivered';
   });
   const revenue=filtered.reduce((s,o)=>s+(o.amount||0),0);
   const commission=Math.round(revenue*0.2);
@@ -1360,6 +1533,33 @@ function renderEarnings(){
   document.getElementById('eOrders').textContent=filtered.length;
   document.getElementById('eComm').textContent='₹'+commission.toLocaleString('en-IN');
   document.getElementById('eNet').textContent='₹'+net.toLocaleString('en-IN');
+}
+
+function renderRefunds(){
+  const refunded=allOrders.filter(o=>o.status==='refunded');
+  const el=document.getElementById('refundList');
+  if(!el) return;
+  if(!refunded.length){
+    el.innerHTML='<div class="empty-state"><div class="ei">💸</div><p>No refunded orders.</p></div>';
+    return;
+  }
+  el.innerHTML=refunded.map(o=>{
+    const orderId=o.orderId||o._id;
+    const shortId='LU-'+(orderId||'').slice(-5).toUpperCase();
+    const d=new Date(getTs(o));
+    const dateStr=isNaN(d)?'—':d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    return `<div class="refund-item">
+      <span class="refund-id">${shortId}</span>
+      <div class="refund-info">
+        <div style="font-size:13px;font-weight:700;">${o.customerName||'—'}</div>
+        <div class="refund-reason">${o.refundReason||o.cancelReason||'Order refunded'}</div>
+      </div>
+      <div class="refund-right">
+        <div class="refund-amt">₹${(o.amount||0).toLocaleString('en-IN')}</div>
+        <div class="refund-date">${dateStr}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── HISTORY ────────────────────────────────────────────────

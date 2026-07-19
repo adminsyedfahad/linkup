@@ -530,6 +530,14 @@ body{
 .search-bar{padding:14px 16px;background:var(--bg);}
 .search-bar input{width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:14px;outline:none;transition:border 0.2s;font-family:'Poppins',sans-serif;}
 .search-bar input:focus{border-color:var(--orange);}
+.rest-search-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;}
+.rest-search-item:last-child{border-bottom:none;}
+.rest-search-item:hover,.rest-search-item:active{background:var(--input-bg);}
+.rest-search-icon{font-size:18px;flex-shrink:0;}
+.rest-search-info{flex:1;min-width:0;}
+.rest-search-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rest-search-sub{font-size:11px;color:var(--muted);}
+.rest-search-arrow{font-size:18px;color:var(--muted);}
 
 /* CATEGORIES */
 .categories{display:flex;overflow-x:auto;padding:0 14px 10px;gap:8px;scrollbar-width:none;}
@@ -2369,7 +2377,10 @@ img[alt="LinkUp"]{
       <div class="ad-card"><img src="https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=120" alt=""><div><h3>Free Delivery</h3><p>Orders above ₹199</p></div></div>
     </div>
   </div>
-  <div class="search-bar"><input type="text" id="searchInput" placeholder="🔍  Search food, restaurants..." oninput="handleSearch()"></div>
+  <div class="search-bar" style="position:relative;">
+    <input type="text" id="searchInput" placeholder="🔍  Search food, restaurants..." oninput="handleSearch()" autocomplete="off" onblur="setTimeout(()=>hideRestSearch(),200)">
+    <div id="restSearchDrop" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:12px;z-index:200;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3);"></div>
+  </div>
   <div style="display:flex;align-items:center;gap:0;">
     <div class="categories" style="flex:1;min-width:0;">
       <div class="cat active" data-cat="all"       onclick="filter('all',this)">🍽️ All</div>
@@ -3279,11 +3290,14 @@ async function openLiveRestDetail(uid){
         items.slice(0,12).forEach(item=>{
           const card=document.createElement('div');
           card.className='rd-mini';
+          const itemImgStyle=item.image
+            ?`background-image:url('${item.image}');background-size:cover;background-position:center;`
+            :`background:#1a1a26;display:flex;align-items:center;justify-content:center;font-size:28px;`;
           card.innerHTML=`
-            <div class="rd-mini-img" style="background:#1a1a26;display:flex;align-items:center;justify-content:center;font-size:28px;">🍽️</div>
+            <div class="rd-mini-img" style="${itemImgStyle}">${item.image?'':'🍽️'}</div>
             <div class="rd-mini-body">
               <div class="rd-mini-name">${item.name}</div>
-              ${item.desc?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;line-height:1.3;">${item.desc}</div>`:''}
+              ${item.description?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;line-height:1.3;">${item.description}</div>`:''}
               <div class="rd-mini-price">₹${item.price}</div>
               <button class="rd-mini-add">+ Add</button>
             </div>`;
@@ -4009,16 +4023,20 @@ function renderHomeRestaurants(){
     </div>`).join('');
   // Live restaurants from Firestore
   _liveRestaurants.forEach(r=>{
+    const isOpen=r.isOpen!==false;
     const d=document.createElement('div');
     d.className='home-rest-mini';
     d.innerHTML=`
-      <div class="home-rest-mini-img" style="background:#13131a;display:flex;align-items:center;justify-content:center;font-size:32px;">🍽️
-        <div class="home-rest-mini-tag">${r.isOpen!==false?'Open':'Closed'}</div>
+      <div class="home-rest-mini-img" style="background:linear-gradient(135deg,#1a1a26,#0d0d15);display:flex;align-items:center;justify-content:center;font-size:36px;">
+        🍽️
+        <div class="home-rest-mini-tag" style="${isOpen?'background:rgba(34,197,94,.85);':'background:rgba(239,68,68,.75);'}">${isOpen?'Open':'Closed'}</div>
       </div>
       <div class="home-rest-mini-body">
         <div class="home-rest-mini-name">${r.name}</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.address||'Local Restaurant'}</div>
         <div class="rest-badge-row">
-          <span class="rb ${r.isOpen!==false?'rb-rating':'rb-time'}">${r.isOpen!==false?'🟢 Open':'🔴 Closed'}</span>
+          <span class="rb ${isOpen?'rb-rating':'rb-time'}" style="${isOpen?'color:#22c55e;':'color:#ef4444;'}">${isOpen?'🟢 Open':'🔴 Closed'}</span>
+          <span class="rb rb-time">⏰ ${r.openTime||'09:00'}–${r.closeTime||'22:00'}</span>
         </div>
       </div>`;
     d.onclick=()=>openLiveRestDetail(r.uid);
@@ -4032,6 +4050,7 @@ function renderRestaurants(){
     d.innerHTML=`
       <div class="rest-img" style="background-image:url('${r.img}')">
         <div class="rest-tag">${r.tag}</div>
+        <div style="position:absolute;top:10px;right:10px;background:rgba(34,197,94,.9);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;">🟢 Open</div>
       </div>
       <div class="rest-body">
         <div class="rest-name">${r.name}</div>
@@ -4046,17 +4065,20 @@ function renderRestaurants(){
   });
   // Live restaurants from Firestore
   _liveRestaurants.forEach(r=>{
+    const isOpen=r.isOpen!==false;
     const d=document.createElement('div');d.className='rest-card';
     d.innerHTML=`
-      <div class="rest-img" style="background:#13131a;display:flex;align-items:center;justify-content:center;font-size:48px;">🍽️
-        <div class="rest-tag">${r.isOpen!==false?'Open':'Closed'}</div>
+      <div class="rest-img" style="background:linear-gradient(135deg,#1a1a26,#0d0d15);display:flex;align-items:center;justify-content:center;font-size:56px;">
+        🍽️
+        <div style="position:absolute;top:10px;right:10px;background:${isOpen?'rgba(34,197,94,.9)':'rgba(239,68,68,.85)'};color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;">${isOpen?'🟢 Open':'🔴 Closed'}</div>
+        ${r.openTime?`<div style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 7px;border-radius:5px;">⏰ ${r.openTime}–${r.closeTime||''}</div>`:''}
       </div>
       <div class="rest-body">
         <div class="rest-name">${r.name}</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">${r.address||'Local Restaurant'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">📍 ${r.address||'Local Restaurant'}</div>
         <div class="rest-badge-row">
-          <span class="rb ${r.isOpen!==false?'rb-rating':'rb-time'}">${r.isOpen!==false?'🟢 Open':'🔴 Closed'}</span>
-          <span class="rb rb-time">⏰ ${r.openTime||'09:00'}–${r.closeTime||'22:00'}</span>
+          <span class="rb ${isOpen?'rb-rating':'rb-time'}" style="${isOpen?'color:#22c55e;border-color:rgba(34,197,94,.3);':'color:#ef4444;border-color:rgba(239,68,68,.3);'}">${isOpen?'🟢 Open':'🔴 Closed'}</span>
+          ${r.phone?`<span class="rb rb-time">📞 ${r.phone}</span>`:''}
         </div>
       </div>`;
     d.onclick=()=>openLiveRestDetail(r.uid);
@@ -4084,13 +4106,35 @@ function handleSearch(){
   document.querySelectorAll('.cat').forEach(c=>c.classList.remove('active'));
   const restSec=document.getElementById('homeRestSection');
   const oaSec=document.getElementById('orderAgainSection');
-  if(!q){filter('all');return;}
+  if(!q){hideRestSearch();filter('all');return;}
   if(restSec)restSec.style.display='none';
   if(oaSec)oaSec.style.display='none';
+  // Restaurant name search
+  const restMatches=_liveRestaurants.filter(r=>(r.name||'').toLowerCase().includes(q));
+  const staticMatches=RESTAURANTS.filter(r=>r.name.toLowerCase().includes(q));
+  const drop=document.getElementById('restSearchDrop');
+  if(drop&&(restMatches.length||staticMatches.length)){
+    const items=[
+      ...staticMatches.map(r=>`<div class="rest-search-item" onmousedown="openRestDetail(${r.id})">
+        <span class="rest-search-icon">🏪</span>
+        <div class="rest-search-info"><div class="rest-search-name">${r.name}</div><div class="rest-search-sub">${r.cuisine}</div></div>
+        <span class="rest-search-arrow">›</span></div>`),
+      ...restMatches.map(r=>`<div class="rest-search-item" onmousedown="openLiveRestDetail('${r.uid}')">
+        <span class="rest-search-icon">🏪</span>
+        <div class="rest-search-info"><div class="rest-search-name">${r.name}</div><div class="rest-search-sub">${r.address||'Local Restaurant'} · ${r.isOpen!==false?'🟢 Open':'🔴 Closed'}</div></div>
+        <span class="rest-search-arrow">›</span></div>`)
+    ];
+    drop.innerHTML=items.join('');
+    drop.style.display='block';
+  }else if(drop){drop.style.display='none';}
   let results=ITEMS.filter(i=>i.active&&(i.name.toLowerCase().includes(q)||i.cat.includes(q)));
   results=applyVeg(results);
   document.getElementById('sectionTitle').textContent=`🔍 Results for "${q}"${vegOnly?' 🌿':''}`;
   renderGrid(results);
+}
+function hideRestSearch(){
+  const drop=document.getElementById('restSearchDrop');
+  if(drop) drop.style.display='none';
 }
 
 // ── CART ──────────────────────────────────────────
