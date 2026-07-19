@@ -587,9 +587,16 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
 
     <!-- MENU -->
     <div class="sec" id="sec-menu">
-      <div class="sec-hdr">
-        <h2>🍽️ Menu Management</h2>
-        <p>Add and manage your menu items</p>
+      <div class="sec-hdr" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <h2>🍽️ Menu Management</h2>
+          <p>Add and manage your menu items</p>
+        </div>
+        <button id="seedMenuBtn" onclick="seedTestMenu()"
+          style="padding:8px 14px;background:rgba(255,140,0,.12);border:1px solid rgba(255,140,0,.3);
+            border-radius:9px;color:var(--orange);font-family:'Poppins',sans-serif;font-size:11px;
+            font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;"
+          title="Load test menu data into Firestore">🌱 Load Test Menu</button>
       </div>
       <div class="menu-cats" id="menuCatTabs">
         <button class="cat-add-btn" onclick="openCatModal()">+ Add Category</button>
@@ -1132,6 +1139,47 @@ async function saveMenu(){
         {menuCategories:rMenu.categories||[]},{merge:true});
     }catch(e){}
   }catch(e){rToast('⚠️ Save failed: '+e.message);}
+}
+
+async function seedTestMenu(){
+  if(!restProfile?.uid){rToast('⚠️ Login required.');return;}
+  const btn=document.getElementById('seedMenuBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Saving…';}
+  const g=()=>'id_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  const testMenu={
+    type:'menu',uid:restProfile.uid,
+    categories:[
+      {id:g(),name:'Biryani',items:[
+        {id:g(),name:'Chicken Biryani',price:199,description:'Aromatic basmati with tender chicken',available:true},
+        {id:g(),name:'Mutton Biryani',price:249,description:'Slow-cooked mutton dum biryani',available:true},
+        {id:g(),name:'Veg Biryani',price:149,description:'Fresh vegetables in fragrant rice',available:true}
+      ]},
+      {id:g(),name:'Drinks',items:[
+        {id:g(),name:'Chai',price:20,description:'Hot masala chai',available:true},
+        {id:g(),name:'Cold Coffee',price:89,description:'Chilled blended coffee with ice cream',available:true},
+        {id:g(),name:'Lassi',price:59,description:'Sweet yoghurt drink',available:true}
+      ]},
+      {id:g(),name:'Snacks',items:[
+        {id:g(),name:'Samosa',price:15,description:'Crispy fried pastry with spiced filling',available:true},
+        {id:g(),name:'Bread Pakora',price:30,description:'Batter-fried bread with chutney',available:true}
+      ]}
+    ]
+  };
+  try{
+    await window._resSetDoc(window._resDoc(window._resDb,'counters','menu_'+restProfile.uid),testMenu);
+    try{
+      await window._resSetDoc(window._resDoc(window._resDb,'restaurants',restProfile.uid),
+        {menuCategories:testMenu.categories},{merge:true});
+    }catch(e){}
+    rMenu=testMenu;
+    _currentCatId=testMenu.categories[0]?.id||null;
+    renderMenuUI();
+    rToast('✅ Test menu loaded! 3 categories, 8 items.');
+    if(btn){btn.textContent='✅ Done';setTimeout(()=>{btn.style.display='none';},2000);}
+  }catch(e){
+    rToast('❌ Failed: '+e.message);
+    if(btn){btn.disabled=false;btn.textContent='🌱 Load Test Menu';}
+  }
 }
 
 function renderMenuUI(){
