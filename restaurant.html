@@ -295,6 +295,36 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
 /* ── MISC ───────────────────────────────────────── */
 .card-block{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
 .divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+/* ── THEME TOGGLE ───────────────────────────────── */
+.theme-btn{background:none;border:1px solid var(--border);border-radius:8px;
+  padding:7px 11px;color:var(--muted);font-family:'Poppins',sans-serif;font-size:12px;
+  font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;
+  width:100%;margin-bottom:4px;}
+.theme-btn:hover{border-color:var(--orange);color:var(--orange);}
+
+/* ── REVIEWS ────────────────────────────────────── */
+.reviews-avg{background:var(--card);border:1px solid rgba(255,140,0,.28);
+  border-radius:14px;padding:20px;text-align:center;margin-bottom:18px;}
+.reviews-avg .avg-num{font-size:48px;font-weight:800;color:var(--orange);line-height:1;}
+.reviews-avg .avg-stars{font-size:24px;color:#f59e0b;margin:6px 0;}
+.reviews-avg .avg-count{font-size:12px;color:var(--muted);}
+.review-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-bottom:10px;}
+.review-stars{color:#f59e0b;font-size:16px;margin-bottom:4px;}
+.review-comment{font-size:13px;margin-bottom:6px;line-height:1.5;}
+.review-meta{font-size:11px;color:var(--muted);}
+
+/* ── LIGHT THEME ────────────────────────────────── */
+html.light{
+  --bg:#f0f0f8;--surface:#ffffff;--card:#ffffff;--border:#dcdce8;
+  --text:#1a1a2e;--muted:#5c5c75;
+}
+html.light body{background:var(--bg);}
+html.light #rLogin{background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,.06) 0%,transparent 60%),#f0f0f8;}
+html.light .lb{box-shadow:0 4px 24px rgba(0,0,0,.06);}
+html.light .lf input,html.light .mo-field input,html.light .mo-field textarea,html.light .mo-field select{background:#f4f4fc;color:var(--text);}
+html.light .bnav-item{color:var(--muted);}
 </style>
 </head>
 <body>
@@ -346,12 +376,16 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
       <div class="rni" id="rn-history" onclick="showSec('history')">
         <span class="ico">📋</span> Order History
       </div>
+      <div class="rni" id="rn-reviews" onclick="showSec('reviews')">
+        <span class="ico">⭐</span> Reviews
+      </div>
       <div class="rni" id="rn-profile" onclick="showSec('profile')">
         <span class="ico">⚙️</span> Profile
       </div>
     </div>
     <div class="res-sb-info" id="sbEmail"></div>
     <div class="res-sb-bot">
+      <button class="theme-btn" id="sbThemeBtn" onclick="toggleTheme()"><span>🌙</span> Dark Mode</button>
       <button class="rlogout" onclick="rDoLogout()"><span class="ico">⏻</span> Sign Out</button>
     </div>
   </div>
@@ -365,7 +399,10 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
         <div class="tb-brand">LINKUP</div>
         <div class="tb-name" id="tbRestName">Restaurant</div>
       </div>
-      <div class="tb-status" id="tbIsOpen"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="tb-status" id="tbIsOpen"></div>
+        <button onclick="toggleTheme()" id="tbThemeBtn" style="background:none;border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:13px;cursor:pointer;color:var(--muted);transition:all .15s;" title="Toggle theme">🌙</button>
+      </div>
     </div>
 
     <!-- ORDERS -->
@@ -442,6 +479,16 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
       <div id="histList"></div>
     </div>
 
+    <!-- REVIEWS -->
+    <div class="sec" id="sec-reviews">
+      <div class="sec-hdr">
+        <h2>⭐ Customer Reviews</h2>
+        <p>Ratings and feedback from your customers</p>
+      </div>
+      <div id="reviewsAvg"></div>
+      <div id="reviewsList"></div>
+    </div>
+
     <!-- PROFILE -->
     <div class="sec" id="sec-profile">
       <div class="sec-hdr">
@@ -494,6 +541,9 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
       <button class="bnav-item" id="bn-history" onclick="showSec('history')">
         <span class="bico">📋</span>History
       </button>
+      <button class="bnav-item" id="bn-reviews" onclick="showSec('reviews')">
+        <span class="bico">⭐</span>Reviews
+      </button>
       <button class="bnav-item" id="bn-profile" onclick="showSec('profile')">
         <span class="bico">⚙️</span>Profile
       </button>
@@ -522,6 +572,8 @@ let restProfile=null;
 let rMenu={categories:[]};
 let allOrders=[];
 let _ordersUnsub=null;
+let _reviewsUnsub=null;
+let _allReviews=[];
 let _orderFilter='pending';
 let _earnFilter='today';
 let _histFilter='today';
@@ -537,6 +589,25 @@ function _ensureAudio(){
   }catch(e){}
 }
 document.addEventListener('click',_ensureAudio);
+
+// ── THEME ──────────────────────────────────────────────────
+function applyTheme(theme){
+  const isLight=theme==='light';
+  document.documentElement.classList.toggle('light',isLight);
+  const icon=isLight?'☀️':'🌙';
+  const label=isLight?'Light Mode':'Dark Mode';
+  const sb=document.getElementById('sbThemeBtn');
+  const tb=document.getElementById('tbThemeBtn');
+  if(sb){sb.innerHTML=`<span>${icon}</span> ${label}`;}
+  if(tb){tb.textContent=icon;}
+}
+function toggleTheme(){
+  const isLight=document.documentElement.classList.contains('light');
+  const next=isLight?'dark':'light';
+  localStorage.setItem('res_theme',next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('res_theme')||'dark');
 
 // ── AUTH ───────────────────────────────────────────────────
 function setupResAuth(){
@@ -571,12 +642,18 @@ function setupResAuth(){
           showResLogin('❌ Restaurant account not found. Contact admin.');
           return;
         }
-        if(snap.data().active===false){
+        const data=snap.data();
+        if(data.role!=='restaurant'){
+          await window._resSignOut(window._resAuth);
+          showResLogin('❌ Access denied. Only restaurant accounts can login here.');
+          return;
+        }
+        if(data.active===false){
           await window._resSignOut(window._resAuth);
           showResLogin('❌ Restaurant account is deactivated. Contact admin.');
           return;
         }
-        restProfile={uid,...snap.data()};
+        restProfile={uid,...data};
         showResApp();
         subscribeOrders();
         loadMenu();
@@ -615,7 +692,8 @@ function showResApp(){
 
 function cleanupResApp(){
   if(_ordersUnsub){_ordersUnsub();_ordersUnsub=null;}
-  restProfile=null; allOrders=[];
+  if(_reviewsUnsub){_reviewsUnsub();_reviewsUnsub=null;}
+  restProfile=null; allOrders=[]; _allReviews=[];
   _prevOrderIds=new Set(); _isFirstLoad=true;
 }
 
@@ -660,6 +738,7 @@ function showSec(name){
   if(name==='menu') renderMenuUI();
   if(name==='earnings') renderEarnings();
   if(name==='history') renderHistory();
+  if(name==='reviews') subscribeReviews();
 }
 
 // ── ORDERS ─────────────────────────────────────────────────
@@ -705,8 +784,7 @@ function setOrderFilter(f){
 
 function renderOrders(){
   const pending=allOrders.filter(o=>o.status==='placed');
-  const accepted=allOrders.filter(o=>o.status==='accepted');
-  const active=allOrders.filter(o=>['preparing','ready_for_pickup'].includes(o.status));
+  const active=allOrders.filter(o=>['accepted','preparing','ready_for_pickup'].includes(o.status));
   const done=allOrders.filter(o=>['delivered','rejected','cancelled','delivery_failed'].includes(o.status));
   // Update pending count badge
   const pc=pending.length;
@@ -718,7 +796,7 @@ function renderOrders(){
   if(bnoc){bnoc.textContent=pc;bnoc.classList.toggle('on',pc>0);}
   // Get orders for current filter
   let orders;
-  if(_orderFilter==='pending') orders=[...pending,...accepted];
+  if(_orderFilter==='pending') orders=pending;
   else if(_orderFilter==='active') orders=active;
   else orders=done.slice(0,50);
   const el=document.getElementById('ordersList');
@@ -749,12 +827,8 @@ function renderOrderCard(o){
   let actions='';
   if(status==='placed'){
     actions=`<div class="oc-actions"><div class="oa-row">
-      <button class="oa-btn accept" onclick="orderAction('${orderId}','accept')">✓ Accept</button>
+      <button class="oa-btn accept" onclick="orderAction('${orderId}','accept')">✓ Accept & Prepare</button>
       <button class="oa-btn reject" onclick="orderAction('${orderId}','reject')">✕ Reject</button>
-    </div></div>`;
-  }else if(status==='accepted'){
-    actions=`<div class="oc-actions"><div class="oa-row">
-      <button class="oa-btn prepare" onclick="orderAction('${orderId}','preparing')">🍳 Start Preparing</button>
     </div></div>`;
   }else if(status==='preparing'){
     actions=`<div class="oc-actions"><div class="oa-row">
@@ -784,7 +858,7 @@ function renderOrderCard(o){
 
 async function orderAction(orderId,action){
   if(!window._resDb||!restProfile?.uid) return;
-  const statusMap={accept:'accepted',reject:'rejected',preparing:'preparing',ready:'ready_for_pickup'};
+  const statusMap={accept:'preparing',reject:'rejected',ready:'ready_for_pickup'};
   const newStatus=statusMap[action]||action;
   const rqRef=window._resDoc(window._resDb,'counters','rq_'+orderId);
   const rsRef=window._resDoc(window._resDb,'counters','rstatus_'+orderId);
@@ -794,9 +868,8 @@ async function orderAction(orderId,action){
       window._resSetDoc(rqRef,{status:newStatus,restaurantUpdatedAt:now},{merge:true}),
       window._resSetDoc(rsRef,{type:'rstatus',orderId,status:newStatus,updatedAt:now,restaurantId:restProfile.uid},{merge:true})
     ]);
-    rToast(action==='accept'?'✅ Order accepted!'
+    rToast(action==='accept'?'🍳 Order accepted — now preparing!'
       :action==='reject'?'❌ Order rejected'
-      :action==='preparing'?'🍳 Marked as preparing!'
       :'✅ Ready for pickup!');
   }catch(e){rToast('⚠️ Failed: '+e.message);}
 }
@@ -1095,22 +1168,69 @@ async function toggleIsOpen(val){
 }
 
 // ── SOUND ──────────────────────────────────────────────────
+function _playOsc(ctx,freq,type,vol,dur,delay){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);
+  o.type=type;o.frequency.value=freq;
+  const t=ctx.currentTime+delay;
+  g.gain.setValueAtTime(vol,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t);o.stop(t+dur+0.02);
+}
 function playNewOrderSound(){
   try{
     _ensureAudio();
-    if(!_resAC) return;
-    const t=_resAC.currentTime;
-    [523,659,784,1047].forEach((f,i)=>{
-      const o=_resAC.createOscillator(),g=_resAC.createGain();
-      o.connect(g); g.connect(_resAC.destination);
-      o.type='sine'; o.frequency.value=f;
-      const s=t+i*.12;
-      g.gain.setValueAtTime(0,s);
-      g.gain.linearRampToValueAtTime(.18,s+.05);
-      g.gain.exponentialRampToValueAtTime(.0001,s+.35);
-      o.start(s); o.stop(s+.35);
-    });
+    if(!_resAC||_resAC.state==='suspended') return;
+    for(let i=0;i<3;i++) _playOsc(_resAC,1400,'square',0.6,0.13,i*0.23);
   }catch(e){}
+}
+
+// ── REVIEWS ────────────────────────────────────────────────
+function subscribeReviews(){
+  if(_reviewsUnsub){_reviewsUnsub();_reviewsUnsub=null;}
+  if(!window._resDb) return;
+  _reviewsUnsub=window._resSnap(
+    window._resCol(window._resDb,'ratings'),
+    snap=>{
+      _allReviews=snap.docs.map(d=>({_id:d.id,...d.data()}))
+        .filter(r=>typeof r.rating==='number')
+        .sort((a,b)=>new Date(b.ratedAt||0)-new Date(a.ratedAt||0));
+      renderReviews();
+    },
+    err=>console.warn('[Restaurant] Reviews:',err)
+  );
+}
+
+function renderReviews(){
+  const avgEl=document.getElementById('reviewsAvg');
+  const listEl=document.getElementById('reviewsList');
+  if(!avgEl||!listEl) return;
+  if(!_allReviews.length){
+    avgEl.innerHTML='';
+    listEl.innerHTML='<div class="empty-state"><div class="ei">⭐</div><p>No reviews yet.</p></div>';
+    return;
+  }
+  const total=_allReviews.reduce((s,r)=>s+r.rating,0);
+  const avg=(total/_allReviews.length).toFixed(1);
+  const fullStars=Math.round(avg);
+  avgEl.innerHTML=`<div class="reviews-avg">
+    <div class="avg-num">${avg}</div>
+    <div class="avg-stars">${'★'.repeat(fullStars)}${'☆'.repeat(5-fullStars)}</div>
+    <div class="avg-count">${_allReviews.length} review${_allReviews.length!==1?'s':''}</div>
+  </div>`;
+  listEl.innerHTML=_allReviews.map(r=>{
+    const stars='★'.repeat(r.rating)+'☆'.repeat(5-r.rating);
+    const date=r.ratedAt?new Date(r.ratedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';
+    return `<div class="review-card">
+      <div class="review-stars">${stars}</div>
+      ${r.comment?`<div class="review-comment">"${r.comment}"</div>`:''}
+      <div class="review-meta">
+        ${r.customerName||'Customer'}
+        ${date?` · ${date}`:''}
+        ${r.amount?` · ₹${r.amount}`:''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── TOAST ──────────────────────────────────────────────────

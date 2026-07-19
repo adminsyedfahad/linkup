@@ -5009,6 +5009,7 @@ async function submitRating(){
         customerName,
         phone,
         walletToken,
+        restaurantId:'default',
         items:(order.items||[]).join(', '),
         amount:order.total||0,
         paymentMethod:order.payMethod||'COD',
