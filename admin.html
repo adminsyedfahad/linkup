@@ -953,43 +953,56 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 let allOrders=[], isInit=true, unsub=null, dispatchOrderId=null, newCnt=0;
 const _adminDelayAlerted=new Set();
 const ADMIN_PREP_LIMIT=8;
+let _rqCache={}, _rqUnsub=null;
+
+function _rqTs(v){return v?v.toDate?v.toDate():v.seconds?new Date(v.seconds*1000):new Date(v):null;}
 
 function isOrderDelayed(o){
   const status=o.status||'';
   if(!['accepted','preparing'].includes(status)) return false;
-  const ac=o.acceptedAt;
+  const ac=o.acceptedAt||(_rqCache[o._id]?.acceptedAt)||null;
   if(!ac) return false;
-  const start=ac.toDate?ac.toDate():ac.seconds?new Date(ac.seconds*1000):new Date(ac);
-  if(isNaN(start)) return false;
+  const start=_rqTs(ac);
+  if(!start||isNaN(start)) return false;
   return (Date.now()-start)/60000>ADMIN_PREP_LIMIT;
 }
 
 function _adminPrepTime(o){
-  const ac=o.acceptedAt;
+  const ac=o.acceptedAt||(_rqCache[o._id]?.acceptedAt)||null;
   if(!ac) return null;
-  const start=ac.toDate?ac.toDate():ac.seconds?new Date(ac.seconds*1000):new Date(ac);
-  if(isNaN(start)) return null;
-  const rd=o.readyAt;
+  const start=_rqTs(ac);
+  if(!start||isNaN(start)) return null;
+  const rd=(o.readyAt||(_rqCache[o._id]?.readyAt)||null);
   if(rd){
-    const end=rd.toDate?rd.toDate():rd.seconds?new Date(rd.seconds*1000):new Date(rd);
-    if(!isNaN(end)){const mins=Math.max(0,Math.round((end-start)/60000));return{done:true,mins,overdue:mins>ADMIN_PREP_LIMIT};}
+    const end=_rqTs(rd);
+    if(end&&!isNaN(end)){const mins=Math.max(0,Math.round((end-start)/60000));return{done:true,mins,overdue:mins>ADMIN_PREP_LIMIT};}
   }
   if(!['accepted','preparing'].includes(o.status||'')) return null;
   const mins=Math.max(0,Math.round((Date.now()-start)/60000));
   return{done:false,mins,overdue:mins>ADMIN_PREP_LIMIT};
 }
 
-function checkAdminDelayed(){
-  const delayed=allOrders.filter(o=>isOrderDelayed(o));
-  delayed.forEach(o=>{
+function _tickPrepCells(){
+  allOrders.filter(o=>isOrderDelayed(o)).forEach(o=>{
     const id=o.orderId||o._id;
     if(!_adminDelayAlerted.has(id)){
       _adminDelayAlerted.add(id);
-      const shortId='LU-'+(id||'').slice(-5).toUpperCase();
-      toast('⚠️ Order '+shortId+' is delayed — over 8 min in prep!','#ef4444');
+      toast('⚠️ Order LU-'+(id||'').slice(-5).toUpperCase()+' is delayed — over 8 min!','#ef4444');
     }
   });
-  afr();
+  document.querySelectorAll('td.prep-cell[data-orderid]').forEach(cell=>{
+    const oid=cell.dataset.orderid;
+    const o=allOrders.find(x=>x._id===oid);
+    if(!o) return;
+    const del=isOrderDelayed(o);
+    const pt=_adminPrepTime(o);
+    let html;
+    if(!pt) html=`<span class="adm-prep-val" style="color:var(--muted)">—</span>`;
+    else{const c=pt.done?(pt.overdue?'over':'done'):(pt.overdue?'over':'running');html=`<span class="adm-prep-val ${c}">${pt.mins}m</span>`+(del?`<div style="margin-top:3px;"><span class="delayed-badge" style="margin-left:0;">⚠️ DELAYED</span></div>`:'');}
+    if(cell.innerHTML!==html) cell.innerHTML=html;
+    const tr=cell.closest('tr');
+    if(tr){const nc=del?'ord-delayed':'';if(tr.className!==nc) tr.className=nc;}
+  });
 }
 let allRiders=[], allRidersAdmin=[], _ridersUnsub=null;
 let _riderStatusCache={}, _riderStatusFilter='all', _riderStatusUnsubs=[];
@@ -1147,6 +1160,7 @@ function showApp(email){
   const tb=document.getElementById('tone-'+activeTone);
   if(tb){document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('active'));tb.classList.add('active');}
   startListener();
+  startRqListener();
   loadRiders();
   loadVisitorStats();
   startRstatusListener();
@@ -1241,7 +1255,7 @@ async function assignRider(orderId,trackingToken){
 function startListener(){
   if(unsub) unsub();
   if(!window._db) return;
-  if(!window._adminDelayInterval) window._adminDelayInterval=setInterval(checkAdminDelayed,30000);
+  if(!window._adminDelayInterval) window._adminDelayInterval=setInterval(_tickPrepCells,30000);
   isInit=true;
   const q=window._fbQuery(window._fbCol(window._db,'orders'),window._fbOrderBy('createdAt','desc'));
   unsub=window._fbSnap(q,snap=>{
@@ -1301,6 +1315,24 @@ function startRstatusListener(){
         }).catch(()=>{});
       }
     });
+  },()=>{});
+}
+
+// ── RQ CACHE (acceptedAt / readyAt from counters) ──────────
+function startRqListener(){
+  if(_rqUnsub){_rqUnsub();_rqUnsub=null;}
+  if(!window._db) return;
+  const q=window._fbQuery(window._fbCol(window._db,'counters'),window._fbWhere('type','==','orderqueue'));
+  _rqUnsub=window._fbSnap(q,snap=>{
+    snap.forEach(d=>{
+      const data=d.data();
+      const oid=d.id.startsWith('rq_')?d.id.slice(3):null;
+      if(!oid) return;
+      if(!_rqCache[oid]) _rqCache[oid]={};
+      if(data.acceptedAt) _rqCache[oid].acceptedAt=data.acceptedAt;
+      if(data.readyAt) _rqCache[oid].readyAt=data.readyAt;
+    });
+    _tickPrepCells();
   },()=>{});
 }
 
@@ -1522,7 +1554,7 @@ function renderTable(orders){
       <td><div class="iline" title="${its}">${sh}</div>${totalQty?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">${totalQty} item${totalQty>1?'s':''}</div>`:''}</td>
       <td class="amt">₹${(o.amount||0).toLocaleString('en-IN')}</td>
       <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span>${o.riderName?`<div style="font-size:9px;color:var(--muted);margin-top:3px;">${(()=>{const rs=o.assignedRiderUid?(_riderStatusCache[o.assignedRiderUid]?.status||null):null;return rs==='available'?'🟢 ':rs==='break'?'🟡 ':rs==='finished'?'🔴 ':''})()}🛵 ${o.riderName}</div>`:''}</td>
-      <td class="tcol">${prepCell}</td>
+      <td class="tcol prep-cell" data-orderid="${o._id}">${prepCell}</td>
       <td class="tcol">${fmtTime12(dispAt)}</td>
       <td class="tcol">${fmtTime12(delAt)}${dur?`<div class="tdur">${dur}</div>`:''}</td>
       <td class="ac" onclick="event.stopPropagation()">${actBtns(o._id,st)}</td>

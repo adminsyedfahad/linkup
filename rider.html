@@ -502,7 +502,7 @@ html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
       </div>
       <div id="delivSection" style="display:none;">
         <div class="sec-hd deliv-hd" onclick="toggleDelivered()">
-          <span class="sec-hd-title">Delivered Today</span>
+          <span class="sec-hd-title">Completed Orders</span>
           <span class="sec-hd-count" id="delivCnt" style="background:var(--green);color:#fff;">0</span>
           <span class="sec-hd-cod" id="delivCod"></span>
           <span class="sec-hd-toggle" id="delivToggle">▼</span>
@@ -841,7 +841,7 @@ function startOrdersListener(){
   _isFirstOrderLoad=true;
   const q=riderProfile.isAdmin
     ?window._rfQuery(window._rfCol(window._rdb,'orders'),
-        window._rfWhere('status','in',['placed','accepted','preparing','picked_up','on_the_way']))
+        window._rfWhere('status','in',['placed','accepted','preparing','ready_for_pickup','picked_up','on_the_way']))
     :window._rfQuery(window._rfCol(window._rdb,'orders'),
         window._rfWhere('assignedRiderUid','==',riderProfile.uid));
   _ordersUnsub=window._rfSnap(q,snap=>{
@@ -893,7 +893,7 @@ function renderOrders(){
     const codTotal=deliveredToday.filter(isCOD).reduce((s,o)=>s+(o.amount||0),0);
     const codEl=document.getElementById('delivCod');
     if(codEl) codEl.textContent=codTotal?'💵 ₹'+codTotal.toLocaleString('en-IN'):'';
-    if(_delivExpanded){
+    if(_delivToggleState){
       const dl=document.getElementById('delivList');
       if(dl) dl.innerHTML=deliveredToday.map(o=>orderCardHtml(o,true)).join('');
     }
@@ -918,10 +918,23 @@ function toggleDelivered(){
 
 function orderCardHtml(o,isDelivered){
   const cod=isCOD(o);
-  const addr=(o.address||'').trim()||'No address saved';
   const items=(o.itemDetails||[]).map(i=>`${i.name} ×${i.qty}`).join(', ')||(o.items||[]).join(', ')||'—';
-  const clickAttr=isDelivered?'':'onclick="openDetail(\''+o._id+'\')"';
-  return `<div class="o-card${isDelivered?' delivered':''}" ${clickAttr}>
+  if(isDelivered){
+    const shortId='LU-'+(o.orderId||o._id||'').slice(-5).toUpperCase();
+    return `<div class="o-card delivered">
+      <div class="o-top">
+        <span class="o-oid">${shortId}</span>
+        <span class="o-chip delivered">Delivered</span>
+      </div>
+      <div class="o-items-txt">${items}</div>
+      <div class="o-foot">
+        <span class="o-amt ${cod?'cod':'paid'}">₹${(o.amount||0).toLocaleString('en-IN')}</span>
+        <span class="o-paytag ${cod?'cod':'paid'}">${cod?'💵 COD':'✅ Paid'}</span>
+      </div>
+    </div>`;
+  }
+  const addr=(o.address||'').trim()||'No address saved';
+  return `<div class="o-card" onclick="openDetail('${o._id}')">
     <div class="o-top">
       <span class="o-oid">${o.orderId||o._id}</span>
       <span class="o-chip ${o.status||''}">${fmtSt(o.status)}</span>
@@ -1005,10 +1018,11 @@ function renderDetail(){
 function renderActionBtn(status,cod){
   const bar=document.getElementById('actionBar');
   const ACTS={
-    accepted: {label:'📦 Mark Picked Up',cls:'pick',next:'picked_up'},
-    preparing:{label:'📦 Mark Picked Up',cls:'pick',next:'picked_up'},
-    picked_up:{label:'🛵 On the Way',    cls:'way', next:'on_the_way'},
-    on_the_way:{label:'✅ Mark Delivered',cls:'done',next:'delivered'},
+    accepted:        {label:'📦 Mark Picked Up', cls:'pick',next:'picked_up'},
+    preparing:       {label:'📦 Mark Picked Up', cls:'pick',next:'picked_up'},
+    ready_for_pickup:{label:'📦 Mark Picked Up', cls:'pick',next:'picked_up'},
+    picked_up:       {label:'🛵 On the Way',     cls:'way', next:'on_the_way'},
+    on_the_way:      {label:'✅ Mark Delivered',  cls:'done',next:'delivered'},
   };
   const a=ACTS[status];
   if(!a){bar.innerHTML=`<button class="act-btn complete">Order Complete ✓</button>`;return;}
