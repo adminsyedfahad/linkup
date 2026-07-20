@@ -134,6 +134,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .pku-g{background:rgba(34,197,94,.14);color:#22c55e;}
 .tcol{font-size:11px;white-space:nowrap;}
 .tdur{font-size:10px;color:var(--muted);margin-top:2px;}
+.adm-prep-val{font-size:11px;font-weight:700;white-space:nowrap;}
+.adm-prep-val.done{color:#22c55e;}
+.adm-prep-val.over{color:#ef4444;}
+.adm-prep-val.running{color:#f59e0b;}
 
 /* BADGES */
 .bdg{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
@@ -551,7 +555,7 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
           <thead>
             <tr>
               <th>Order</th><th>Customer</th><th>Items</th>
-              <th>Amount</th><th>Status</th><th>Dispatch</th><th>Delivery</th><th>Actions</th>
+              <th>Amount</th><th>Status</th><th>Prep Time</th><th>Dispatch</th><th>Delivery</th><th>Actions</th>
             </tr>
           </thead>
           <tbody id="otb"></tbody>
@@ -958,6 +962,21 @@ function isOrderDelayed(o){
   const start=ac.toDate?ac.toDate():ac.seconds?new Date(ac.seconds*1000):new Date(ac);
   if(isNaN(start)) return false;
   return (Date.now()-start)/60000>ADMIN_PREP_LIMIT;
+}
+
+function _adminPrepTime(o){
+  const ac=o.acceptedAt;
+  if(!ac) return null;
+  const start=ac.toDate?ac.toDate():ac.seconds?new Date(ac.seconds*1000):new Date(ac);
+  if(isNaN(start)) return null;
+  const rd=o.readyAt;
+  if(rd){
+    const end=rd.toDate?rd.toDate():rd.seconds?new Date(rd.seconds*1000):new Date(rd);
+    if(!isNaN(end)){const mins=Math.max(0,Math.round((end-start)/60000));return{done:true,mins,overdue:mins>ADMIN_PREP_LIMIT};}
+  }
+  if(!['accepted','preparing'].includes(o.status||'')) return null;
+  const mins=Math.max(0,Math.round((Date.now()-start)/60000));
+  return{done:false,mins,overdue:mins>ADMIN_PREP_LIMIT};
 }
 
 function checkAdminDelayed(){
@@ -1493,13 +1512,17 @@ function renderTable(orders){
     const delAt=o.deliveredAt||o.deliveryTime||null;
     const dur=dispDur(dispAt,delAt);
     const delayed=isOrderDelayed(o);
-    const delayedBadge=delayed?`<span class="delayed-badge">⚠️ DELAYED</span>`:'';
+    const pt=_adminPrepTime(o);
+    let prepCell;
+    if(!pt){prepCell=`<span class="adm-prep-val" style="color:var(--muted)">—</span>`;}
+    else{const ptCls=pt.done?(pt.overdue?'over':'done'):(pt.overdue?'over':'running');prepCell=`<span class="adm-prep-val ${ptCls}">${pt.mins}m</span>`+(delayed?`<div style="margin-top:3px;"><span class="delayed-badge" style="margin-left:0;">⚠️ DELAYED</span></div>`:'');}
     return `<tr class="${delayed?'ord-delayed':''}" data-id="${o._id}" onclick="openOrderDetail('${o._id}')">
       <td><div class="oid">${o.orderId||o._id}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">${timeStr}</div></td>
       <td><div class="cname">${o.customerName||'—'}</div><div class="cphone">${o.phone||''}</div></td>
       <td><div class="iline" title="${its}">${sh}</div>${totalQty?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">${totalQty} item${totalQty>1?'s':''}</div>`:''}</td>
       <td class="amt">₹${(o.amount||0).toLocaleString('en-IN')}</td>
-      <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span>${delayedBadge}${o.riderName?`<div style="font-size:9px;color:var(--muted);margin-top:3px;">${(()=>{const rs=o.assignedRiderUid?(_riderStatusCache[o.assignedRiderUid]?.status||null):null;return rs==='available'?'🟢 ':rs==='break'?'🟡 ':rs==='finished'?'🔴 ':''})()}🛵 ${o.riderName}</div>`:''}</td>
+      <td><span class="bdg ${st}">${st.replace(/_/g,' ')}</span>${o.riderName?`<div style="font-size:9px;color:var(--muted);margin-top:3px;">${(()=>{const rs=o.assignedRiderUid?(_riderStatusCache[o.assignedRiderUid]?.status||null):null;return rs==='available'?'🟢 ':rs==='break'?'🟡 ':rs==='finished'?'🔴 ':''})()}🛵 ${o.riderName}</div>`:''}</td>
+      <td class="tcol">${prepCell}</td>
       <td class="tcol">${fmtTime12(dispAt)}</td>
       <td class="tcol">${fmtTime12(delAt)}${dur?`<div class="tdur">${dur}</div>`:''}</td>
       <td class="ac" onclick="event.stopPropagation()">${actBtns(o._id,st)}</td>
