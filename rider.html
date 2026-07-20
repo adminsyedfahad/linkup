@@ -139,8 +139,47 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 .sec-hd-cod{font-size:11px;font-weight:700;color:var(--green);margin-left:auto;}
 .sec-hd-toggle{font-size:11px;color:var(--muted);margin-left:4px;transition:transform .2s;}
 .sec-hd-toggle.open{transform:rotate(180deg);}
-.deliv-hd{cursor:pointer;}
-.deliv-hd:active{opacity:.7;}
+.comp-hdr-btn{margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(34,197,94,.12);color:var(--green);border:1.5px solid rgba(34,197,94,.3);border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .12s;}
+.comp-hdr-btn:active{opacity:.7;}
+.comp-hdr-cnt{background:var(--green);color:#000;font-size:10px;font-weight:800;padding:1px 6px;border-radius:10px;}
+
+/* COMPLETED PANEL */
+#compOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;}
+#compOverlay.open{opacity:1;pointer-events:all;}
+#compPanel{
+  position:fixed;top:0;right:0;bottom:0;
+  width:min(380px,100vw);
+  background:var(--bg);z-index:201;
+  display:flex;flex-direction:column;
+  transform:translateX(105%);
+  transition:transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow:-6px 0 32px rgba(0,0,0,.35);
+}
+#compPanel.open{transform:translateX(0);}
+.cp-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;
+  padding-top:calc(14px + env(safe-area-inset-top,0px));
+  border-bottom:1px solid var(--border);flex-shrink:0;
+  background:var(--surface);
+}
+.cp-nav-title{font-family:'Righteous',cursive;font-size:18px;color:var(--orange);}
+.cp-close{background:none;border:none;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;padding:2px 6px;}
+.cp-close:active{opacity:.6;}
+.cp-filters{display:flex;gap:6px;padding:10px 14px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
+.cp-filters::-webkit-scrollbar{display:none;}
+.cp-filter-btn{flex-shrink:0;padding:6px 14px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-weight:700;background:none;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+.cp-filter-btn.active{background:var(--orange);color:#000;border-color:var(--orange);}
+.cp-list{flex:1;overflow-y:auto;padding:8px 14px 24px;}
+.cp-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:14px 15px;margin-bottom:10px;}
+.cp-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.cp-oid{font-family:'Righteous',cursive;font-size:15px;color:var(--orange);}
+.cp-ts{font-size:10px;color:var(--muted);text-align:right;}
+.cp-items{font-size:12px;color:var(--text);opacity:.78;line-height:1.45;margin-bottom:8px;}
+.cp-amt{font-size:16px;font-weight:800;color:var(--text);}
+.cp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:60px;gap:10px;}
+.cp-empty-icon{font-size:42px;opacity:.35;}
+.cp-empty-txt{font-size:13px;color:var(--muted);font-weight:600;}
 
 .orders-list{display:flex;flex-direction:column;gap:10px;padding:0 12px;}
 
@@ -497,6 +536,9 @@ html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
       <div class="sec-hd">
         <span class="sec-hd-title">Active Orders</span>
         <span class="sec-hd-count" id="activeCnt">0</span>
+        <button class="comp-hdr-btn" id="compHdrBtn" onclick="openCompletedPanel()" style="display:none;">
+          ✓ Completed <span class="comp-hdr-cnt" id="compHdrCnt">0</span>
+        </button>
       </div>
       <div class="orders-list" id="ordersList">
         <div class="empty-state" id="emptyState">
@@ -505,15 +547,23 @@ html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
           <div class="empty-sub">Assigned orders appear here live</div>
         </div>
       </div>
-      <div id="delivSection" style="display:none;">
-        <div class="sec-hd deliv-hd" onclick="toggleDelivered()">
-          <span class="sec-hd-title">Completed Orders</span>
-          <span class="sec-hd-count" id="delivCnt" style="background:var(--green);color:#fff;">0</span>
-          <span class="sec-hd-cod" id="delivCod"></span>
-          <span class="sec-hd-toggle" id="delivToggle">▼</span>
-        </div>
-        <div class="orders-list" id="delivList" style="display:none;"></div>
+    </div>
+
+    <!-- COMPLETED PANEL (fixed overlay, breaks out of rContent clip) -->
+    <div id="compOverlay" onclick="closeCompletedPanel()"></div>
+    <div id="compPanel">
+      <div class="cp-nav">
+        <span class="cp-nav-title">✓ Completed</span>
+        <button class="cp-close" onclick="closeCompletedPanel()">✕</button>
       </div>
+      <div class="cp-filters">
+        <button class="cp-filter-btn active" id="cpf-today"      onclick="setCompFilter('today')">Today</button>
+        <button class="cp-filter-btn"        id="cpf-yesterday"  onclick="setCompFilter('yesterday')">Yesterday</button>
+        <button class="cp-filter-btn"        id="cpf-week"       onclick="setCompFilter('week')">This Week</button>
+        <button class="cp-filter-btn"        id="cpf-month"      onclick="setCompFilter('month')">This Month</button>
+        <button class="cp-filter-btn"        id="cpf-all"        onclick="setCompFilter('all')">All Time</button>
+      </div>
+      <div id="compList" class="cp-list"></div>
     </div>
 
     <!-- DETAIL SCREEN -->
@@ -683,8 +733,9 @@ const RESTAURANTS=[
 // ── STATE ──────────────────────────────────────────────
 const ADMIN_EMAIL='adminlinkup@gmail.com';
 let riderProfile=null;
-let myOrders=[], deliveredToday=[], currentOrder=null;
+let myOrders=[], deliveredToday=[], allCompleted=[], currentOrder=null;
 let _ordersUnsub=null, _delivExpanded=false;
+let _compFilter='today', _compPanelOpen=false;
 let _isStatusUpdating=false; // blocks renderDetail() during in-flight writes
 
 // Notification / settings
@@ -866,8 +917,10 @@ function startOrdersListener(){
     _prevOrderIds=new Set(active.map(o=>o._id));
 
     myOrders=active;
-    deliveredToday=all.filter(o=>o.status==='delivered'&&isToday(o.deliveredAt||o.deliveryTime));
+    allCompleted=all.filter(o=>o.status==='delivered');
+    deliveredToday=allCompleted.filter(o=>isToday(o.deliveredAt||o.deliveryTime));
     renderOrders();
+    if(_compPanelOpen) renderCompletedList();
     if(currentOrder){
       const upd=myOrders.find(o=>o._id===currentOrder._id);
       // Always update data, but skip re-rendering action bar during in-flight writes
@@ -890,35 +943,75 @@ function renderOrders(){
     if(empty) empty.style.display='none';
     if(list) list.innerHTML=myOrders.map(o=>orderCardHtml(o,false)).join('');
   }
-  // Delivered today section
-  const ds=document.getElementById('delivSection');
-  if(deliveredToday.length){
-    const cntEl=document.getElementById('delivCnt');
-    if(cntEl) cntEl.textContent=deliveredToday.length;
-    const codTotal=deliveredToday.filter(isCOD).reduce((s,o)=>s+(o.amount||0),0);
-    const codEl=document.getElementById('delivCod');
-    if(codEl) codEl.textContent=codTotal?'💵 ₹'+codTotal.toLocaleString('en-IN'):'';
-    if(_delivToggleState){
-      const dl=document.getElementById('delivList');
-      if(dl) dl.innerHTML=deliveredToday.map(o=>orderCardHtml(o,true)).join('');
-    }
-    if(ds) ds.style.display='block';
-  }else{
-    if(ds) ds.style.display='none';
+  // Completed header badge
+  const hdrBtn=document.getElementById('compHdrBtn');
+  const hdrCnt=document.getElementById('compHdrCnt');
+  if(hdrBtn){
+    hdrBtn.style.display=allCompleted.length?'flex':'none';
+    if(hdrCnt) hdrCnt.textContent=deliveredToday.length||allCompleted.length;
   }
 }
-let _delivToggleState=false;
-function toggleDelivered(){
-  _delivToggleState=!_delivToggleState;
-  const dl=document.getElementById('delivList');
-  const tog=document.getElementById('delivToggle');
-  dl.style.display=_delivToggleState?'flex':'none';
-  dl.style.flexDirection='column';
-  dl.style.gap='10px';
-  tog.classList.toggle('open',_delivToggleState);
-  if(_delivToggleState){
-    dl.innerHTML=deliveredToday.map(o=>orderCardHtml(o,true)).join('');
+
+// ── COMPLETED PANEL ────────────────────────────────────────
+function openCompletedPanel(){
+  _compPanelOpen=true;
+  document.getElementById('compOverlay').classList.add('open');
+  document.getElementById('compPanel').classList.add('open');
+  renderCompletedList();
+}
+function closeCompletedPanel(){
+  _compPanelOpen=false;
+  document.getElementById('compOverlay').classList.remove('open');
+  document.getElementById('compPanel').classList.remove('open');
+}
+function setCompFilter(f){
+  _compFilter=f;
+  document.querySelectorAll('.cp-filter-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('cpf-'+f);
+  if(btn) btn.classList.add('active');
+  renderCompletedList();
+}
+function _compTs(o){
+  const v=o.deliveredAt||o.deliveryTime||o.updatedAt||o.createdAt;
+  if(!v) return 0;
+  if(v.toMillis) return v.toMillis();
+  if(v.seconds) return v.seconds*1000;
+  return new Date(v).getTime();
+}
+function renderCompletedList(){
+  const list=document.getElementById('compList');
+  if(!list) return;
+  const now=new Date();
+  const todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  const yestStart=todayStart-86400000;
+  const weekStart=todayStart-6*86400000;
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+  let filtered=allCompleted.slice();
+  if(_compFilter==='today')     filtered=filtered.filter(o=>_compTs(o)>=todayStart);
+  else if(_compFilter==='yesterday') filtered=filtered.filter(o=>_compTs(o)>=yestStart&&_compTs(o)<todayStart);
+  else if(_compFilter==='week') filtered=filtered.filter(o=>_compTs(o)>=weekStart);
+  else if(_compFilter==='month') filtered=filtered.filter(o=>_compTs(o)>=monthStart);
+  filtered.sort((a,b)=>_compTs(b)-_compTs(a));
+  if(!filtered.length){
+    list.innerHTML=`<div class="cp-empty"><div class="cp-empty-icon">📦</div><div class="cp-empty-txt">No completed orders</div></div>`;
+    return;
   }
+  list.innerHTML=filtered.map(o=>{
+    const shortId='LU-'+(o.orderId||o._id||'').slice(-5).toUpperCase();
+    const items=(o.itemDetails||[]).map(i=>`${i.name} ×${i.qty}`).join(', ')||(o.items||[]).join(', ')||'—';
+    const ts=_compTs(o);
+    const d=ts?new Date(ts):null;
+    const timeStr=d?d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}).toUpperCase():'';
+    const dateStr=d?d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
+    return `<div class="cp-card">
+      <div class="cp-card-top">
+        <span class="cp-oid">${shortId}</span>
+        <span class="cp-ts">${dateStr}${timeStr?'<br>'+timeStr:''}</span>
+      </div>
+      <div class="cp-items">${items}</div>
+      <div class="cp-amt">₹${(o.amount||0).toLocaleString('en-IN')}</div>
+    </div>`;
+  }).join('');
 }
 
 function orderCardHtml(o,isDelivered){
