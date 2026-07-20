@@ -1,4 +1,4 @@
-const CACHE = 'linkup-v6';
+const CACHE = 'linkup-v7';
 const STATIC = ['/index.html'];
 
 self.addEventListener('install', e => {

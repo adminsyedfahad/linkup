@@ -1193,7 +1193,9 @@ function renderOrderRow(o){
       <button class="ord-act-btn markready" onclick="event.stopPropagation();orderAction('${orderId}','ready')">✅ Mark Ready</button>
     </div>`;
   }else if(status==='ready_for_pickup'){
-    actHtml=`<span class="ord-act-done">⏳ Awaiting rider</span>`;
+    actHtml=o.assignedRiderUid||o.riderName
+      ?`<span class="ord-act-done" style="color:#22c55e;">🛵 Rider Assigned</span>`
+      :`<span class="ord-act-done">⏳ Awaiting rider</span>`;
   }
   let rowClass='';
   if(status==='placed') rowClass='ord-row-new';
@@ -1230,6 +1232,10 @@ function renderOrderMobileCard(o){
       <button class="ord-act-btn reject" onclick="orderAction('${orderId}','reject')">✕ Reject</button>`;
   }else if(status==='accepted'||status==='preparing'){
     actions=`<button class="ord-act-btn markready" onclick="orderAction('${orderId}','ready')">✅ Mark Ready</button>`;
+  }else if(status==='ready_for_pickup'){
+    actions=o.assignedRiderUid||o.riderName
+      ?`<div class="ord-act-done" style="color:#22c55e;text-align:center;padding:8px 0;font-weight:700;">🛵 Rider Assigned</div>`
+      :`<div class="ord-act-done" style="text-align:center;padding:8px 0;">⏳ Awaiting rider</div>`;
   }
   let cardClass='ord-m-card';
   if(status==='placed') cardClass+=' ord-row-new';

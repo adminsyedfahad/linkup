@@ -643,7 +643,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
       <div class="rev-tabs">
         <div class="rev-tab active" id="revt-linkup" onclick="switchRevTab('linkup')">📱 LinkUp Reviews</div>
         <div class="rev-tab" id="revt-rider" onclick="switchRevTab('rider')">🛵 Rider Reviews</div>
-        <div class="rev-tab" id="revt-rest" onclick="switchRevTab('rest')">🍽️ Restaurant Reviews</div>
       </div>
       <!-- Pane: LinkUp Reviews (existing) -->
       <div id="revPane-linkup">
@@ -681,10 +680,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
         </div>
         <div id="revRiderSummary" style="margin-bottom:18px;"></div>
         <div id="revRiderList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
-      </div>
-      <!-- Pane: Restaurant Reviews (new) -->
-      <div id="revPane-rest" style="display:none;">
-        <div id="revRestContent"></div>
       </div>
     </div>
 
@@ -814,16 +809,12 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
       </div>
       <div class="rdr-date-filter">
         <button class="rdr-date-btn active" data-f="today" onclick="setRdrFilter('today')">Today</button>
-        <button class="rdr-date-btn" data-f="yesterday" onclick="setRdrFilter('yesterday')">Yesterday</button>
-        <button class="rdr-date-btn" data-f="week" onclick="setRdrFilter('week')">Last 7 Days</button>
-        <button class="rdr-date-btn" data-f="custom" onclick="setRdrFilter('custom')">Custom</button>
+        <button class="rdr-date-btn" data-f="week" onclick="setRdrFilter('week')">This Week</button>
+        <button class="rdr-date-btn" data-f="month" onclick="setRdrFilter('month')">This Month</button>
+        <button class="rdr-date-btn" data-f="quarter" onclick="setRdrFilter('quarter')">Last 3 Months</button>
+        <button class="rdr-date-btn" data-f="year" onclick="setRdrFilter('year')">This Year</button>
       </div>
-      <div id="rdrCustomDatesRow" style="display:none;margin-bottom:14px;">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <input type="date" id="rdrFromDate" class="ref-input" style="flex:1;min-width:140px;" onchange="renderRdrOrders()">
-          <input type="date" id="rdrToDate" class="ref-input" style="flex:1;min-width:140px;" onchange="renderRdrOrders()">
-        </div>
-      </div>
+      <div id="rdrCustomDatesRow" style="display:none;"></div>
       <h3 style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;" id="rdrOrdersHeading">Delivered Orders</h3>
       <div class="rdr-orders-block" id="rdrOrdersList"><p style="text-align:center;padding:20px;color:var(--muted);">Loading…</p></div>
     </div>
@@ -1972,14 +1963,13 @@ let _curRevTab='linkup';
 
 function switchRevTab(tab){
   _curRevTab=tab;
-  ['linkup','rider','rest'].forEach(t=>{
+  ['linkup','rider'].forEach(t=>{
     const pane=document.getElementById('revPane-'+t);
     const btn=document.getElementById('revt-'+t);
     if(pane) pane.style.display=(t===tab)?'':'none';
     if(btn) btn.classList.toggle('active',t===tab);
   });
   if(tab==='rider') loadRiderReviewsTab();
-  if(tab==='rest') renderRestReviews();
 }
 
 async function loadRiderReviewsTab(){
@@ -2501,6 +2491,7 @@ async function openRiderPage(uid){
   `;
   document.querySelectorAll('.rdr-date-btn').forEach(b=>b.classList.toggle('active',b.dataset.f==='today'));
   document.getElementById('rdrCustomDatesRow').style.display='none';
+  _rdrAutoResetDone=false;
   updateRdrLive();
   renderRdrOrders();
   _rdrLiveInterval=setInterval(updateRdrLive,1000);
@@ -2516,8 +2507,28 @@ function backFromRiderDetail(){
   showSec('riders');
 }
 
+let _rdrAutoResetDone=false;
+async function _autoResetRiderShift(uid){
+  if(!uid||!window._db) return;
+  try{
+    await window._fbUpdate(window._fbDoc(window._db,'counters','rs_'+uid),
+      {shiftStart:null,shiftEnd:null,breakStart:null,totalBreakMs:0,status:'finished'});
+    if(_rdrStatusData){
+      _rdrStatusData.shiftStart=null;_rdrStatusData.shiftEnd=null;
+      _rdrStatusData.breakStart=null;_rdrStatusData.totalBreakMs=0;
+      _rdrStatusData.status='finished';
+    }
+    toast('⏰ Shift auto-reset — was over 12 hours old.','#f59e0b');
+  }catch(e){console.warn('Auto-reset failed:',e);}
+}
+
 function updateRdrLive(){
   const sd=_rdrStatusData;
+  // Auto-reset if shift has been open for >12 hours with no shiftEnd
+  if(sd.shiftStart&&!sd.shiftEnd&&!_rdrAutoResetDone){
+    const age=Date.now()-new Date(sd.shiftStart).getTime();
+    if(age>12*3600*1000){_rdrAutoResetDone=true;_autoResetRiderShift(_currentRiderUid);return;}
+  }
   const fmtMs=ms=>{
     const tot=Math.max(0,Math.round(ms/1000));
     const h=Math.floor(tot/3600),m=Math.floor((tot%3600)/60),s=tot%60;
@@ -2559,24 +2570,21 @@ function renderRdrOrders(){
   const hdg=document.getElementById('rdrOrdersHeading');
   if(!uid||!el) return;
   const now=new Date();
-  let fromTs=null,toTs=null;
+  let fromTs=null,toTs=now.getTime()+1000;
   if(_rdrFilter==='today'){
     fromTs=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
     toTs=fromTs+86400000;
-  }else if(_rdrFilter==='yesterday'){
-    fromTs=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1).getTime();
-    toTs=fromTs+86400000;
   }else if(_rdrFilter==='week'){
-    fromTs=now.getTime()-7*86400000;
-    toTs=now.getTime()+1000;
-  }else if(_rdrFilter==='custom'){
-    const from=document.getElementById('rdrFromDate')?.value;
-    const to=document.getElementById('rdrToDate')?.value;
-    if(!from||!to){el.innerHTML='<p style="text-align:center;padding:20px;color:var(--muted);">Select date range above</p>';if(cntEl)cntEl.textContent='—';return;}
-    fromTs=new Date(from).getTime();
-    toTs=new Date(to).getTime()+86400000;
+    const day=now.getDay()||7;
+    fromTs=new Date(now.getFullYear(),now.getMonth(),now.getDate()-day+1).getTime();
+  }else if(_rdrFilter==='month'){
+    fromTs=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+  }else if(_rdrFilter==='quarter'){
+    fromTs=new Date(now.getFullYear(),now.getMonth()-3,now.getDate()).getTime();
+  }else if(_rdrFilter==='year'){
+    fromTs=new Date(now.getFullYear(),0,1).getTime();
   }
-  const filterLabel={today:"Today's",yesterday:"Yesterday's",week:'Last 7 Days',custom:'Custom Range'};
+  const filterLabel={today:"Today's",week:"This Week's",month:"This Month's",quarter:'Last 3 Months',year:"This Year's"};
   if(hdg) hdg.textContent=(filterLabel[_rdrFilter]||'')+' Delivered Orders';
   const orders=allOrders.filter(o=>{
     if(o.assignedRiderUid!==uid) return false;
@@ -2587,19 +2595,48 @@ function renderRdrOrders(){
     return true;
   });
   if(cntEl) cntEl.textContent=orders.length;
+  const totalAmt=orders.reduce((s,o)=>s+(o.amount||0),0);
+  const daysWorked=new Set(orders.map(o=>{const t=new Date(o.deliveredAt||o.createdAt);return t.toLocaleDateString('en-IN');})).size;
+  // Work/break hours: live from shift data (today only)
+  const fmtMsH=ms=>{const tot=Math.max(0,Math.round(ms/1000));const h=Math.floor(tot/3600),m=Math.floor((tot%3600)/60);return h?`${h}h ${String(m).padStart(2,'0')}m`:`${m}m`;};
+  let workHours='—', breakHours='—';
+  if(_rdrFilter==='today'&&_rdrStatusData?.shiftStart){
+    const sd=_rdrStatusData;
+    let shiftMs=0, bMs=sd.totalBreakMs||0;
+    const end=sd.shiftEnd?new Date(sd.shiftEnd):new Date();
+    shiftMs=end.getTime()-new Date(sd.shiftStart).getTime();
+    if(!sd.shiftEnd&&sd.status==='break'&&sd.breakStart) bMs+=(Date.now()-new Date(sd.breakStart).getTime());
+    workHours=fmtMsH(Math.max(0,shiftMs-bMs));
+    breakHours=fmtMsH(bMs);
+  }
+  const summaryHtml=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:14px;background:rgba(255,140,0,.04);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+    <div style="text-align:center;padding:6px 0;">
+      <div style="font-size:22px;font-weight:800;color:var(--orange);">${orders.length}</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Total Orders</div>
+    </div>
+    <div style="text-align:center;padding:6px 0;">
+      <div style="font-size:22px;font-weight:800;color:#22c55e;">₹${totalAmt.toLocaleString('en-IN')}</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Total Earnings</div>
+    </div>
+    <div style="text-align:center;padding:6px 0;">
+      <div style="font-size:22px;font-weight:800;color:var(--text);">${daysWorked}</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Days Worked</div>
+    </div>
+    <div style="text-align:center;padding:6px 0;">
+      <div style="font-size:22px;font-weight:800;color:var(--text);">${workHours}</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">Work Hours${_rdrFilter!=='today'?' *':''}</div>
+    </div>
+  </div>${_rdrFilter!=='today'?'<div style="font-size:10px;color:var(--muted);margin-bottom:10px;">* Work hours only available for today\'s live shift.</div>':''}`;
   if(!orders.length){
-    el.innerHTML='<p style="text-align:center;padding:20px;color:var(--muted);">No delivered orders in this period.</p>';
+    el.innerHTML=summaryHtml+'<p style="text-align:center;padding:20px;color:var(--muted);">No delivered orders in this period.</p>';
     return;
   }
-  const totalAmt=orders.reduce((s,o)=>s+(o.amount||0),0);
-  el.innerHTML=`<div class="rdr-order-row" style="background:rgba(255,140,0,.05);">
-      <span style="font-size:11px;font-weight:700;color:var(--muted);">TOTAL EARNINGS</span>
-      <span style="color:var(--orange);font-size:17px;font-weight:800;">₹${totalAmt.toLocaleString('en-IN')}</span>
-    </div>`+orders.map(o=>{
+  el.innerHTML=summaryHtml+orders.map(o=>{
     const t=new Date(o.deliveredAt||o.createdAt);
     const timeStr=t.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const dateStr=t.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
     return `<div class="rdr-order-row">
-      <div><div style="font-weight:700;font-size:13px;">${o.orderId||o._id}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${timeStr}</div></div>
+      <div><div style="font-weight:700;font-size:13px;">${o.orderId||o._id}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${dateStr} · ${timeStr}</div></div>
       <div style="text-align:right;"><div style="font-weight:700;font-size:14px;">₹${(o.amount||0).toLocaleString('en-IN')}</div><div style="font-size:10px;color:#22c55e;margin-top:2px;">✅ Delivered</div></div>
     </div>`;
   }).join('');

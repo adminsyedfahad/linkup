@@ -941,7 +941,20 @@ body{
 
 /* PAGES */
 .page{display:none;padding-bottom:4px;}
-.page.active{display:block;}
+.page.active{display:block;animation:pgIn .22s cubic-bezier(.22,1,.36,1);}
+@keyframes pgIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.checkout-page.active,.tracking-page.active,.restaurants-page.active,.admin-page.active{animation:pgIn .22s cubic-bezier(.22,1,.36,1);}
+/* Smooth hover & tap effects */
+.btn,.checkout-btn,.menu-btn,button:not(.qty-btn):not(.cart-remove):not(.pay-fail-retry):not(.pay-fail-cod){transition:transform .14s ease,box-shadow .14s ease,opacity .14s ease;}
+.checkout-btn:hover,.checkout-btn:active{transform:scale(.98);}
+button:active:not(.qty-btn):not(.cart-remove){transform:scale(.97);}
+.menu-card{transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s ease;}
+.menu-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.18);}
+.order-card{transition:transform .15s ease;}
+.order-card:active{transform:scale(.99);}
+.pay-method{transition:border-color .15s ease,background .15s ease;}
+.nav-item{transition:color .15s ease;}
+* { scroll-behavior: smooth; }
 .order-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin:10px 14px;}
 .order-header{display:flex;justify-content:space-between;margin-bottom:8px;}
 .order-id{font-size:12px;color:var(--muted);}
@@ -2651,21 +2664,8 @@ img[alt="LinkUp"]{
       <p>Manage orders, menu, revenue & settings</p>
     </div>
   </div>
-  <div class="admin-tabs">
-    <div class="admin-tab active" onclick="switchAdminTab('dashboard',this)">📊 Dashboard</div>
-    <div class="admin-tab" onclick="switchAdminTab('orders',this)">📦 Orders</div>
-    <div class="admin-tab" onclick="switchAdminTab('menu',this)">🍔 Menu</div>
-    <div class="admin-tab" onclick="switchAdminTab('firebase',this)">🔥 Firebase</div>
-  </div>
   <div class="admin-content">
-    <div class="admin-section active" id="admin-dashboard">
-      <div class="stats-grid" id="adminStats"></div>
-      <div class="revenue-chart">
-        <h3>📈 Revenue — Last 7 Days</h3>
-        <div class="bar-chart" id="revenueChart"></div>
-      </div>
-    </div>
-    <div class="admin-section" id="admin-orders">
+    <div class="admin-section active" id="admin-orders">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div style="font-size:14px;font-weight:700;">All Orders</div>
         <select id="orderFilterStatus" onchange="renderAdminOrders()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-family:'Poppins',sans-serif;font-size:12px;">
@@ -2681,67 +2681,6 @@ img[alt="LinkUp"]{
           <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
           <tbody id="adminOrdersBody"></tbody>
         </table>
-      </div>
-    </div>
-    <div class="admin-section" id="admin-menu">
-      <div class="add-item-form">
-        <h3>➕ Add New Item</h3>
-        <div class="form-row">
-          <div class="form-group"><label>ITEM NAME</label><input type="text" id="newItemName" placeholder="e.g. Spicy Wrap"></div>
-          <div class="form-group"><label>PRICE (₹)</label><input type="number" id="newItemPrice" placeholder="e.g. 199"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>CATEGORY</label>
-            <select id="newItemCat">
-              <option value="burger">Burger</option><option value="pizza">Pizza</option>
-              <option value="biryani">Biryani</option><option value="dessert">Dessert</option>
-              <option value="juice">Juice</option><option value="chicken">Chicken</option>
-              <option value="grocery">Grocery</option>
-            </select>
-          </div>
-          <div class="form-group"><label>BADGE (optional)</label><input type="text" id="newItemBadge" placeholder="e.g. New! or Hot 🔥"></div>
-        </div>
-        <div class="form-group"><label>IMAGE URL</label><input type="text" id="newItemImg" placeholder="https://..."></div>
-        <div class="form-group"><label>DESCRIPTION</label><input type="text" id="newItemDesc" placeholder="Short description..."></div>
-        <button class="btn-add-item" onclick="addMenuItem()">➕ Add Item</button>
-      </div>
-      <div class="menu-manager-grid" id="adminMenuGrid"></div>
-    </div>
-    <div class="admin-section" id="admin-firebase">
-      <div class="firebase-box">
-        <h3>🔥 Firebase Setup Guide</h3>
-        <p>Follow these steps to connect LinkUp to a real Firebase backend.</p>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--border);">
-            <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:6px;">Step 1 — Create Firebase Project</div>
-            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Go to <span style="color:var(--orange);">console.firebase.google.com</span> → Create project → Name it "linkup-app".</div>
-          </div>
-          <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--border);">
-            <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:6px;">Step 2 — Add your Firebase config</div>
-            <div class="code-block">const firebaseConfig = {
-  apiKey: "AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
-  authDomain: "food-app-linkup.firebaseapp.com",
-  projectId: "food-app-linkup",
-  storageBucket: "food-app-linkup.firebasestorage.app",
-  messagingSenderId: "957073867036",
-  appId: "1:957073867036:web:9ae4e4f2fd728d71777ad9",
-  measurementId: "G-QWQ7BCQEV9"
-}; // ✅ Connected</div>
-          </div>
-          <div style="background:var(--card);border-radius:10px;padding:12px;border:1px solid var(--border);">
-            <div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:6px;">Step 3 — Razorpay Integration</div>
-            <div class="code-block">var rzp = new Razorpay({
-  key: "rzp_test_YOUR_KEY_ID",
-  amount: totalAmount * 100,
-  currency: "INR",
-  name: "LinkUp",
-  handler: function(response) {
-    saveOrderToFirebase(response);
-  }
-});
-rzp.open();</div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -2955,6 +2894,19 @@ rzp.open();</div>
       <button class="pay-fail-retry" onclick="retryPayment()">🔄 Retry Payment</button>
       <button class="pay-fail-cod" onclick="switchToCOD()">💵 Switch to COD</button>
     </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MINIMUM ORDER POPUP
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="minOrderOverlay" onclick="closeMinOrderPopup()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:340px;text-align:center;padding:28px 22px;">
+    <div style="font-size:40px;margin-bottom:10px;">🛒</div>
+    <h3 style="font-size:17px;font-weight:800;margin:0 0 8px;">Minimum Order ₹200</h3>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 22px;">However you can still continue with a small order convenience fee.</p>
+    <button onclick="closeMinOrderPopup()" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--text);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">← Add More Items</button>
+    <button onclick="acceptConvenienceFee()" style="width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange),#e55a00);color:#fff;font-size:14px;font-weight:800;cursor:pointer;">Continue with ₹15 Convenience Fee →</button>
   </div>
 </div>
 
@@ -3400,6 +3352,8 @@ let luPoints=parseInt(localStorage.getItem('lu_points')||'0');      // localStor
 let luPointsTxns=JSON.parse(localStorage.getItem('lu_points_txns')||'[]'); // [{type,pts,orderId,date,note}]
 let _pendingPayMethod=null;
 let _pendingPayTotal=0;
+let _convenienceFeeAccepted=false;
+let _convenienceFee=0;
 let _adminNotifsUnsub=null;
 // One 24-char secret token per device — used as doc ID for wallets/ and notifications/
 // Mirrors the orderTracking/{token} security model: path IS the secret, no Firebase auth needed
@@ -4238,6 +4192,7 @@ function closeCart(){document.getElementById('cartOverlay').classList.remove('op
 // ── CHECKOUT ──────────────────────────────────────
 function goToCheckout(){
   closeCart();
+  _convenienceFeeAccepted=false; _convenienceFee=0;
   const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
   document.getElementById('codAmount').textContent=total;
   updateCheckoutTotal();
@@ -4303,15 +4258,26 @@ function _getSavingsApplied(){
   if(wAmt+pAmt>maxDiscount){const r=maxDiscount/(wAmt+pAmt);wAmt=Math.round(wAmt*r);pAmt=maxDiscount-wAmt;}
   return{wAmt,pAmt,total};
 }
+function _getDeliveryFee(){
+  const sub=cart.reduce((s,i)=>s+i.price*i.qty,0)+(_convenienceFeeAccepted?_convenienceFee:0);
+  return sub>=200?10:20;
+}
 function updateCheckoutTotal(){
+  const sub=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const convFee=_convenienceFeeAccepted?_convenienceFee:0;
+  const delFee=_getDeliveryFee();
   const{wAmt,pAmt,total}=_getSavingsApplied();
+  const grandTotal=total+convFee+delFee;
+  const saved=sub>=200?`<div class="discount-row" style="color:#22c55e;"><span>🎉 You saved ₹10 on delivery!</span><span></span></div>`:'';
   const baseRows=cart.map(c=>`<div class="order-summary-item"><span>${c.name} ×${c.qty}</span><span>₹${c.price*c.qty}</span></div>`).join('')
-    +`<div class="order-summary-item"><span>Delivery Fee</span><span style="color:var(--green);">FREE</span></div>`;
+    +(convFee>0?`<div class="order-summary-item"><span>Convenience Fee</span><span>₹${convFee}</span></div>`:'')
+    +`<div class="order-summary-item"><span>Delivery Fee</span><span>₹${delFee}</span></div>`
+    +saved;
   let discountRows='';
   if(wAmt>0) discountRows+=`<div class="discount-row"><span>🏦 Wallet Applied</span><span>−₹${wAmt}</span></div>`;
   if(pAmt>0) discountRows+=`<div class="discount-row"><span>⭐ Points Applied</span><span>−₹${pAmt}</span></div>`;
   document.getElementById('checkoutSummary').innerHTML=baseRows+discountRows;
-  document.getElementById('checkoutTotal').textContent=`₹${Math.max(0,total-wAmt-pAmt)}`;
+  document.getElementById('checkoutTotal').textContent=`₹${Math.max(0,grandTotal-wAmt-pAmt)}`;
 }
 function toggleSavings(type){
   const id=type==='wallet'?'applyWalletToggle':'applyPointsToggle';
@@ -4346,6 +4312,14 @@ function fmtCheckoutCard(el){
 }
 
 // ── ORDER ─────────────────────────────────────────
+function showMinOrderPopup(){document.getElementById('minOrderOverlay').classList.add('open');}
+function closeMinOrderPopup(){document.getElementById('minOrderOverlay').classList.remove('open');}
+function acceptConvenienceFee(){
+  _convenienceFeeAccepted=true; _convenienceFee=15;
+  closeMinOrderPopup();
+  updateCheckoutTotal();
+  placeOrder();
+}
 function placeOrder(){
   if(!cart.length) return;
   const name  = document.getElementById('cdName').value.trim();
@@ -4355,7 +4329,9 @@ function placeOrder(){
   if(!name){ errEl.textContent='⚠️ Please enter your full name.'; errEl.style.display='block'; document.getElementById('cdName').focus(); return; }
   if(!phone||!/^\d{10}$/.test(phone)){ errEl.textContent='⚠️ Enter a valid 10-digit phone number.'; errEl.style.display='block'; document.getElementById('cdPhone').focus(); return; }
   localStorage.setItem('lu_phone',phone);
-  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const cartSub=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  if(cartSub<200&&!_convenienceFeeAccepted){showMinOrderPopup();return;}
+  const total=cartSub+(_convenienceFeeAccepted?_convenienceFee:0)+_getDeliveryFee();
 
   const {wAmt,pAmt}=_getSavingsApplied();
   if(selectedPayment==='upi'){
@@ -5469,7 +5445,7 @@ function showPage(name){
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
   const nav=document.getElementById('nav-'+name);if(nav)nav.classList.add('active');
   if(name==='orders')renderOrders();
-  if(name==='admin')renderAdminDashboard();
+  if(name==='admin')renderAdminOrders();
 }
 
 // ── ADMIN ─────────────────────────────────────────
