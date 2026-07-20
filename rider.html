@@ -903,7 +903,17 @@ function startOrdersListener(){
         window._rfWhere('assignedRiderUid','==',riderProfile.uid));
   _ordersUnsub=window._rfSnap(q,snap=>{
     const all=snap.docs.map(d=>({_id:d.id,...d.data()}));
-    const active=all.filter(o=>!['delivered','cancelled','delivery_failed'].includes(o.status||''));
+    const cutoff=Date.now()-86400000;
+    const active=all.filter(o=>{
+      const st=o.status||'';
+      if(['delivered','cancelled','delivery_failed'].includes(st)) return false;
+      if(['ready_for_pickup','picked_up','on_the_way'].includes(st)){
+        const v=o.createdAt;
+        const ts=v?(v.toMillis?v.toMillis():v.seconds?v.seconds*1000:new Date(v).getTime()):0;
+        if(ts>0&&ts<cutoff) return false;
+      }
+      return true;
+    });
 
     // Notify on new assignments (skip very first snapshot to avoid false positives on login)
     if(!_isFirstOrderLoad){
