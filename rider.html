@@ -910,10 +910,15 @@ function startOrdersListener(){
     const active=all.filter(o=>{
       const st=o.status||'';
       if(['delivered','cancelled','delivery_failed'].includes(st)) return false;
+      const _cv=o.createdAt;
+      const _cts=_cv?(_cv.toMillis?_cv.toMillis():_cv.seconds?_cv.seconds*1000:new Date(_cv).getTime()):0;
+      // In-transit: hide if >24h old OR createdAt missing
       if(['ready_for_pickup','picked_up','on_the_way'].includes(st)){
-        const v=o.createdAt;
-        const ts=v?(v.toMillis?v.toMillis():v.seconds?v.seconds*1000:new Date(v).getTime()):0;
-        if(ts===0||ts<cutoff) return false;
+        if(_cts===0||_cts<cutoff) return false;
+      }
+      // Pre-pickup: hide if >24h old (only when createdAt is present)
+      if(['placed','accepted','preparing'].includes(st)){
+        if(_cts>0&&_cts<cutoff) return false;
       }
       return true;
     });
