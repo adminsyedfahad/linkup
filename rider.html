@@ -738,6 +738,7 @@ let myOrders=[], deliveredToday=[], allCompleted=[], currentOrder=null;
 let _ordersUnsub=null, _delivExpanded=false;
 let _compFilter='today', _compPanelOpen=false;
 let _isStatusUpdating=false; // blocks renderDetail() during in-flight writes
+let _allSnapOrders=[], _autoCompletedIds=new Set();
 
 // Notification / settings
 let _prevOrderIds=new Set(), _isFirstOrderLoad=true;
@@ -901,8 +902,10 @@ function startOrdersListener(){
         window._rfWhere('status','in',['placed','accepted','preparing','ready_for_pickup','picked_up','on_the_way']))
     :window._rfQuery(window._rfCol(window._rdb,'orders'),
         window._rfWhere('assignedRiderUid','==',riderProfile.uid));
+  if(!window._autoCompleteInterval) window._autoCompleteInterval=setInterval(autoCompleteStaleOrders,1800000);
   _ordersUnsub=window._rfSnap(q,snap=>{
     const all=snap.docs.map(d=>({_id:d.id,...d.data()}));
+    _allSnapOrders=all;
     const cutoff=Date.now()-86400000;
     const active=all.filter(o=>{
       const st=o.status||'';
@@ -938,6 +941,7 @@ function startOrdersListener(){
       // (renderDetail will be called explicitly after the write resolves/rejects)
       if(upd){currentOrder=upd; if(!_isStatusUpdating) renderDetail();}
     }
+    autoCompleteStaleOrders();
   },err=>console.error('[Wheels] orders:',err.code,err.message));
 }
 
@@ -1177,6 +1181,46 @@ function _timedUpdate(ref,data){
     window._rfUpdate(ref,data),
     new Promise((_,rej)=>setTimeout(()=>rej({code:'deadline-exceeded',message:'Write timed out after 12s — check network or Firestore rules'}),12000))
   ]);
+}
+
+// Auto-complete orders stuck in transit for >12 hours
+async function _autoMarkDelivered(o){
+  const now=new Date();
+  const orderRef=window._rfDoc(window._rdb,'orders',o._id);
+  const orderData={
+    status:'delivered',
+    statusHistory:window._rfArrUnion({status:'delivered',time:now.toISOString()}),
+    deliveredAt:now.toISOString(),
+    deliveryTime:now.toISOString()
+  };
+  try{
+    await _timedUpdate(orderRef,orderData);
+    if(o.trackingToken){
+      const trackRef=window._rfDoc(window._rdb,'orderTracking',o.trackingToken);
+      await _timedUpdate(trackRef,{status:'delivered',deliveredAt:now.toISOString(),deliveryTime:now.toISOString()});
+    }
+    console.log('[Wheels] Auto-completed stale order:',o._id);
+  }catch(e){
+    console.warn('[Wheels] Auto-complete failed for',o._id,':',e?.code,e?.message);
+  }
+}
+
+async function autoCompleteStaleOrders(){
+  if(!riderProfile?.uid||!window._rdb) return;
+  if(!riderProfile?.isAdmin&&riderProfile?.active!==true) return;
+  const cutoff=Date.now()-43200000; // 12 hours
+  const stale=_allSnapOrders.filter(o=>{
+    const st=o.status||'';
+    if(!['ready_for_pickup','picked_up','on_the_way'].includes(st)) return false;
+    if(_autoCompletedIds.has(o._id)) return false;
+    const v=o.createdAt;
+    const ts=v?(v.toMillis?v.toMillis():v.seconds?v.seconds*1000:new Date(v).getTime()):0;
+    return ts>0&&ts<cutoff;
+  });
+  for(const o of stale){
+    _autoCompletedIds.add(o._id);
+    await _autoMarkDelivered(o);
+  }
 }
 
 async function doStatusUpdate(newStatus,extra={}){
