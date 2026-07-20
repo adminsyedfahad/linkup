@@ -154,6 +154,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 .o-card:active{border-color:var(--orange);transform:scale(.985);}
 .o-card.delivered{opacity:.65;cursor:default;}
 .o-card.delivered:active{transform:none;border-color:var(--border);}
+.o-card-btn{width:100%;padding:12px;border:none;border-radius:11px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.2px;transition:opacity .12s,transform .12s;}
+.o-card-btn:active{opacity:.82;transform:scale(.97);}
+.o-card-btn.pick{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;}
+.o-card-btn.way{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#000;}
+.o-card-btn.done{background:linear-gradient(135deg,var(--green),#15803d);color:#fff;}
 .o-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .o-oid{font-family:'Righteous',cursive;font-size:17px;color:var(--orange);}
 .o-chip{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
@@ -934,10 +939,20 @@ function orderCardHtml(o,isDelivered){
     </div>`;
   }
   const addr=(o.address||'').trim()||'No address saved';
+  const status=o.status||'';
+  const CARD_ACTS={
+    accepted:        {label:'📦 Mark Picked Up',cls:'pick',next:'picked_up'},
+    preparing:       {label:'📦 Mark Picked Up',cls:'pick',next:'picked_up'},
+    ready_for_pickup:{label:'📦 Mark Picked Up',cls:'pick',next:'picked_up'},
+    picked_up:       {label:'🛵 On the Way',    cls:'way', next:'on_the_way'},
+    on_the_way:      {label:'✅ Mark Delivered', cls:'done',next:'delivered'},
+  };
+  const act=CARD_ACTS[status];
+  const btnHtml=act?`<button class="o-card-btn ${act.cls}" onclick="event.stopPropagation();_cardAction('${o._id}','${act.next}')">${act.label}</button>`:'';
   return `<div class="o-card" onclick="openDetail('${o._id}')">
     <div class="o-top">
       <span class="o-oid">${o.orderId||o._id}</span>
-      <span class="o-chip ${o.status||''}">${fmtSt(o.status)}</span>
+      <span class="o-chip ${status}">${fmtSt(status)}</span>
     </div>
     <div class="o-addr"><span class="o-addr-pin">📍</span><span class="o-addr-txt">${addr}</span></div>
     <div class="o-items-txt">${items}</div>
@@ -945,6 +960,7 @@ function orderCardHtml(o,isDelivered){
       <span class="o-amt ${cod?'cod':'paid'}">₹${(o.amount||0).toLocaleString('en-IN')}</span>
       <span class="o-paytag ${cod?'cod':'paid'}">${cod?'💵 COD':'✅ Paid'}</span>
     </div>
+    ${btnHtml}
   </div>`;
 }
 
@@ -1013,6 +1029,13 @@ function renderDetail(){
   if(['picked_up','on_the_way'].includes(o.status||'')&&_gpsWatchId===null){
     startGPS(o.trackingToken);
   }
+}
+
+function _cardAction(id,nextStatus){
+  currentOrder=myOrders.find(o=>o._id===id);
+  if(!currentOrder) return;
+  if(nextStatus==='delivered') startDeliveryConfirm();
+  else doStatusUpdate(nextStatus);
 }
 
 function renderActionBtn(status,cod){
