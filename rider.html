@@ -1710,6 +1710,7 @@ async function loadRiderStatus(){
     if(snap.exists()){
       const d=snap.data();
       updateStatusButton(d.status||null);
+      if(d.status==='available') startStatusGPS();
     }else{
       updateStatusButton(null);
     }
