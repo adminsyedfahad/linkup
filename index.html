@@ -3348,6 +3348,7 @@ let _pendingPayMethod=null;
 let _pendingPayTotal=0;
 let _convenienceFeeAccepted=false;
 let _convenienceFee=0;
+let _currentDeliveryFee=0;
 let _adminNotifsUnsub=null;
 // One 24-char secret token per device — used as doc ID for wallets/ and notifications/
 // Mirrors the orderTracking/{token} security model: path IS the secret, no Firebase auth needed
@@ -3385,6 +3386,8 @@ const _EJS = {
   publicKey:  'YOUR_PUBLIC_KEY'
 };
 const _EJS_ENABLED = false; // ← set to true after configuring above
+// Order confirmation emailjs — initialized once
+emailjs.init('kDsA9p2EBJEmHmcnV');
 
 // ── ADMIN EMAIL (role check only — no password stored here) ──────────────
 const _ADMIN_EMAIL = 'adminlinkup@gmail.com';
@@ -4349,8 +4352,8 @@ function placeOrder(){
   const cartSub=cart.reduce((s,i)=>s+i.price*i.qty,0);
   if(cartSub<100){showMinOrderPopup(cartSub);return;}
   if(cartSub<200&&!_convenienceFeeAccepted){showMinOrderPopup(cartSub);return;}
-  const deliveryFee=_convenienceFeeAccepted?_convenienceFee:_getDeliveryFee(cartSub);
-  const total=cartSub+deliveryFee;
+  _currentDeliveryFee=_convenienceFeeAccepted?_convenienceFee:_getDeliveryFee(cartSub);
+  const total=cartSub+_currentDeliveryFee;
 
   const {wAmt,pAmt}=_getSavingsApplied();
   if(selectedPayment==='upi'){
@@ -4403,6 +4406,24 @@ function showPayFailModal(){
 function closePayFailModal(){ document.getElementById('payFailOverlay').classList.remove('open'); }
 function retryPayment(){ closePayFailModal(); simulatePayment(_pendingPayMethod,_pendingPayTotal); }
 function switchToCOD(){ closePayFailModal(); selectPay('cod',document.getElementById('pm-cod')); showToast('💵 Switched to Cash on Delivery'); }
+async function sendOrderConfirmationEmail(orderData){
+  try{
+    await emailjs.send('service_5b3ow83','template_4lwgqx8',{
+      email:            orderData.email,
+      customer_name:    orderData.customerName||'Valued Customer',
+      order_id:         orderData.orderId,
+      orders:           orderData.items,
+      subtotal:         orderData.subtotal,
+      delivery_fee:     orderData.deliveryFee===0?'FREE':'₹'+orderData.deliveryFee,
+      total:            orderData.total,
+      delivery_address: orderData.address
+    });
+    console.log('Order confirmation email sent!');
+  }catch(error){
+    console.error('Email failed:',error);
+  }
+}
+
 async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   const now   = new Date();
   const name  = document.getElementById('cdName').value.trim();
@@ -4491,6 +4512,19 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'✅');
   setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider is on the way!','🛵'),8000);
 
+  // Send confirmation email — non-blocking, failure does not affect order flow
+  const cartSub=total-_currentDeliveryFee;
+  sendOrderConfirmationEmail({
+    email,
+    customerName: name,
+    orderId,
+    items: order.cartItems.map(c=>({name:c.name, units:c.qty, price:'₹'+(c.price*c.qty)})),
+    subtotal: cartSub,
+    deliveryFee: _currentDeliveryFee,
+    total: Math.max(0,total-wAmt-pAmt),
+    address
+  });
+
   // ── Step 3: Write orders + orderTracking in PARALLEL background (no await) ──
   if(window._fbReady && window._db){
     const cartSnapshot = order.items; // already captured above
@@ -4502,7 +4536,7 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         items:        order.items.map(s=>s.replace(/ ×\d+$/,'')),
         itemDetails,
         amount:        total,
-        deliveryFee:   deliveryFee,
+        deliveryFee:   _currentDeliveryFee,
         paymentMethod: payMethod,
         orderType:     'food',
         status:        'placed',
