@@ -3326,6 +3326,7 @@ const TRACK_STEP_META=[
   {status:'delivered', icon:'📍', title:'Delivered'},
 ];
 let trackingUnsub=null;
+const _deliveredEmailSent=new Set(); // order IDs for which delivered email has already been sent
 
 function genToken(len=24){
   const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -4427,6 +4428,23 @@ async function sendOrderConfirmationEmail(orderData){
     console.error('Email failed:',error);
   }
 }
+async function sendOrderDeliveredEmail(orderData){
+  try{
+    await emailjs.send('service_5b3ow83','template_0s9t4my',{
+      email:         orderData.email,
+      customer_name: orderData.customerName||'Valued Customer',
+      order_id:      orderData.orderId,
+      orders:        orderData.items,
+      subtotal:      orderData.subtotal,
+      delivery_fee:  orderData.deliveryFee===0?'FREE':'₹'+orderData.deliveryFee,
+      total:         orderData.total,
+      rating_link:   'https://orderlinkup.vercel.app?rate='+orderData.orderId
+    });
+    console.log('Delivered email sent!');
+  }catch(error){
+    console.error('Delivered email failed:',error);
+  }
+}
 
 /*
  * confirmOrder(payMethod, total, wAmt, pAmt)
@@ -5112,6 +5130,19 @@ function startActiveOrderTracking() {
       lo.statusLabel=_STATUS_LABELS[st]||st;
       // Sync rider info into orderHistory entry so rating modal can find it even after page reload
       if(_aocData.assignedRiderUid){ lo.riderUid=_aocData.assignedRiderUid; lo.riderName=_aocData.riderName||''; }
+      // Fire delivered email exactly once on the delivered status transition
+      if(st==='delivered'&&!_deliveredEmailSent.has(lo.id)){
+        _deliveredEmailSent.add(lo.id);
+        sendOrderDeliveredEmail({
+          email:        lo.email||'',
+          customerName: lo.customerName||'',
+          orderId:      lo.id,
+          items:        (lo.cartItems||[]).map(c=>({name:c.name,units:c.qty,price:'₹'+(c.price*c.qty)})),
+          subtotal:     (_aocData.amount||0)-(_aocData.deliveryFee||0),
+          deliveryFee:  _aocData.deliveryFee||0,
+          total:        Math.max(0,(_aocData.amount||0)-(lo.walletDiscount||0)-(lo.pointsDiscount||0))
+        });
+      }
       localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
       renderOrders();
     }
