@@ -1,12 +1,8 @@
-const CACHE = 'linkup-admin-v16';
-const STATIC = ['/admin.html'];
+const CACHE = 'linkup-admin-v17';
+const STATIC = [];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(STATIC))
-      .then(() => self.skipWaiting())
-  );
+  e.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', e => {
@@ -21,6 +17,11 @@ self.addEventListener('fetch', e => {
   const url = e.request.url;
   if (e.request.method !== 'GET') return;
   if (url.includes('firestore') || url.includes('googleapis') || url.includes('gstatic') || url.includes('fonts') || url.includes('leaflet')) return;
+  // Never serve HTML from cache — always fetch fresh
+  if (url.includes('.html') || url.endsWith('/')) {
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    return;
+  }
   e.respondWith(
     fetch(e.request)
       .then(res => {

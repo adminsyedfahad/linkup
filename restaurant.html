@@ -1072,6 +1072,7 @@ function subscribeOrders(){
   if(_ordersUnsub){_ordersUnsub();_ordersUnsub=null;}
   if(!window._resDb) return;
   if(!window._delayCheckInterval) window._delayCheckInterval=setInterval(checkDelayedOrders,30000);
+  if(!window._kaInterval) window._kaInterval=setInterval(()=>{localStorage.setItem('_res_ka',Date.now());},50000);
   const q=window._resQuery(
     window._resCol(window._resDb,'orders'),
     window._resWhere('restaurantId','==',restProfile.uid)
@@ -1873,7 +1874,7 @@ function playResTone(id){
   try{
     _ensureAudio();
     if(!_resAC) return;
-    if(_resAC.state==='suspended') _resAC.resume().then(()=>playResTone(id));
+    if(_resAC.state==='suspended'){_resAC.resume().then(()=>playResTone(id));return;}
     if(id==='tripleBeep'){
       for(let i=0;i<3;i++) _playOsc(_resAC,1400,'square',0.65,0.13,i*0.23);
     }else if(id==='ascending'){

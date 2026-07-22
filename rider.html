@@ -914,8 +914,10 @@ function startOrdersListener(){
     ?window._rfQuery(window._rfCol(window._rdb,'orders'),
         window._rfWhere('status','in',['placed','accepted','preparing','ready_for_pickup','picked_up','on_the_way']))
     :window._rfQuery(window._rfCol(window._rdb,'orders'),
-        window._rfWhere('assignedRiderUid','==',riderProfile.uid));
+        window._rfWhere('assignedRiderUid','==',riderProfile.uid),
+        window._rfWhere('status','in',['placed','accepted','preparing','ready_for_pickup','picked_up','on_the_way']));
   if(!window._autoCompleteInterval) window._autoCompleteInterval=setInterval(autoCompleteStaleOrders,1800000);
+  if(!window._kaInterval) window._kaInterval=setInterval(()=>{localStorage.setItem('_rw_ka',Date.now());},50000);
   _ordersUnsub=window._rfSnap(q,snap=>{
     const all=snap.docs.map(d=>({_id:d.id,...d.data()}));
     _allSnapOrders=all;

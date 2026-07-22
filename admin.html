@@ -1156,6 +1156,7 @@ function showApp(email){
   loadVisitorStats();
   startRstatusListener();
   loadRestaurants();
+  if(!window._kaInterval) window._kaInterval=setInterval(()=>{localStorage.setItem('_adm_ka',Date.now());},50000);
 }
 
 async function doLogin(){

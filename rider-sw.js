@@ -1,5 +1,5 @@
-const CACHE = 'wheels-v17';
-const STATIC = ['/rider.html', '/rider-manifest.json', '/rider-icon.svg'];
+const CACHE = 'wheels-v15';
+const STATIC = ['/rider-manifest.json', '/rider-icon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -21,6 +21,11 @@ self.addEventListener('fetch', e => {
   const url = e.request.url;
   if (e.request.method !== 'GET') return;
   if (url.includes('firestore') || url.includes('googleapis') || url.includes('gstatic')) return;
+  // Never serve HTML from cache — always fetch fresh
+  if (url.includes('.html') || url.endsWith('/')) {
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    return;
+  }
   e.respondWith(
     fetch(e.request)
       .then(res => {

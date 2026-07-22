@@ -3901,6 +3901,7 @@ function enterApp(){
   loadDeliveryArea();
   loadOrderAgainSection();
   startActiveOrderTracking();
+  if(!window._kaInterval) window._kaInterval=setInterval(()=>{localStorage.setItem('_lu_ka',Date.now());},50000);
 }
 async function doLogout(){
   try { if(window._auth) await window._fbSignOut(window._auth); } catch(e){}
