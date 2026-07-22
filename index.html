@@ -4428,6 +4428,28 @@ async function sendOrderConfirmationEmail(orderData){
   }
 }
 
+/*
+ * confirmOrder(payMethod, total, wAmt, pAmt)
+ *
+ * Module-level state this function reads or mutates — verify before adding new code:
+ *   _currentDeliveryFee   set by placeOrder() before this runs; used for email + Firestore writes
+ *   _cartRestaurantId     set by addLiveItemToCart()/addToCart(); captured into _ordRestaurantId
+ *                         BEFORE cart is cleared — do NOT use _cartRestaurantId after the clear line
+ *   _liveRestaurants      fallback source for restaurant UID
+ *   walletToken           const IIFE (line ~3358); session wallet identifier
+ *   walletBalance         mutated here (deduct wAmt)
+ *   walletTxns            mutated here (push spend record)
+ *   luPoints              mutated here (+5 earned, -pAmt spent)
+ *   luPointsTxns          mutated here
+ *   orderHistory          mutated here (unshift new order)
+ *   savedAddresses        read-only; fallback for delivery address
+ *   cart                  snapshot captured into order.cartItems at line ~4470
+ *                         *** cart=[] fires mid-function — ALL cart data needed after
+ *                         that point MUST come from order.cartItems, not cart ***
+ *   currentUser           read-only; email fallback
+ *
+ * Firebase window globals: _fbReady, _db, _fbDoc, _fbTxn, _fbGetDoc, _fbSetDoc, _fbArrUnion
+ */
 async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   const now   = new Date();
   const name  = document.getElementById('cdName').value.trim();
@@ -4535,8 +4557,8 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
 
   // ── Step 3: Write orders + orderTracking in PARALLEL background (no await) ──
   if(window._fbReady && window._db){
-    const cartSnapshot = order.items; // already captured above
-    const itemDetails  = cart.length ? cart.map(c=>({name:c.name,qty:c.qty,price:c.price})) : order.items.map(s=>{const m=s.match(/^(.+) ×(\d+)$/);return m?{name:m[1],qty:+m[2],price:0}:{name:s,qty:1,price:0};});
+    // order.cartItems was captured before cart=[] — use it; never re-read cart here
+    const itemDetails = order.cartItems;
     Promise.all([
       window._fbSetDoc(window._fbDoc(window._db,'orders',orderId),{
         orderId, trackingToken, walletToken,
@@ -4577,7 +4599,7 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         orderId, trackingToken,
         customerName: name, phone, email: email||'', address,
         items: order.items,
-        cartItems: cart.length?cart.map(c=>({name:c.name,price:c.price,qty:c.qty})):itemDetails,
+        cartItems: order.cartItems,
         amount: total,
         payMethod,
         status: 'placed',
