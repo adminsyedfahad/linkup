@@ -910,29 +910,43 @@ function startOrdersListener(){
   _ordersUnsub=window._rfSnap(q,snap=>{
     const all=snap.docs.map(d=>({_id:d.id,...d.data()}));
     _allSnapOrders=all;
-    console.log('[Wheels] snap: total='+all.length, all.map(o=>o._id.slice(-5)+':'+o.status));
-    const rfpCutoff=Date.now()-10800000;  // 3h: ready_for_pickup with no action = stale
-    const transitCutoff=Date.now()-86400000; // 24h: picked_up/on_the_way
+    console.log('[Wheels] snap total='+all.length+' orders from Firestore');
+    const rfpCutoff=Date.now()-10800000;   // 3h: ready_for_pickup stale threshold
+    const transitCutoff=Date.now()-86400000; // 24h: picked_up/on_the_way stale threshold
     const TERMINAL_STATUSES=['delivered','cancelled','delivery_failed','rejected','refunded','refund_initiated'];
     const active=all.filter(o=>{
-      const st=(o.status||'').toLowerCase().trim();
-      if(TERMINAL_STATUSES.includes(st)) return false;
+      const raw=o.status||'';
+      const st=raw.toLowerCase().trim();
+      const oid=o.orderId||o._id;
+      if(TERMINAL_STATUSES.includes(st)){
+        console.log('[Wheels] EXCLUDE',oid,'raw_status="'+raw+'" → terminal');
+        return false;
+      }
       const _cv=o.createdAt;
       const _cts=_cv?(_cv.toMillis?_cv.toMillis():_cv.seconds?_cv.seconds*1000:new Date(_cv).getTime()):0;
-      // ready_for_pickup: hide after 3h (or if createdAt missing) — rider didn't show up
+      const ageH=_cts?((Date.now()-_cts)/3600000).toFixed(1)+'h':'no-ts';
       if(st==='ready_for_pickup'){
-        if(_cts===0||_cts<rfpCutoff) return false;
+        if(_cts===0||_cts<rfpCutoff){
+          console.log('[Wheels] EXCLUDE',oid,'raw_status="'+raw+'" → rfp stale (age='+ageH+')');
+          return false;
+        }
       }
-      // In-transit: hide if >24h old OR createdAt missing
       if(['picked_up','on_the_way'].includes(st)){
-        if(_cts===0||_cts<transitCutoff) return false;
+        if(_cts===0||_cts<transitCutoff){
+          console.log('[Wheels] EXCLUDE',oid,'raw_status="'+raw+'" → transit stale (age='+ageH+')');
+          return false;
+        }
       }
-      // Pre-pickup: hide if >24h old (only when createdAt is present)
       if(['placed','accepted','preparing'].includes(st)){
-        if(_cts>0&&_cts<transitCutoff) return false;
+        if(_cts>0&&_cts<transitCutoff){
+          console.log('[Wheels] EXCLUDE',oid,'raw_status="'+raw+'" → pre-pickup stale (age='+ageH+')');
+          return false;
+        }
       }
+      console.log('[Wheels] INCLUDE',oid,'raw_status="'+raw+'" age='+ageH);
       return true;
     });
+    console.log('[Wheels] filter result: active='+active.length+' excluded='+(all.length-active.length));
 
     // Notify on new assignments (skip very first snapshot to avoid false positives on login)
     if(!_isFirstOrderLoad){
