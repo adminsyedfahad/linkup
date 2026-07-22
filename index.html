@@ -3474,6 +3474,7 @@ function doSignup(){
   localStorage.setItem('lu_session', JSON.stringify(currentUser));
   const phone=document.getElementById('signupPhone')?.value.trim();
   if(phone) localStorage.setItem('lu_phone', phone);
+  sendWelcomeEmail({email, displayName: name}); // fire-and-forget, does not block signup
   enterApp();
 }
 
@@ -4411,6 +4412,17 @@ function showPayFailModal(){
 function closePayFailModal(){ document.getElementById('payFailOverlay').classList.remove('open'); }
 function retryPayment(){ closePayFailModal(); simulatePayment(_pendingPayMethod,_pendingPayTotal); }
 function switchToCOD(){ closePayFailModal(); selectPay('cod',document.getElementById('pm-cod')); showToast('💵 Switched to Cash on Delivery'); }
+async function sendWelcomeEmail(user){
+  try{
+    await emailjs.send('service_5b3ow83','template_1v4tes5',{
+      email:         user.email,
+      customer_name: user.displayName||user.email.split('@')[0]
+    });
+    console.log('Welcome email sent!');
+  }catch(error){
+    console.error('Welcome email failed:',error);
+  }
+}
 async function sendOrderConfirmationEmail(orderData){
   try{
     await emailjs.send('service_5b3ow83','template_4lwgqx8',{
