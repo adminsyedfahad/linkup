@@ -909,7 +909,7 @@ function startOrdersListener(){
     const cutoff=Date.now()-86400000;
     const active=all.filter(o=>{
       const st=o.status||'';
-      if(['delivered','cancelled','delivery_failed'].includes(st)) return false;
+      if(['delivered','cancelled','delivery_failed','rejected','refunded','refund_initiated'].includes(st)) return false;
       const _cv=o.createdAt;
       const _cts=_cv?(_cv.toMillis?_cv.toMillis():_cv.seconds?_cv.seconds*1000:new Date(_cv).getTime()):0;
       // In-transit: hide if >24h old OR createdAt missing

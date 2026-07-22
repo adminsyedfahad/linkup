@@ -163,10 +163,12 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
 /* Status badges */
 .ord-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:800;
   padding:4px 10px;border-radius:20px;letter-spacing:.3px;white-space:nowrap;}
-.ord-badge.pending{background:rgba(245,158,11,.15);color:#d97706;}
-.ord-badge.preparing{background:rgba(59,130,246,.15);color:#3b82f6;}
+.ord-badge.placed{background:rgba(59,130,246,.15);color:#3b82f6;}
+.ord-badge.accepted{background:rgba(249,115,22,.15);color:#ea580c;}
+.ord-badge.preparing{background:rgba(234,179,8,.15);color:#ca8a04;}
 .ord-badge.ready{background:rgba(34,197,94,.15);color:#16a34a;}
-.ord-badge.delivered{background:rgba(34,197,94,.1);color:#6ee7b7;}
+.ord-badge.dispatched{background:rgba(168,85,247,.15);color:#a855f7;}
+.ord-badge.delivered{background:rgba(34,197,94,.15);color:#16a34a;}
 .ord-badge.rejected,.ord-badge.cancelled{background:rgba(239,68,68,.1);color:#ef4444;}
 /* Prep time */
 .ord-prep-val{font-size:12px;font-weight:700;color:var(--muted);}
@@ -628,7 +630,7 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
         <table class="ord-table">
           <colgroup>
             <col style="width:110px"><col style="width:130px"><col><col style="width:80px">
-            <col style="width:110px"><col style="width:88px"><col style="width:185px">
+            <col style="width:110px"><col style="width:90px"><col style="width:88px"><col style="width:185px">
           </colgroup>
           <thead><tr>
             <th class="ord-th">Order</th>
@@ -636,11 +638,12 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
             <th class="ord-th">Items</th>
             <th class="ord-th">Amount</th>
             <th class="ord-th">Status</th>
+            <th class="ord-th">Rider</th>
             <th class="ord-th">Prep Time</th>
             <th class="ord-th">Actions</th>
           </tr></thead>
           <tbody id="ordTableBody">
-            <tr><td colspan="7" class="ord-empty-cell"><div class="ord-ei">📦</div><div class="ord-et">Loading orders…</div></td></tr>
+            <tr><td colspan="8" class="ord-empty-cell"><div class="ord-ei">📦</div><div class="ord-et">Loading orders…</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -1130,12 +1133,14 @@ function _prepTime(o){
 }
 
 function _ordBadge(status){
-  const cls={placed:'pending',accepted:'preparing',preparing:'preparing',
-    ready_for_pickup:'ready',delivered:'delivered',rejected:'rejected',
-    cancelled:'cancelled',delivery_failed:'rejected'}[status]||'';
-  const lbl={placed:'Pending',accepted:'Accepted',preparing:'Preparing',
-    ready_for_pickup:'Ready',delivered:'Delivered',rejected:'Rejected',
-    cancelled:'Cancelled',delivery_failed:'Failed'}[status]||status;
+  const cls={placed:'placed',accepted:'accepted',preparing:'preparing',
+    ready_for_pickup:'ready',picked_up:'dispatched',on_the_way:'dispatched',
+    delivered:'delivered',rejected:'rejected',cancelled:'cancelled',
+    delivery_failed:'rejected'}[status]||'';
+  const lbl={placed:'Placed',accepted:'Accepted',preparing:'Preparing',
+    ready_for_pickup:'Ready',picked_up:'Dispatched',on_the_way:'Dispatched',
+    delivered:'Delivered',rejected:'Rejected',cancelled:'Cancelled',
+    delivery_failed:'Failed'}[status]||status;
   return {cls,lbl};
 }
 
@@ -1161,7 +1166,7 @@ function renderOrders(){
   const tbody=document.getElementById('ordTableBody');
   const cards=document.getElementById('ordCards');
   if(!orders.length){
-    const emptyHtml=`<tr><td colspan="7" class="ord-empty-cell"><div class="ord-ei">📦</div><div class="ord-et">No orders found</div></td></tr>`;
+    const emptyHtml=`<tr><td colspan="8" class="ord-empty-cell"><div class="ord-ei">📦</div><div class="ord-et">No orders found</div></td></tr>`;
     const emptyCard=`<div class="empty-state"><div class="ei">📦</div><p>No orders found</p></div>`;
     if(tbody) tbody.innerHTML=emptyHtml;
     if(cards) cards.innerHTML=emptyCard;
@@ -1206,12 +1211,16 @@ function renderOrderRow(o){
   let rowClass='';
   if(status==='placed') rowClass='ord-row-new';
   else if(isDelayed) rowClass='ord-row-delayed';
+  const riderCell=o.riderName
+    ?`<span style="font-size:12px;font-weight:700;color:var(--text);">🛵 ${o.riderName}</span>`
+    :`<span style="font-size:11px;color:var(--muted);">—</span>`;
   return `<tr class="${rowClass}" id="oc-${orderId}" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
     <td class="ord-td"><span class="ord-id">${shortId}</span><span class="ord-time">${time}</span></td>
     <td class="ord-td"><span class="ord-cust-name">${o.customerName||'—'}</span>${o.phone?`<span class="ord-cust-ph">📞 ${o.phone}</span>`:''}</td>
     <td class="ord-td"><div>${itemLines}${moreItems}</div></td>
     <td class="ord-td"><span class="ord-amt-val">₹${o.amount||0}</span><span class="ord-pay-lbl">${o.payMethod||''}</span></td>
     <td class="ord-td"><span class="ord-badge ${cls}">${lbl}</span>${delayedBadge}</td>
+    <td class="ord-td">${riderCell}</td>
     <td class="ord-td">${prepHtml}</td>
     <td class="ord-td">${actHtml}</td>
   </tr>`;
@@ -1255,6 +1264,7 @@ function renderOrderMobileCard(o){
     <div class="ord-m-body" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">
       <div class="ord-m-row"><span class="ord-m-lbl">Customer</span><span class="ord-m-val">👤 ${o.customerName||'—'}</span></div>
       ${o.phone?`<div class="ord-m-row"><span class="ord-m-lbl">Phone</span><span class="ord-m-val">📞 ${o.phone}</span></div>`:''}
+      ${o.riderName?`<div class="ord-m-row"><span class="ord-m-lbl">Rider</span><span class="ord-m-val">🛵 ${o.riderName}</span></div>`:''}
       <div class="ord-m-row"><span class="ord-m-lbl">Prep Time</span><span class="ord-m-val ${prepCls}">${prepStr}</span></div>
     </div>
     ${itemsHtml?`<div class="ord-m-items" onclick="openOrderDetail('${orderId}')" style="cursor:pointer;">${itemsHtml}</div>`:''}
