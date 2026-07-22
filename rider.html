@@ -1221,7 +1221,7 @@ async function autoCompleteStaleOrders(){
   if(!riderProfile?.isAdmin&&riderProfile?.active!==true) return;
   const cutoff=Date.now()-43200000; // 12 hours
   const stale=_allSnapOrders.filter(o=>{
-    const st=o.status||'';
+    const st=(o.status||'').toLowerCase().trim();
     if(!['ready_for_pickup','picked_up','on_the_way'].includes(st)) return false;
     if(_autoCompletedIds.has(o._id)) return false;
     const v=o.createdAt;
