@@ -5172,7 +5172,10 @@ function stopActiveOrderTracking() {
 }
 
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&currentUser&&!_aocUnsub) startActiveOrderTracking();
+  if(document.visibilityState==='visible'){
+    _ensureIndexAudio(); // resume AudioContext so notification tone works after tab switch
+    if(currentUser&&!_aocUnsub) startActiveOrderTracking();
+  }
 });
 
 function hideAOC() {
@@ -6074,9 +6077,20 @@ const NOTIF_TONES = [
   { key:'alert',  label:'Alert',  icon:'📳', desc:'Double beep' }
 ];
 
+let _indexAC = null;
+function _ensureIndexAudio(){
+  try{
+    if(!_indexAC) _indexAC=new(window.AudioContext||window.webkitAudioContext)();
+    if(_indexAC.state==='suspended') _indexAC.resume();
+  }catch(e){}
+}
+document.addEventListener('click',_ensureIndexAudio);
+document.addEventListener('touchstart',_ensureIndexAudio,{passive:true});
+
 function playNotifTone(type) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    _ensureIndexAudio();
+    const ctx = _indexAC || new (window.AudioContext || window.webkitAudioContext)();
     const play = (freq, start, dur, type='sine') => {
       const o = ctx.createOscillator();
       const g = ctx.createGain();

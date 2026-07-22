@@ -802,8 +802,16 @@ function init(){
           +' | using uid='+uid);
 
         if(fbUser.email?.toLowerCase()===ADMIN_EMAIL){
+          if(riderProfile?.isAdmin&&document.getElementById('rApp')?.style.display==='flex'){
+            if(!_ordersUnsub) startOrdersListener(); return;
+          }
           riderProfile={uid,name:'Admin',isAdmin:true};
           showApp(); startOrdersListener(); return;
+        }
+        // Auth re-fired for same rider already logged in — only reconnect dropped listeners
+        if(riderProfile?.uid===uid&&document.getElementById('rApp')?.style.display==='flex'){
+          if(!_ordersUnsub) startOrdersListener();
+          return;
         }
         try{
           const snap=await window._rfGetDoc(window._rfDoc(window._rdb,'riders',uid));
@@ -841,6 +849,7 @@ function init(){
 
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible'){
+      _ensureRiderAudio(); // resume AudioContext so notification tone works after tab switch
       if(_gpsWatchId!==null&&'wakeLock' in navigator)
         navigator.wakeLock.request('screen').then(wl=>{_wakeLock=wl;}).catch(()=>{});
       // Re-establish Firestore listener if it was dropped while tab was hidden

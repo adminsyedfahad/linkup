@@ -866,6 +866,7 @@ function _ensureAudio(){
   }catch(e){}
 }
 document.addEventListener('click',_ensureAudio);
+document.addEventListener('touchstart',_ensureAudio,{passive:true});
 
 // ── THEME ──────────────────────────────────────────────────
 function applyTheme(theme){
@@ -891,6 +892,11 @@ function setupResAuth(){
   if(!window._resOnAuth||!window._resAuth) return;
   window._resOnAuth(window._resAuth,async user=>{
     if(user){
+      // Auth re-fired while app is already showing (token refresh / tab return) — only reconnect listeners
+      if(restProfile?.uid===user.uid&&document.getElementById('rApp')?.classList.contains('on')){
+        if(!_ordersUnsub) subscribeOrders();
+        return;
+      }
       const uid=user.uid;
       const email=user.email?.toLowerCase()||'';
       if(email===ADMIN_EMAIL){
@@ -956,7 +962,10 @@ window.addEventListener('resReady',setupResAuth);
 if(window._resReady) setupResAuth();
 
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&restProfile?.uid&&!_ordersUnsub) subscribeOrders();
+  if(document.visibilityState==='visible'){
+    _ensureAudio(); // resume AudioContext so notification tone works after tab switch
+    if(restProfile?.uid&&!_ordersUnsub) subscribeOrders();
+  }
 });
 
 function showResLogin(err=''){

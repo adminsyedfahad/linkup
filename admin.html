@@ -1197,12 +1197,33 @@ async function doLogout(){
 function setupAuth(){
   if(!window._fbOnAuth||!window._auth) return;
   window._fbOnAuth(window._auth,user=>{
-    if(user&&user.email.toLowerCase()===ADMIN) showApp(user.email);
-    else{ if(user) window._fbSignOut(window._auth); showLogin(); }
+    if(user&&user.email.toLowerCase()===ADMIN){
+      if(document.getElementById('app').classList.contains('on')){
+        // App already visible — auth re-fired (e.g. token refresh). Only reconnect dropped listeners.
+        if(!unsub) startListener();
+        if(!_rstatusUnsub) startRstatusListener();
+        if(!_rqUnsub) startRqListener();
+        if(!_ridersUnsub) loadRiders();
+      }else{
+        showApp(user.email);
+      }
+    }else{ if(user) window._fbSignOut(window._auth); showLogin(); }
   });
 }
 window.addEventListener('firebaseReady',setupAuth);
 if(window._fbReady) setupAuth();
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    _ensureAdminAudio();
+    if(document.getElementById('app').classList.contains('on')){
+      if(!unsub) startListener();
+      if(!_rstatusUnsub) startRstatusListener();
+      if(!_rqUnsub) startRqListener();
+      if(!_ridersUnsub) loadRiders();
+    }
+  }
+});
 
 // ── RIDERS ─────────────────────────────────────
 function loadRiders(){
