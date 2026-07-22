@@ -1902,8 +1902,10 @@ img[alt="LinkUp"]{
       </button>
       <div class="lp-lang-menu" id="lpLangMenu">
         <div class="lp-lang-opt active" data-code="en" onclick="setLang('en','English',false)">🇺🇸 English</div>
-        <div class="lp-lang-opt" data-code="ar" onclick="setLang('ar','العربية',true)">🇸🇦 العربية</div>
+        <div class="lp-lang-opt" data-code="hi" onclick="setLang('hi','हिंदी',false)">🇮🇳 हिंदी</div>
         <div class="lp-lang-opt" data-code="te" onclick="setLang('te','తెలుగు',false)">🇮🇳 తెలుగు</div>
+        <div class="lp-lang-opt" data-code="ar" onclick="setLang('ar','العربية',true)">🇸🇦 العربية</div>
+        <div class="lp-lang-opt" data-code="fil" onclick="setLang('fil','Filipino',false)">🇵🇭 Filipino</div>
       </div>
     </div>
   </nav>
@@ -2138,24 +2140,24 @@ img[alt="LinkUp"]{
       </div>
       <div class="auth-logo">LinkUp</div>
     </div>
-    <div class="auth-tagline">✨ Hot food, cold drinks — just a tap away ✨</div>
+    <div class="auth-tagline" data-i18n="auth_tagline">✨ Hot food, cold drinks — just a tap away ✨</div>
     <div class="auth-tabs" id="authTabs">
-      <div class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')">Sign In</div>
-      <div class="auth-tab" id="signupTab" onclick="switchAuthTab('signup')">Sign Up</div>
+      <div class="auth-tab active" id="loginTab" onclick="switchAuthTab('login')" data-i18n="sign_in_tab">Sign In</div>
+      <div class="auth-tab" id="signupTab" onclick="switchAuthTab('signup')" data-i18n="sign_up_tab">Sign Up</div>
     </div>
     <!-- ── STATE: Normal Login ── -->
     <div id="loginForm">
       <div class="auth-error" id="loginError"></div>
-      <div class="form-group"><label>EMAIL ADDRESS</label><input type="email" id="loginEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-group"><label data-i18n="email_label_auth">EMAIL ADDRESS</label><input type="email" id="loginEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()" data-i18n-ph="ph_email"></div>
       <div class="form-group">
-        <label>PASSWORD</label>
-        <input type="password" id="loginPass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()">
-        <button class="forgot-link" onclick="showFpState('fp-email')">Forgot Password?</button>
+        <label data-i18n="password_label">PASSWORD</label>
+        <input type="password" id="loginPass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()" data-i18n-ph="ph_password">
+        <button class="forgot-link" onclick="showFpState('fp-email')" data-i18n="forgot_pw">Forgot Password?</button>
       </div>
-      <button class="auth-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
-      <div class="auth-divider">— or continue as —</div>
+      <button class="auth-btn" id="loginBtn" onclick="doLogin()" data-i18n="sign_in_btn">Sign In →</button>
+      <div class="auth-divider" data-i18n="or_continue">— or continue as —</div>
       <div class="social-btns">
-        <button class="social-btn" onclick="guestLogin()">🚀 Guest</button>
+        <button class="social-btn" onclick="guestLogin()" data-i18n="guest_btn">🚀 Guest</button>
       </div>
     </div>
 
@@ -2225,11 +2227,11 @@ img[alt="LinkUp"]{
       <button class="auth-btn" id="fpConfirmBtn" onclick="fpInConfirm()" style="background:linear-gradient(135deg,var(--orange),#ff3c3c);">🔑 Confirm & Sign In →</button>
     </div>
     <div id="signupForm" style="display:none;">
-      <div class="form-group"><label>FULL NAME</label><input type="text" id="signupName" placeholder="Your full name"></div>
-      <div class="form-group"><label>EMAIL ADDRESS</label><input type="email" id="signupEmail" placeholder="you@example.com"></div>
-      <div class="form-group"><label>PHONE NUMBER</label><input type="tel" id="signupPhone" placeholder="+91 98765 43210"></div>
-      <div class="form-group"><label>PASSWORD</label><input type="password" id="signupPass" placeholder="Create a strong password"></div>
-      <button class="auth-btn" onclick="doSignup()">Create Account →</button>
+      <div class="form-group"><label data-i18n="full_name_signup">FULL NAME</label><input type="text" id="signupName" placeholder="Your full name" data-i18n-ph="ph_full_name"></div>
+      <div class="form-group"><label data-i18n="email_label_auth">EMAIL ADDRESS</label><input type="email" id="signupEmail" placeholder="you@example.com" data-i18n-ph="ph_email"></div>
+      <div class="form-group"><label data-i18n="phone_label">PHONE NUMBER</label><input type="tel" id="signupPhone" placeholder="+91 98765 43210" data-i18n-ph="ph_phone"></div>
+      <div class="form-group"><label data-i18n="password_label">PASSWORD</label><input type="password" id="signupPass" placeholder="Create a strong password" data-i18n-ph="ph_password"></div>
+      <button class="auth-btn" onclick="doSignup()" data-i18n="create_account">Create Account →</button>
     </div>
     <div class="auth-footer-txt">By continuing you agree to LinkUp's <a href="terms.html" target="_blank">Terms</a> &amp; <a href="privacy.html" target="_blank">Privacy Policy</a></div>
   </div>
@@ -2340,11 +2342,11 @@ img[alt="LinkUp"]{
 
 <div class="notif-panel" id="notifPanel">
   <div class="notif-panel-header">
-    <h3>🔔 Notifications</h3>
-    <button class="notif-clear" onclick="clearNotifs()">Clear all</button>
+    <h3 data-i18n="notifs_title">🔔 Notifications</h3>
+    <button class="notif-clear" onclick="clearNotifs()" data-i18n="notifs_clear">Clear all</button>
   </div>
   <div class="notif-list" id="notifList">
-    <div class="notif-empty">No notifications yet</div>
+    <div class="notif-empty" data-i18n="notifs_empty">No notifications yet</div>
   </div>
 </div>
 
@@ -2359,11 +2361,11 @@ img[alt="LinkUp"]{
       <div class="aoc-del-inner">
         <div class="aoc-del-emoji" id="aocDelEmoji">🎉</div>
         <div class="aoc-del-body">
-          <div class="aoc-del-title">Order Delivered!</div>
-          <div class="aoc-del-msg" id="aocDelMsg">Thank you for ordering with LinkUp!</div>
+          <div class="aoc-del-title" data-i18n="aoc_delivered">Order Delivered!</div>
+          <div class="aoc-del-msg" id="aocDelMsg" data-i18n="aoc_thankyou">Thank you for ordering with LinkUp!</div>
           <div class="aoc-del-actions">
-            <button class="aoc-rate-btn" id="aocRateBtn" onclick="rateOrder('',true)">⭐ Rate</button>
-            <button class="aoc-skip-btn" onclick="dismissDeliveredCard()">✕ Skip</button>
+            <button class="aoc-rate-btn" id="aocRateBtn" onclick="rateOrder('',true)" data-i18n="aoc_rate">⭐ Rate</button>
+            <button class="aoc-skip-btn" onclick="dismissDeliveredCard()" data-i18n="aoc_skip">✕ Skip</button>
           </div>
         </div>
       </div>
@@ -2378,10 +2380,10 @@ img[alt="LinkUp"]{
           <div class="aoc-progress"><div class="aoc-progress-fill" id="aocProgressFill" style="width:0%"></div></div>
         </div>
         <div class="aoc-right">
-          <div class="aoc-eta-label">ETA</div>
+          <div class="aoc-eta-label" data-i18n="aoc_eta">ETA</div>
           <div class="aoc-eta-value" id="aocEtaValue">—</div>
-          <div class="aoc-eta-unit">min</div>
-          <div class="aoc-map-hint">🗺️ Tap to track</div>
+          <div class="aoc-eta-unit" data-i18n="aoc_min">min</div>
+          <div class="aoc-map-hint" data-i18n="aoc_track">🗺️ Tap to track</div>
         </div>
       </div>
     </div>
@@ -2397,24 +2399,24 @@ img[alt="LinkUp"]{
     </div>
   </div>
   <div class="search-bar" style="position:relative;">
-    <input type="text" id="searchInput" placeholder="🔍  Search food, restaurants..." oninput="handleSearch()" autocomplete="off" onblur="setTimeout(()=>hideRestSearch(),200)">
+    <input type="text" id="searchInput" placeholder="🔍  Search food, restaurants..." oninput="handleSearch()" autocomplete="off" onblur="setTimeout(()=>hideRestSearch(),200)" data-i18n-ph="ph_search">
     <div id="restSearchDrop" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:12px;z-index:200;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3);"></div>
   </div>
   <div style="display:flex;align-items:center;gap:0;">
     <div class="categories" style="flex:1;min-width:0;">
-      <div class="cat active" data-cat="all"       onclick="filter('all',this)">🍽️ All</div>
-      <div class="cat"        data-cat="burger"    onclick="filter('burger',this)">🍔 Burger</div>
-      <div class="cat"        data-cat="pizza"     onclick="filter('pizza',this)">🍕 Pizza</div>
-      <div class="cat"        data-cat="biryani"   onclick="filter('biryani',this)">🍛 Biryani</div>
-      <div class="cat"        data-cat="dessert"   onclick="filter('dessert',this)">🍫 Dessert</div>
-      <div class="cat"        data-cat="juice"     onclick="filter('juice',this)">🧃 Juice</div>
-      <div class="cat"        data-cat="chicken"   onclick="filter('chicken',this)">🍗 Chicken</div>
-      <div class="cat"        data-cat="grocery"   onclick="filter('grocery',this)">🛒 Grocery</div>
-      <div class="cat" onclick="showPage('restaurants')" style="background:rgba(255,140,0,0.08);border-color:rgba(255,140,0,0.4);color:var(--orange);font-weight:700;">🏪 Restaurants</div>
+      <div class="cat active" data-cat="all"       onclick="filter('all',this)">🍽️ <span data-i18n="cat_all">All</span></div>
+      <div class="cat"        data-cat="burger"    onclick="filter('burger',this)">🍔 <span data-i18n="cat_burger">Burger</span></div>
+      <div class="cat"        data-cat="pizza"     onclick="filter('pizza',this)">🍕 <span data-i18n="cat_pizza">Pizza</span></div>
+      <div class="cat"        data-cat="biryani"   onclick="filter('biryani',this)">🍛 <span data-i18n="cat_biryani">Biryani</span></div>
+      <div class="cat"        data-cat="dessert"   onclick="filter('dessert',this)">🍫 <span data-i18n="cat_dessert">Dessert</span></div>
+      <div class="cat"        data-cat="juice"     onclick="filter('juice',this)">🧃 <span data-i18n="cat_juice">Juice</span></div>
+      <div class="cat"        data-cat="chicken"   onclick="filter('chicken',this)">🍗 <span data-i18n="cat_chicken">Chicken</span></div>
+      <div class="cat"        data-cat="grocery"   onclick="filter('grocery',this)">🛒 <span data-i18n="cat_grocery">Grocery</span></div>
+      <div class="cat" onclick="showPage('restaurants')" style="background:rgba(255,140,0,0.08);border-color:rgba(255,140,0,0.4);color:var(--orange);font-weight:700;">🏪 <span data-i18n="cat_restaurants">Restaurants</span></div>
     </div>
     <div class="veg-filter-wrap">
       <button class="veg-toggle-btn" id="vegToggleBtn" onclick="toggleVeg()">
-        <span class="veg-dot"></span> Veg
+        <span class="veg-dot"></span> <span data-i18n="veg_filter">Veg</span>
       </button>
     </div>
   </div>
@@ -2432,7 +2434,7 @@ img[alt="LinkUp"]{
   <!-- ORDER AGAIN SECTION -->
   <div id="orderAgainSection" class="oa-section" style="display:none;">
     <div class="oa-header">
-      <div class="home-rest-title">🔁 Order Again</div>
+      <div class="home-rest-title" data-i18n="order_again">🔁 Order Again</div>
     </div>
     <div class="oa-strip" id="oaStrip"></div>
     <div class="home-rest-divider"></div>
@@ -2441,8 +2443,8 @@ img[alt="LinkUp"]{
   <!-- RESTAURANTS STRIP -->
   <div id="homeRestSection">
     <div class="home-rest-header">
-      <div class="home-rest-title">🏪 Top Restaurants</div>
-      <button class="home-rest-see-all" onclick="showPage('restaurants')">See All →</button>
+      <div class="home-rest-title" data-i18n="top_restaurants">🏪 Top Restaurants</div>
+      <button class="home-rest-see-all" onclick="showPage('restaurants')" data-i18n="see_all">See All →</button>
     </div>
     <div class="home-rest-strip" id="homeRestStrip"></div>
     <div class="home-rest-divider"></div>
@@ -2456,7 +2458,7 @@ img[alt="LinkUp"]{
 <div id="page-orders" class="page">
   <div class="page-back-header">
     <button class="page-back-btn" onclick="showPage('home')">‹</button>
-    <div class="page-back-title">📦 Your Orders</div>
+    <div class="page-back-title" data-i18n="orders_title">📦 Your Orders</div>
   </div>
   <div id="ordersList"></div>
 </div>
@@ -2477,7 +2479,7 @@ img[alt="LinkUp"]{
 <div id="page-profile" class="page">
   <div class="page-back-header">
     <button class="page-back-btn" onclick="showPage('home')">‹</button>
-    <div class="page-back-title">Profile</div>
+    <div class="page-back-title" data-i18n="profile_title">Profile</div>
   </div>
   <div class="profile-header">
     <div class="avatar" id="profileAvatar">👤</div>
@@ -2486,26 +2488,26 @@ img[alt="LinkUp"]{
   </div>
   <div class="profile-menu">
     <div class="theme-toggle-row">
-      <div class="theme-toggle-label">☀️ Light Theme</div>
+      <div class="theme-toggle-label" data-i18n="light_theme">☀️ Light Theme</div>
       <label class="toggle-switch"><input type="checkbox" id="themeToggle" onchange="toggleTheme()"><span class="toggle-slider"></span></label>
     </div>
     <!-- ★ CHANGE 3: Language option in profile -->
     <div class="profile-item" onclick="openProfileLangSheet()" style="cursor:pointer;">
-      <span>🌐 Language</span>
+      <span data-i18n="lang_item">🌐 Language</span>
       <span style="display:flex;align-items:center;gap:6px;color:var(--orange);font-size:13px;">
         <span id="profileLangDisplay">English</span><span style="color:var(--muted);">›</span>
       </span>
     </div>
-    <div class="profile-item" onclick="openPsheet('addr')"><span>📍 Delivery Address</span><span>›</span></div>
-    <div class="profile-item" onclick="openWalletSheet()"><span>⭐ My Wallet & Points</span><span class="wallet-profile-badge" id="walletBadge">₹0</span></div>
-    <div class="profile-item" onclick="openPsheet('payment')"><span>💳 Payment Methods</span><span>›</span></div>
-    <div class="profile-item" onclick="openPsheet('notifs')"><span>🔔 Notifications</span><span>›</span></div>
-    <div class="profile-item" onclick="openFavourites()"><span>⭐ Favourites</span><span>›</span></div>
+    <div class="profile-item" onclick="openPsheet('addr')"><span data-i18n="addr_item">📍 Delivery Address</span><span>›</span></div>
+    <div class="profile-item" onclick="openWalletSheet()"><span data-i18n="wallet_item">⭐ My Wallet & Points</span><span class="wallet-profile-badge" id="walletBadge">₹0</span></div>
+    <div class="profile-item" onclick="openPsheet('payment')"><span data-i18n="payment_item">💳 Payment Methods</span><span>›</span></div>
+    <div class="profile-item" onclick="openPsheet('notifs')"><span data-i18n="notifs_item">🔔 Notifications</span><span>›</span></div>
+    <div class="profile-item" onclick="openFavourites()"><span data-i18n="favs_item">⭐ Favourites</span><span>›</span></div>
     <div class="profile-item" id="adminPanelItem" onclick="showPage('admin')" style="color:var(--orange);display:none;"><span>🔧 Admin Panel</span><span>›</span></div>
-    <div class="profile-item" onclick="openPsheet('changepw')"><span>🔑 Change Password</span><span>›</span></div>
-    <div class="profile-item" id="installAppItem" onclick="triggerInstall()" style="color:var(--orange);"><span>📲 Install App</span><span style="font-size:11px;background:rgba(255,140,0,0.15);padding:2px 8px;border-radius:10px;font-weight:700;">FREE</span></div>
-    <div class="profile-item" onclick="openPsheet('help')"><span>❓ Help & Support</span><span>›</span></div>
-    <div class="profile-item" onclick="doLogout()" style="color:var(--red);"><span>🚪 Sign Out</span><span>›</span></div>
+    <div class="profile-item" onclick="openPsheet('changepw')"><span data-i18n="changepw_item">🔑 Change Password</span><span>›</span></div>
+    <div class="profile-item" id="installAppItem" onclick="triggerInstall()" style="color:var(--orange);"><span data-i18n="install_item">📲 Install App</span><span style="font-size:11px;background:rgba(255,140,0,0.15);padding:2px 8px;border-radius:10px;font-weight:700;">FREE</span></div>
+    <div class="profile-item" onclick="openPsheet('help')"><span data-i18n="help_item">❓ Help & Support</span><span>›</span></div>
+    <div class="profile-item" onclick="doLogout()" style="color:var(--red);"><span data-i18n="signout_item">🚪 Sign Out</span><span>›</span></div>
   </div>
 </div>
 
@@ -2513,46 +2515,46 @@ img[alt="LinkUp"]{
 <div id="page-restaurants" class="restaurants-page">
   <div class="page-back-header">
     <button class="page-back-btn" onclick="showPage('home')">‹</button>
-    <div class="page-back-title">🏪 Top Restaurants</div>
+    <div class="page-back-title" data-i18n="top_restaurants">🏪 Top Restaurants</div>
   </div>
   <div class="rest-grid" id="restGrid" style="padding:14px;"></div>
 </div>
 
 <!-- CHECKOUT PAGE -->
 <div id="page-checkout" class="checkout-page">
-  <button class="back-page-btn" onclick="closeCart();showPage('home')">← Back to Menu</button>
-  <div class="section-title">💳 Checkout</div>
+  <button class="back-page-btn" onclick="closeCart();showPage('home')" data-i18n="back_menu">← Back to Menu</button>
+  <div class="section-title" data-i18n="checkout_title">💳 Checkout</div>
 
   <!-- CUSTOMER DETAILS -->
   <div class="checkout-section">
-    <h3>👤 Your Details</h3>
+    <h3 data-i18n="your_details">👤 Your Details</h3>
     <div class="form-group">
-      <label>FULL NAME <span style="color:var(--red);">*</span></label>
-      <input type="text" id="cdName" placeholder="Enter your full name" autocomplete="name">
+      <label><span data-i18n="full_name_label">FULL NAME</span> <span style="color:var(--red);">*</span></label>
+      <input type="text" id="cdName" placeholder="Enter your full name" autocomplete="name" data-i18n-ph="ph_full_name">
     </div>
     <div class="form-group">
-      <label>PHONE NUMBER <span style="color:var(--red);">*</span></label>
-      <input type="tel" id="cdPhone" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" autocomplete="tel">
+      <label><span data-i18n="phone_label">PHONE NUMBER</span> <span style="color:var(--red);">*</span></label>
+      <input type="tel" id="cdPhone" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" autocomplete="tel" data-i18n-ph="ph_phone">
     </div>
     <div class="form-group">
-      <label>EMAIL</label>
-      <input type="email" id="cdEmail" placeholder="your@email.com" autocomplete="email">
+      <label data-i18n="email_label">EMAIL</label>
+      <input type="email" id="cdEmail" placeholder="your@email.com" autocomplete="email" data-i18n-ph="ph_email">
     </div>
     <p id="cdError" style="display:none;color:var(--red);font-size:12px;margin-top:6px;"></p>
   </div>
 
   <!-- DELIVERY ADDRESS -->
   <div class="checkout-section">
-    <h3>📍 Delivery Address</h3>
-    <div class="form-group"><label>FULL ADDRESS</label><input type="text" id="delivAddr" placeholder="House No, Street, Area..."></div>
-    <div class="form-group"><label>CITY & PINCODE</label><input type="text" id="delivCity" placeholder="City, Pincode"></div>
+    <h3 data-i18n="delivery_section">📍 Delivery Address</h3>
+    <div class="form-group"><label data-i18n="full_addr_label">FULL ADDRESS</label><input type="text" id="delivAddr" placeholder="House No, Street, Area..." data-i18n-ph="ph_full_addr"></div>
+    <div class="form-group"><label data-i18n="city_pincode_label">CITY & PINCODE</label><input type="text" id="delivCity" placeholder="City, Pincode" data-i18n-ph="ph_city_pincode"></div>
   </div>
   <div class="checkout-section">
-    <h3>💳 Payment Method</h3>
+    <h3 data-i18n="payment_section">💳 Payment Method</h3>
     <div class="pay-methods">
       <div class="pay-method selected" id="pm-cod" onclick="selectPay('cod',this)">
         <div class="pay-method-icon">💵</div>
-        <div class="pay-method-info"><div class="pay-method-name">Cash on Delivery</div><div class="pay-method-desc">Pay when your order arrives — no hassle</div></div>
+        <div class="pay-method-info"><div class="pay-method-name" data-i18n="cod_name">Cash on Delivery</div><div class="pay-method-desc" data-i18n="cod_desc">Pay when your order arrives — no hassle</div></div>
         <input type="radio" class="pay-radio" name="pay" checked>
       </div>
       <div class="pay-method" id="pm-upi" onclick="selectPay('upi',this)">
@@ -2616,17 +2618,17 @@ img[alt="LinkUp"]{
     </div>
   </div>
   <div class="checkout-section">
-    <h3>🧾 Order Summary</h3>
+    <h3 data-i18n="order_summary">🧾 Order Summary</h3>
     <div id="checkoutSummary"></div>
-    <div class="order-summary-total"><span>Total</span><span id="checkoutTotal" style="color:var(--orange);">₹0</span></div>
+    <div class="order-summary-total"><span data-i18n="total_label">Total</span><span id="checkoutTotal" style="color:var(--orange);">₹0</span></div>
   </div>
   <button class="checkout-btn" id="confirmOrderBtn" onclick="placeOrder()" style="margin-bottom:20px;">🎉 Confirm & Place Order</button>
 </div>
 
 <!-- TRACKING PAGE -->
 <div id="page-tracking" class="tracking-page">
-  <button class="back-page-btn" onclick="showPage('orders')">← Back to Orders</button>
-  <div class="section-title">🗺️ Live Order Tracking</div>
+  <button class="back-page-btn" onclick="showPage('orders')" data-i18n="tracking_back">← Back to Orders</button>
+  <div class="section-title" data-i18n="tracking_title">🗺️ Live Order Tracking</div>
   <div class="track-card">
     <div class="track-order-id" id="trackOrderId">Order #LU123456</div>
     <div class="track-eta" id="trackEta">24 min</div>
@@ -2689,20 +2691,20 @@ img[alt="LinkUp"]{
 
 <!-- FOOTER NAV -->
 <div class="footer-nav">
-  <div class="nav-item active" id="nav-home" onclick="showPage('home')"><span>🏠</span>Home</div>
-  <div class="nav-item" id="nav-restaurants" onclick="showPage('restaurants')"><span>🏪</span>Eats</div>
-  <div class="nav-item" id="nav-orders" onclick="showPage('orders')"><span>📦</span>Orders</div>
-  <div class="nav-item" id="nav-profile" onclick="showPage('profile')"><span>👤</span>Profile</div>
+  <div class="nav-item active" id="nav-home" onclick="showPage('home')"><span>🏠</span><span data-i18n="nav_home">Home</span></div>
+  <div class="nav-item" id="nav-restaurants" onclick="showPage('restaurants')"><span>🏪</span><span data-i18n="nav_eats">Eats</span></div>
+  <div class="nav-item" id="nav-orders" onclick="showPage('orders')"><span>📦</span><span data-i18n="nav_orders">Orders</span></div>
+  <div class="nav-item" id="nav-profile" onclick="showPage('profile')"><span>👤</span><span data-i18n="nav_profile">Profile</span></div>
 </div>
 
 <!-- CART DRAWER -->
 <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
 <div class="cart-drawer" id="cartDrawer">
-  <div class="cart-header"><h2>🛒 Your Cart</h2><button class="close-cart" onclick="closeCart()">✕</button></div>
-  <div class="cart-items" id="cartItems"><div class="cart-empty">Your cart is empty.<br>Add some delicious items! 🍔</div></div>
+  <div class="cart-header"><h2 data-i18n="cart_title">🛒 Your Cart</h2><button class="close-cart" onclick="closeCart()">✕</button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty" data-i18n="cart_empty">Your cart is empty. Add some delicious items! 🍔</div></div>
   <div class="cart-footer" id="cartFooter" style="display:none;">
-    <div class="cart-total"><span>Total</span><span id="cartTotal" style="color:var(--orange);">₹0</span></div>
-    <button class="checkout-btn" onclick="goToCheckout()">Proceed to Checkout →</button>
+    <div class="cart-total"><span data-i18n="cart_total">Total</span><span id="cartTotal" style="color:var(--orange);">₹0</span></div>
+    <button class="checkout-btn" onclick="goToCheckout()" data-i18n="proceed_checkout">Proceed to Checkout →</button>
   </div>
 </div>
 
@@ -2734,12 +2736,20 @@ img[alt="LinkUp"]{
       <span>🇺🇸 English</span>
       <span class="lang-sheet-check">✓</span>
     </div>
-    <div class="lang-sheet-opt" data-code="ar" onclick="setLang('ar','العربية',true)">
-      <span>🇸🇦 العربية</span>
+    <div class="lang-sheet-opt" data-code="hi" onclick="setLang('hi','हिंदी',false)">
+      <span>🇮🇳 हिंदी</span>
       <span class="lang-sheet-check">✓</span>
     </div>
     <div class="lang-sheet-opt" data-code="te" onclick="setLang('te','తెలుగు',false)">
       <span>🇮🇳 తెలుగు</span>
+      <span class="lang-sheet-check">✓</span>
+    </div>
+    <div class="lang-sheet-opt" data-code="ar" onclick="setLang('ar','العربية',true)">
+      <span>🇸🇦 العربية</span>
+      <span class="lang-sheet-check">✓</span>
+    </div>
+    <div class="lang-sheet-opt" data-code="fil" onclick="setLang('fil','Filipino',false)">
+      <span>🇵🇭 Filipino</span>
       <span class="lang-sheet-check">✓</span>
     </div>
   </div>
@@ -3118,27 +3128,250 @@ let currentLang = localStorage.getItem('lu_lang') || 'en';
 let currentLangLabel = localStorage.getItem('lu_lang_label') || 'English';
 let isRTL = localStorage.getItem('lu_rtl') === 'true';
 
+const TRANSLATIONS = {
+  en: {
+    nav_home:'Home', nav_eats:'Eats', nav_orders:'Orders', nav_profile:'Profile',
+    cat_all:'All', cat_burger:'Burger', cat_pizza:'Pizza', cat_biryani:'Biryani',
+    cat_dessert:'Dessert', cat_juice:'Juice', cat_chicken:'Chicken', cat_grocery:'Grocery',
+    cat_restaurants:'Restaurants', veg_filter:'Veg',
+    section_popular:'🔥 Popular Items', top_restaurants:'🏪 Top Restaurants',
+    see_all:'See All →', order_again:'🔁 Order Again',
+    aoc_on_way:'Your order is on its way!', aoc_eta:'ETA', aoc_min:'min',
+    aoc_track:'🗺️ Tap to track', aoc_delivered:'Order Delivered!',
+    aoc_thankyou:'Thank you for ordering with LinkUp!',
+    aoc_rate:'⭐ Rate', aoc_skip:'✕ Skip',
+    notifs_title:'🔔 Notifications', notifs_clear:'Clear all', notifs_empty:'No notifications yet',
+    orders_title:'📦 Your Orders',
+    profile_title:'Profile', light_theme:'☀️ Light Theme', lang_item:'🌐 Language',
+    addr_item:'📍 Delivery Address', wallet_item:'⭐ My Wallet & Points',
+    payment_item:'💳 Payment Methods', notifs_item:'🔔 Notifications',
+    favs_item:'⭐ Favourites', changepw_item:'🔑 Change Password',
+    install_item:'📲 Install App', help_item:'❓ Help & Support', signout_item:'🚪 Sign Out',
+    cart_title:'🛒 Your Cart', cart_empty:'Your cart is empty. Add some delicious items! 🍔',
+    cart_total:'Total', proceed_checkout:'Proceed to Checkout →',
+    checkout_title:'💳 Checkout', back_menu:'← Back to Menu',
+    your_details:'👤 Your Details', full_name_label:'FULL NAME', phone_label:'PHONE NUMBER',
+    email_label:'EMAIL', delivery_section:'📍 Delivery Address',
+    full_addr_label:'FULL ADDRESS', city_pincode_label:'CITY & PINCODE',
+    payment_section:'💳 Payment Method', cod_name:'Cash on Delivery',
+    cod_desc:'Pay when your order arrives — no hassle',
+    order_summary:'🧾 Order Summary', total_label:'Total',
+    tracking_back:'← Back to Orders', tracking_title:'🗺️ Live Order Tracking',
+    auth_tagline:'✨ Hot food, cold drinks — just a tap away ✨',
+    sign_in_tab:'Sign In', sign_up_tab:'Sign Up', email_label_auth:'EMAIL ADDRESS',
+    password_label:'PASSWORD', forgot_pw:'Forgot Password?', sign_in_btn:'Sign In →',
+    or_continue:'— or continue as —', guest_btn:'🚀 Guest',
+    full_name_signup:'FULL NAME', create_account:'Create Account →',
+    ph_email:'you@example.com', ph_password:'Enter your password',
+    ph_full_name:'Enter your full name', ph_phone:'10-digit mobile number',
+    ph_full_addr:'House No, Street, Area...', ph_city_pincode:'City, Pincode',
+    ph_search:'🔍  Search food, restaurants...',
+    toast_signed_out:'👋 Signed out!',
+    toast_order_placed:'🎉 Order placed! +5 ⭐ pts earned',
+    toast_fill_fields:'⚠️ Please fill all fields'
+  },
+  hi: {
+    nav_home:'होम', nav_eats:'खाना', nav_orders:'ऑर्डर', nav_profile:'प्रोफाइल',
+    cat_all:'सभी', cat_burger:'बर्गर', cat_pizza:'पिज़्जा', cat_biryani:'बिरयानी',
+    cat_dessert:'मिठाई', cat_juice:'जूस', cat_chicken:'चिकन', cat_grocery:'किराना',
+    cat_restaurants:'रेस्टोरेंट', veg_filter:'वेज',
+    section_popular:'🔥 लोकप्रिय आइटम', top_restaurants:'🏪 टॉप रेस्टोरेंट',
+    see_all:'सभी देखें →', order_again:'🔁 फिर ऑर्डर करें',
+    aoc_on_way:'आपका ऑर्डर आ रहा है!', aoc_eta:'ETA', aoc_min:'मिनट',
+    aoc_track:'🗺️ ट्रैक करें', aoc_delivered:'ऑर्डर डिलीवर!',
+    aoc_thankyou:'LinkUp से ऑर्डर करने के लिए धन्यवाद!',
+    aoc_rate:'⭐ रेट करें', aoc_skip:'✕ छोड़ें',
+    notifs_title:'🔔 सूचनाएं', notifs_clear:'सब हटाएं', notifs_empty:'कोई सूचना नहीं',
+    orders_title:'📦 आपके ऑर्डर',
+    profile_title:'प्रोफाइल', light_theme:'☀️ लाइट थीम', lang_item:'🌐 भाषा',
+    addr_item:'📍 डिलीवरी पता', wallet_item:'⭐ वॉलेट और पॉइंट्स',
+    payment_item:'💳 भुगतान तरीके', notifs_item:'🔔 सूचनाएं',
+    favs_item:'⭐ पसंदीदा', changepw_item:'🔑 पासवर्ड बदलें',
+    install_item:'📲 ऐप इंस्टॉल करें', help_item:'❓ सहायता और समर्थन', signout_item:'🚪 साइन आउट',
+    cart_title:'🛒 आपकी कार्ट', cart_empty:'कार्ट खाली है। कुछ स्वादिष्ट जोड़ें! 🍔',
+    cart_total:'कुल', proceed_checkout:'चेकआउट करें →',
+    checkout_title:'💳 चेकआउट', back_menu:'← मेनू पर वापस',
+    your_details:'👤 आपकी जानकारी', full_name_label:'पूरा नाम', phone_label:'फोन नंबर',
+    email_label:'ईमेल', delivery_section:'📍 डिलीवरी पता',
+    full_addr_label:'पूरा पता', city_pincode_label:'शहर और पिनकोड',
+    payment_section:'💳 भुगतान तरीका', cod_name:'कैश ऑन डिलीवरी',
+    cod_desc:'ऑर्डर आने पर भुगतान करें',
+    order_summary:'🧾 ऑर्डर सारांश', total_label:'कुल',
+    tracking_back:'← ऑर्डर पर वापस', tracking_title:'🗺️ लाइव ट्रैकिंग',
+    auth_tagline:'✨ गर्म खाना, ठंडे पेय — बस एक टैप पर ✨',
+    sign_in_tab:'साइन इन', sign_up_tab:'साइन अप', email_label_auth:'ईमेल पता',
+    password_label:'पासवर्ड', forgot_pw:'पासवर्ड भूल गए?', sign_in_btn:'साइन इन →',
+    or_continue:'— या जारी रखें —', guest_btn:'🚀 अतिथि',
+    full_name_signup:'पूरा नाम', create_account:'अकाउंट बनाएं →',
+    ph_email:'you@example.com', ph_password:'अपना पासवर्ड दर्ज करें',
+    ph_full_name:'अपना पूरा नाम दर्ज करें', ph_phone:'10 अंकों का मोबाइल नंबर',
+    ph_full_addr:'मकान नंबर, गली, क्षेत्र...', ph_city_pincode:'शहर, पिनकोड',
+    ph_search:'🔍  खाना, रेस्टोरेंट खोजें...',
+    toast_signed_out:'👋 साइन आउट हो गए!',
+    toast_order_placed:'🎉 ऑर्डर हो गया! +5 ⭐ पॉइंट्स',
+    toast_fill_fields:'⚠️ सभी फ़ील्ड भरें'
+  },
+  te: {
+    nav_home:'హోమ్', nav_eats:'తింటారా', nav_orders:'ఆర్డర్లు', nav_profile:'ప్రొఫైల్',
+    cat_all:'అన్నీ', cat_burger:'బర్గర్', cat_pizza:'పిజ్జా', cat_biryani:'బిర్యానీ',
+    cat_dessert:'డెజర్ట్', cat_juice:'జ్యూస్', cat_chicken:'చికెన్', cat_grocery:'కిరాణా',
+    cat_restaurants:'రెస్టారెంట్లు', veg_filter:'వెజ్',
+    section_popular:'🔥 ప్రసిద్ధ వంటకాలు', top_restaurants:'🏪 అగ్రశ్రేణి రెస్టారెంట్లు',
+    see_all:'అన్నీ చూడు →', order_again:'🔁 మళ్ళీ ఆర్డర్ చేయి',
+    aoc_on_way:'మీ ఆర్డర్ వస్తోంది!', aoc_eta:'ETA', aoc_min:'నిమిషాలు',
+    aoc_track:'🗺️ ట్రాక్ చేయి', aoc_delivered:'ఆర్డర్ డెలివర్!',
+    aoc_thankyou:'LinkUp తో ఆర్డర్ చేసినందుకు ధన్యవాదాలు!',
+    aoc_rate:'⭐ రేట్ చేయి', aoc_skip:'✕ స్కిప్',
+    notifs_title:'🔔 నోటిఫికేషన్లు', notifs_clear:'అన్నీ తొలగించు', notifs_empty:'నోటిఫికేషన్లు లేవు',
+    orders_title:'📦 మీ ఆర్డర్లు',
+    profile_title:'ప్రొఫైల్', light_theme:'☀️ లైట్ థీమ్', lang_item:'🌐 భాష',
+    addr_item:'📍 డెలివరీ చిరునామా', wallet_item:'⭐ నా వాలెట్ & పాయింట్లు',
+    payment_item:'💳 చెల్లింపు పద్ధతులు', notifs_item:'🔔 నోటిఫికేషన్లు',
+    favs_item:'⭐ ఇష్టాలు', changepw_item:'🔑 పాస్వర్డ్ మార్చు',
+    install_item:'📲 యాప్ ఇన్స్టాల్ చేయి', help_item:'❓ సహాయం & మద్దతు', signout_item:'🚪 సైన్ అవుట్',
+    cart_title:'🛒 మీ కార్ట్', cart_empty:'కార్ట్ ఖాళీగా ఉంది. ఏదైనా జోడించండి! 🍔',
+    cart_total:'మొత్తం', proceed_checkout:'చెక్అవుట్ చేయి →',
+    checkout_title:'💳 చెక్అవుట్', back_menu:'← మెనూకు వెనక్కి',
+    your_details:'👤 మీ వివరాలు', full_name_label:'పూర్తి పేరు', phone_label:'ఫోన్ నంబర్',
+    email_label:'ఇమెయిల్', delivery_section:'📍 డెలివరీ చిరునామా',
+    full_addr_label:'పూర్తి చిరునామా', city_pincode_label:'నగరం & పిన్కోడ్',
+    payment_section:'💳 చెల్లింపు పద్ధతి', cod_name:'క్యాష్ ఆన్ డెలివరీ',
+    cod_desc:'ఆర్డర్ వచ్చినప్పుడు చెల్లించండి',
+    order_summary:'🧾 ఆర్డర్ సారాంశం', total_label:'మొత్తం',
+    tracking_back:'← ఆర్డర్లకు వెనక్కి', tracking_title:'🗺️ లైవ్ ట్రాకింగ్',
+    auth_tagline:'✨ వేడి ఆహారం, చల్లని పానీయాలు — ఒక్క ట్యాప్లో ✨',
+    sign_in_tab:'సైన్ ఇన్', sign_up_tab:'సైన్ అప్', email_label_auth:'ఇమెయిల్ చిరునామా',
+    password_label:'పాస్వర్డ్', forgot_pw:'పాస్వర్డ్ మర్చిపోయారా?', sign_in_btn:'సైన్ ఇన్ →',
+    or_continue:'— లేదా కొనసాగించు —', guest_btn:'🚀 అతిథి',
+    full_name_signup:'పూర్తి పేరు', create_account:'అకౌంట్ తయారు చేయి →',
+    ph_email:'you@example.com', ph_password:'మీ పాస్వర్డ్ నమోదు చేయండి',
+    ph_full_name:'మీ పూర్తి పేరు నమోదు చేయండి', ph_phone:'10 అంకెల మొబైల్ నంబర్',
+    ph_full_addr:'ఇంటి నం, వీధి, ప్రాంతం...', ph_city_pincode:'నగరం, పిన్కోడ్',
+    ph_search:'🔍  ఆహారం, రెస్టారెంట్లు వెతకండి...',
+    toast_signed_out:'👋 సైన్ అవుట్ అయ్యారు!',
+    toast_order_placed:'🎉 ఆర్డర్ చేశారు! +5 ⭐ పాయింట్లు',
+    toast_fill_fields:'⚠️ అన్ని ఫీల్డ్లు నమోదు చేయండి'
+  },
+  ar: {
+    nav_home:'الرئيسية', nav_eats:'طعام', nav_orders:'الطلبات', nav_profile:'الملف الشخصي',
+    cat_all:'الكل', cat_burger:'برغر', cat_pizza:'بيتزا', cat_biryani:'برياني',
+    cat_dessert:'حلوى', cat_juice:'عصير', cat_chicken:'دجاج', cat_grocery:'بقالة',
+    cat_restaurants:'مطاعم', veg_filter:'نباتي',
+    section_popular:'🔥 العناصر الشائعة', top_restaurants:'🏪 أفضل المطاعم',
+    see_all:'عرض الكل →', order_again:'🔁 اطلب مجدداً',
+    aoc_on_way:'طلبك في الطريق!', aoc_eta:'الوقت', aoc_min:'دقيقة',
+    aoc_track:'🗺️ انقر للتتبع', aoc_delivered:'تم التسليم!',
+    aoc_thankyou:'شكراً لطلبك من LinkUp!',
+    aoc_rate:'⭐ قيّم', aoc_skip:'✕ تخطي',
+    notifs_title:'🔔 الإشعارات', notifs_clear:'مسح الكل', notifs_empty:'لا إشعارات بعد',
+    orders_title:'📦 طلباتك',
+    profile_title:'الملف الشخصي', light_theme:'☀️ الوضع الفاتح', lang_item:'🌐 اللغة',
+    addr_item:'📍 عنوان التوصيل', wallet_item:'⭐ محفظتي والنقاط',
+    payment_item:'💳 طرق الدفع', notifs_item:'🔔 الإشعارات',
+    favs_item:'⭐ المفضلة', changepw_item:'🔑 تغيير كلمة المرور',
+    install_item:'📲 تثبيت التطبيق', help_item:'❓ المساعدة والدعم', signout_item:'🚪 تسجيل الخروج',
+    cart_title:'🛒 سلة التسوق', cart_empty:'السلة فارغة. أضف بعض العناصر! 🍔',
+    cart_total:'الإجمالي', proceed_checkout:'الدفع →',
+    checkout_title:'💳 الدفع', back_menu:'← العودة للقائمة',
+    your_details:'👤 تفاصيلك', full_name_label:'الاسم الكامل', phone_label:'رقم الهاتف',
+    email_label:'البريد الإلكتروني', delivery_section:'📍 عنوان التوصيل',
+    full_addr_label:'العنوان الكامل', city_pincode_label:'المدينة والرمز البريدي',
+    payment_section:'💳 طريقة الدفع', cod_name:'الدفع عند الاستلام',
+    cod_desc:'ادفع عند استلام طلبك',
+    order_summary:'🧾 ملخص الطلب', total_label:'الإجمالي',
+    tracking_back:'← العودة للطلبات', tracking_title:'🗺️ التتبع المباشر',
+    auth_tagline:'✨ طعام ساخن، مشروبات باردة — بنقرة واحدة ✨',
+    sign_in_tab:'تسجيل الدخول', sign_up_tab:'إنشاء حساب', email_label_auth:'عنوان البريد الإلكتروني',
+    password_label:'كلمة المرور', forgot_pw:'نسيت كلمة المرور؟', sign_in_btn:'تسجيل الدخول →',
+    or_continue:'— أو تابع بوصفك —', guest_btn:'🚀 زائر',
+    full_name_signup:'الاسم الكامل', create_account:'إنشاء حساب →',
+    ph_email:'you@example.com', ph_password:'أدخل كلمة المرور',
+    ph_full_name:'أدخل اسمك الكامل', ph_phone:'رقم الجوال',
+    ph_full_addr:'رقم المنزل، الشارع، المنطقة...', ph_city_pincode:'المدينة، الرمز البريدي',
+    ph_search:'🔍  ابحث عن طعام أو مطعم...',
+    toast_signed_out:'👋 تم تسجيل الخروج!',
+    toast_order_placed:'🎉 تم الطلب! +5 ⭐ نقاط',
+    toast_fill_fields:'⚠️ يرجى ملء جميع الحقول'
+  },
+  fil: {
+    nav_home:'Tahanan', nav_eats:'Kain', nav_orders:'Mga Order', nav_profile:'Profile',
+    cat_all:'Lahat', cat_burger:'Burger', cat_pizza:'Pizza', cat_biryani:'Biryani',
+    cat_dessert:'Matamis', cat_juice:'Juice', cat_chicken:'Manok', cat_grocery:'Grocery',
+    cat_restaurants:'Mga Restaurant', veg_filter:'Gulay',
+    section_popular:'🔥 Mga Sikat na Pagkain', top_restaurants:'🏪 Pinakamahusay na Restaurant',
+    see_all:'Tingnan Lahat →', order_again:'🔁 Umorder Ulit',
+    aoc_on_way:'Paparating na ang iyong order!', aoc_eta:'ETA', aoc_min:'min',
+    aoc_track:'🗺️ I-track', aoc_delivered:'Naihatid na ang Order!',
+    aoc_thankyou:'Salamat sa pag-order sa LinkUp!',
+    aoc_rate:'⭐ I-rate', aoc_skip:'✕ Laktawan',
+    notifs_title:'🔔 Mga Abiso', notifs_clear:'Burahin Lahat', notifs_empty:'Wala pang mga abiso',
+    orders_title:'📦 Mga Order Mo',
+    profile_title:'Profile', light_theme:'☀️ Light Theme', lang_item:'🌐 Wika',
+    addr_item:'📍 Address ng Delivery', wallet_item:'⭐ Aking Wallet at Puntos',
+    payment_item:'💳 Mga Paraan ng Bayad', notifs_item:'🔔 Mga Abiso',
+    favs_item:'⭐ Mga Paborito', changepw_item:'🔑 Baguhin ang Password',
+    install_item:'📲 I-install ang App', help_item:'❓ Tulong at Suporta', signout_item:'🚪 Mag-Sign Out',
+    cart_title:'🛒 Iyong Cart', cart_empty:'Walang laman ang cart. Magdagdag ng pagkain! 🍔',
+    cart_total:'Kabuuan', proceed_checkout:'Magbayad Na →',
+    checkout_title:'💳 Checkout', back_menu:'← Bumalik sa Menu',
+    your_details:'👤 Iyong Mga Detalye', full_name_label:'BUONG PANGALAN', phone_label:'NUMERO NG TELEPONO',
+    email_label:'EMAIL', delivery_section:'📍 Address ng Delivery',
+    full_addr_label:'BUONG ADDRESS', city_pincode_label:'LUNGSOD AT PINCODE',
+    payment_section:'💳 Paraan ng Bayad', cod_name:'Cash on Delivery',
+    cod_desc:'Bayad pag dating ng order — walang abala',
+    order_summary:'🧾 Buod ng Order', total_label:'Kabuuan',
+    tracking_back:'← Bumalik sa Mga Order', tracking_title:'🗺️ Live Order Tracking',
+    auth_tagline:'✨ Mainit na pagkain, malamig na inumin — isang tap lang ✨',
+    sign_in_tab:'Mag-Sign In', sign_up_tab:'Mag-Sign Up', email_label_auth:'EMAIL ADDRESS',
+    password_label:'PASSWORD', forgot_pw:'Nakalimutan ang Password?', sign_in_btn:'Mag-Sign In →',
+    or_continue:'— o ituloy bilang —', guest_btn:'🚀 Bisita',
+    full_name_signup:'BUONG PANGALAN', create_account:'Gumawa ng Account →',
+    ph_email:'ikaw@halimbawa.com', ph_password:'Ilagay ang iyong password',
+    ph_full_name:'Ilagay ang iyong buong pangalan', ph_phone:'10-digit na numero ng mobile',
+    ph_full_addr:'House No, Kalye, Lugar...', ph_city_pincode:'Lungsod, Pincode',
+    ph_search:'🔍  Maghanap ng pagkain, restaurant...',
+    toast_signed_out:'👋 Naka-sign out na!',
+    toast_order_placed:'🎉 Nailagay na ang order! +5 ⭐ puntos',
+    toast_fill_fields:'⚠️ Punan ang lahat ng patlang'
+  }
+};
+
+function t(key){
+  return (TRANSLATIONS[currentLang]||TRANSLATIONS.en)[key] || TRANSLATIONS.en[key] || key;
+}
+
 function applyLang(){
-  // Update nav dropdown label
+  const D = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+  // Sweep all data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = D[el.dataset.i18n] !== undefined ? D[el.dataset.i18n] : TRANSLATIONS.en[el.dataset.i18n];
+    if(v !== undefined) el.textContent = v;
+  });
+  // Sweep placeholders
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const v = D[el.dataset.i18nPh] !== undefined ? D[el.dataset.i18nPh] : TRANSLATIONS.en[el.dataset.i18nPh];
+    if(v !== undefined) el.placeholder = v;
+  });
+  // Nav dropdown label & profile display
   const lpLabel = document.getElementById('lpLangLabel');
   if(lpLabel) lpLabel.textContent = currentLangLabel;
-  // Update profile display
   const profileDisplay = document.getElementById('profileLangDisplay');
   if(profileDisplay) profileDisplay.textContent = currentLangLabel;
-  // RTL toggle for Arabic
+  // RTL toggle
   document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
+  // Section title (dynamically managed; reset to default on lang change)
+  const st = document.getElementById('sectionTitle');
+  if(st) st.textContent = t('section_popular');
   // Persist
   localStorage.setItem('lu_lang', currentLang);
   localStorage.setItem('lu_lang_label', currentLangLabel);
   localStorage.setItem('lu_rtl', isRTL);
-  // Update active classes in nav dropdown
+  // Active classes
   document.querySelectorAll('.lp-lang-opt').forEach(el => {
     el.classList.toggle('active', el.dataset.code === currentLang);
   });
-  // Update active classes in bottom sheet
   document.querySelectorAll('.lang-sheet-opt').forEach(el => {
-    const isActive = el.dataset.code === currentLang;
-    el.classList.toggle('active', isActive);
+    el.classList.toggle('active', el.dataset.code === currentLang);
   });
 }
 
@@ -3151,6 +3384,7 @@ function setLang(code, label, rtl){
   applyLang();
   showToast('🌐 Language: ' + label);
 }
+applyLang();
 
 function toggleLangMenu(e){
   e.stopPropagation();
@@ -3470,7 +3704,7 @@ async function doLogin(){
 function doSignup(){
   const name=document.getElementById('signupName').value.trim();
   const email=document.getElementById('signupEmail').value.trim();
-  if(!name||!email){showToast('⚠️ Please fill all fields');return;}
+  if(!name||!email){showToast(t('toast_fill_fields'));return;}
   currentUser={name,email,role:'user'};
   localStorage.setItem('lu_session', JSON.stringify(currentUser));
   const phone=document.getElementById('signupPhone')?.value.trim();
@@ -3913,7 +4147,7 @@ async function doLogout(){
   stopActiveOrderTracking();
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('authPage').classList.add('active');
-  showToast('👋 Signed out!');
+  showToast(t('toast_signed_out'));
 }
 
 // ── FIREBASE AUTH STATE OBSERVER ──────────────────
@@ -4092,7 +4326,7 @@ function filter(type,el){
   document.getElementById('searchInput').value='';
   let filtered=type==='all'?ITEMS.filter(i=>i.active):ITEMS.filter(i=>i.cat===type&&i.active);
   filtered=applyVeg(filtered);
-  const label=type==='all'?'🔥 Popular Items':`🍽️ ${el?el.textContent:type}`;
+  const label=type==='all'?t('section_popular'):`🍽️ ${t('cat_'+type)||type}`;
   document.getElementById('sectionTitle').textContent=label+(vegOnly?' 🌿':'');
   const restSec=document.getElementById('homeRestSection');
   if(restSec)restSec.style.display=type==='all'?'block':'none';
@@ -4171,7 +4405,7 @@ function updateCartUI(){
   document.getElementById('cartCount').textContent=count;
   const itemsEl=document.getElementById('cartItems');
   const footerEl=document.getElementById('cartFooter');
-  if(!cart.length){itemsEl.innerHTML='<div class="cart-empty">Your cart is empty.<br>Add some delicious items! 🍔</div>';footerEl.style.display='none';return;}
+  if(!cart.length){itemsEl.innerHTML=`<div class="cart-empty">${t('cart_empty')}</div>`;footerEl.style.display='none';return;}
   itemsEl.innerHTML=cart.map(c=>`
     <div class="cart-item">
       <div class="cart-item-img" style="background-image:url('${c.img}')"></div>
@@ -4570,7 +4804,7 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   showPage('orders'); renderOrders();
   startActiveOrderTracking();
   loadOrderAgainSection();
-  showToast('🎉 Order placed! +5 ⭐ pts earned');
+  showToast(t('toast_order_placed'));
   pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'✅');
   setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider is on the way!','🛵'),8000);
 
