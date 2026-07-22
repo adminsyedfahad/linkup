@@ -1,4 +1,4 @@
-const CACHE = 'linkup-v11';
+const CACHE = 'linkup-v12';
 const STATIC = ['/index.html'];
 
 self.addEventListener('install', e => {
@@ -22,6 +22,14 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (url.includes('firestore') || url.includes('googleapis') || url.includes('gstatic') || url.includes('emailjs') || url.includes('leaflet') || url.includes('fonts')) return;
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
+    fetch(e.request)
+      .then(res => {
+        if (res && res.status === 200) {
+          const toCache = res.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, toCache));
+        }
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });

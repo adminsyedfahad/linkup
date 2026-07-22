@@ -5171,6 +5171,10 @@ function stopActiveOrderTracking() {
   _aocData=null; hideAOC(); _stopRiderAnim();
 }
 
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&currentUser&&!_aocUnsub) startActiveOrderTracking();
+});
+
 function hideAOC() {
   const el=document.getElementById('aocWrap');
   if(el) el.style.display='none';

@@ -840,8 +840,12 @@ function init(){
   else window.addEventListener('rfReady',setupAuth);
 
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible'&&_gpsWatchId!==null&&'wakeLock' in navigator)
-      navigator.wakeLock.request('screen').then(wl=>{_wakeLock=wl;}).catch(()=>{});
+    if(document.visibilityState==='visible'){
+      if(_gpsWatchId!==null&&'wakeLock' in navigator)
+        navigator.wakeLock.request('screen').then(wl=>{_wakeLock=wl;}).catch(()=>{});
+      // Re-establish Firestore listener if it was dropped while tab was hidden
+      if(riderProfile?.uid&&!_ordersUnsub) startOrdersListener();
+    }
   });
   if('serviceWorker' in navigator) navigator.serviceWorker.register('/rider-sw.js').catch(()=>{});
 }
@@ -906,10 +910,12 @@ function startOrdersListener(){
   _ordersUnsub=window._rfSnap(q,snap=>{
     const all=snap.docs.map(d=>({_id:d.id,...d.data()}));
     _allSnapOrders=all;
+    console.log('[Wheels] snap: total='+all.length, all.map(o=>o._id.slice(-5)+':'+o.status));
     const cutoff=Date.now()-86400000;
+    const TERMINAL_STATUSES=['delivered','cancelled','delivery_failed','rejected','refunded','refund_initiated'];
     const active=all.filter(o=>{
-      const st=o.status||'';
-      if(['delivered','cancelled','delivery_failed','rejected','refunded','refund_initiated'].includes(st)) return false;
+      const st=(o.status||'').toLowerCase().trim();
+      if(TERMINAL_STATUSES.includes(st)) return false;
       const _cv=o.createdAt;
       const _cts=_cv?(_cv.toMillis?_cv.toMillis():_cv.seconds?_cv.seconds*1000:new Date(_cv).getTime()):0;
       // In-transit: hide if >24h old OR createdAt missing
@@ -936,7 +942,7 @@ function startOrdersListener(){
     _prevOrderIds=new Set(active.map(o=>o._id));
 
     myOrders=active;
-    allCompleted=all.filter(o=>o.status==='delivered');
+    allCompleted=all.filter(o=>(o.status||'').toLowerCase().trim()==='delivered');
     deliveredToday=allCompleted.filter(o=>isToday(o.deliveredAt||o.deliveryTime));
     renderOrders();
     if(_compPanelOpen) renderCompletedList();

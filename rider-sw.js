@@ -1,4 +1,4 @@
-const CACHE = 'wheels-v11';
+const CACHE = 'wheels-v12';
 const STATIC = ['/rider.html', '/rider-manifest.json', '/rider-icon.svg'];
 
 self.addEventListener('install', e => {
@@ -22,6 +22,14 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (url.includes('firestore') || url.includes('googleapis') || url.includes('gstatic')) return;
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => cached))
+    fetch(e.request)
+      .then(res => {
+        if (res && res.status === 200) {
+          const toCache = res.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, toCache));
+        }
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });

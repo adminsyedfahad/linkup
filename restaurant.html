@@ -955,6 +955,10 @@ function setupResAuth(){
 window.addEventListener('resReady',setupResAuth);
 if(window._resReady) setupResAuth();
 
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&restProfile?.uid&&!_ordersUnsub) subscribeOrders();
+});
+
 function showResLogin(err=''){
   document.getElementById('rApp').classList.remove('on');
   document.getElementById('rLogin').style.display='flex';
