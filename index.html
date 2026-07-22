@@ -3093,7 +3093,7 @@ function showLanding(){
   _setStatusBar('#0b0b0f');
   // onAuthStateChanged handles session restore — just show landing
   document.getElementById('landingPage').classList.add('active');
-  applyLang();
+  try { applyLang(); } catch(e) { console.error('applyLang in showLanding error:', e); }
 }
 function goToApp(){
   document.getElementById('landingPage').classList.remove('active');
@@ -3384,7 +3384,7 @@ function setLang(code, label, rtl){
   applyLang();
   showToast('🌐 Language: ' + label);
 }
-applyLang();
+try { applyLang(); } catch(e) { console.error('applyLang startup error:', e); }
 
 function toggleLangMenu(e){
   e.stopPropagation();
@@ -3689,6 +3689,7 @@ async function doLogin(){
     } else if(c === 'auth/network-request-failed') {
       showLoginError('⚠️ No internet connection. Please check your network.');
     } else {
+      console.error('doLogin error:', e);
       showLoginError('⚠️ Something went wrong. Please try again.');
     }
     passEl.value = '';
@@ -4126,7 +4127,7 @@ function enterApp(){
   renderHomeRestaurants();
   // Show Admin Panel menu item only for admin role
   document.getElementById('adminPanelItem').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
-  applyLang(); // sync language display in profile
+  try { applyLang(); } catch(e) { console.error('applyLang in enterApp error:', e); }
   pushNotification('👋 Welcome back!',`Hey ${currentUser.name}, ready to order something delicious?`,'🍔');
   if(localStorage.getItem('lu_theme')==='light'){document.body.classList.add('light-theme');document.getElementById('themeToggle').checked=true;}
   loadWallet();
@@ -4170,7 +4171,7 @@ function _setupAuthObserver() {
         // Hide landing/auth, show app
         document.getElementById('landingPage')?.classList.remove('active');
         document.getElementById('authPage')?.classList.remove('active');
-        applyLang();
+        try { applyLang(); } catch(e) { console.error('applyLang in observer error:', e); }
         enterApp();
       }
     } else {
