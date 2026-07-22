@@ -911,20 +911,25 @@ function startOrdersListener(){
     const all=snap.docs.map(d=>({_id:d.id,...d.data()}));
     _allSnapOrders=all;
     console.log('[Wheels] snap: total='+all.length, all.map(o=>o._id.slice(-5)+':'+o.status));
-    const cutoff=Date.now()-86400000;
+    const rfpCutoff=Date.now()-10800000;  // 3h: ready_for_pickup with no action = stale
+    const transitCutoff=Date.now()-86400000; // 24h: picked_up/on_the_way
     const TERMINAL_STATUSES=['delivered','cancelled','delivery_failed','rejected','refunded','refund_initiated'];
     const active=all.filter(o=>{
       const st=(o.status||'').toLowerCase().trim();
       if(TERMINAL_STATUSES.includes(st)) return false;
       const _cv=o.createdAt;
       const _cts=_cv?(_cv.toMillis?_cv.toMillis():_cv.seconds?_cv.seconds*1000:new Date(_cv).getTime()):0;
+      // ready_for_pickup: hide after 3h (or if createdAt missing) — rider didn't show up
+      if(st==='ready_for_pickup'){
+        if(_cts===0||_cts<rfpCutoff) return false;
+      }
       // In-transit: hide if >24h old OR createdAt missing
-      if(['ready_for_pickup','picked_up','on_the_way'].includes(st)){
-        if(_cts===0||_cts<cutoff) return false;
+      if(['picked_up','on_the_way'].includes(st)){
+        if(_cts===0||_cts<transitCutoff) return false;
       }
       // Pre-pickup: hide if >24h old (only when createdAt is present)
       if(['placed','accepted','preparing'].includes(st)){
-        if(_cts>0&&_cts<cutoff) return false;
+        if(_cts>0&&_cts<transitCutoff) return false;
       }
       return true;
     });
@@ -1219,14 +1224,16 @@ async function _autoMarkDelivered(o){
 async function autoCompleteStaleOrders(){
   if(!riderProfile?.uid||!window._rdb) return;
   if(!riderProfile?.isAdmin&&riderProfile?.active!==true) return;
-  const cutoff=Date.now()-43200000; // 12 hours
+  const cutoffReady=Date.now()-10800000;   // 3h for ready_for_pickup
+  const cutoffTransit=Date.now()-43200000; // 12h for picked_up/on_the_way
   const stale=_allSnapOrders.filter(o=>{
     const st=(o.status||'').toLowerCase().trim();
     if(!['ready_for_pickup','picked_up','on_the_way'].includes(st)) return false;
     if(_autoCompletedIds.has(o._id)) return false;
     const v=o.createdAt;
     const ts=v?(v.toMillis?v.toMillis():v.seconds?v.seconds*1000:new Date(v).getTime()):0;
-    return ts>0&&ts<cutoff;
+    if(ts===0) return false;
+    return st==='ready_for_pickup'?ts<cutoffReady:ts<cutoffTransit;
   });
   for(const o of stale){
     _autoCompletedIds.add(o._id);
