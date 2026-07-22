@@ -13,8 +13,8 @@
 <link rel="manifest" href="/rider-manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Righteous&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import{getFirestore,doc,getDoc,setDoc,onSnapshot,updateDoc,collection,where,query,arrayUnion}
@@ -1844,7 +1844,8 @@ function togglePrivacyPass(){
 
 // ── AUDIO TONES ────────────────────────────────────────
 function getACtx(){
-  if(!_audioCtx) _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  // Never create AudioContext here — only _ensureRiderAudio() may create it (requires prior gesture).
+  if(!_audioCtx) return null;
   if(_audioCtx.state==='suspended') _audioCtx.resume();
   return _audioCtx;
 }
@@ -1867,6 +1868,7 @@ const TONE_DEFS=[
 function playTone(id){
   try{
     const ctx=getACtx();
+    if(!ctx||ctx.state==='suspended') return;
     if(id==='tripleBeep'){
       for(let i=0;i<3;i++) playOsc(ctx,1400,'square',0.6,0.13,i*0.23);
     }else if(id==='siren'){
@@ -1889,7 +1891,7 @@ function playTone(id){
       [880,1320,2200].forEach((f,i)=>playOsc(ctx,f,'sine',0.35/(i+1),0.7,0));
       setTimeout(()=>{
         const ctx2=getACtx();
-        [880,1320,2200].forEach((f,i)=>playOsc(ctx2,f,'sine',0.35/(i+1),0.7,0));
+        if(ctx2&&ctx2.state!=='suspended') [880,1320,2200].forEach((f,i)=>playOsc(ctx2,f,'sine',0.35/(i+1),0.7,0));
       },860);
     }
   }catch(e){}
