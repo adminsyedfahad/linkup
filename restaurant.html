@@ -1057,11 +1057,16 @@ function subscribeOrders(){
   if(!window._resDb) return;
   if(!window._delayCheckInterval) window._delayCheckInterval=setInterval(checkDelayedOrders,30000);
   const q=window._resQuery(
-    window._resCol(window._resDb,'counters'),
-    window._resWhere('type','==','orderqueue')
+    window._resCol(window._resDb,'orders'),
+    window._resWhere('restaurantId','==',restProfile.uid)
   );
   _ordersUnsub=window._resSnap(q,snap=>{
-    const raw=snap.docs.map(d=>({_id:d.id,...d.data()}));
+    const raw=snap.docs.map(d=>{
+      const data=d.data();
+      return{_id:d.id,...data,
+        cartItems:data.cartItems||data.itemDetails||[],
+        payMethod:data.payMethod||data.paymentMethod||''};
+    });
     raw.sort((a,b)=>(getTs(b))-(getTs(a)));
     if(!_isFirstLoad){
       const newIds=new Set(raw.map(o=>o.orderId||o._id));
@@ -1319,6 +1324,7 @@ async function orderAction(orderId,action){
   if(!window._resDb||!restProfile?.uid) return;
   const statusMap={accept:'preparing',reject:'rejected',ready:'ready_for_pickup'};
   const newStatus=statusMap[action]||action;
+  const ordRef=window._resDoc(window._resDb,'orders',orderId);
   const rqRef=window._resDoc(window._resDb,'counters','rq_'+orderId);
   const rsRef=window._resDoc(window._resDb,'counters','rstatus_'+orderId);
   const now=new Date();
@@ -1327,6 +1333,7 @@ async function orderAction(orderId,action){
   if(action==='ready') extra.readyAt=now;
   try{
     await Promise.all([
+      window._resSetDoc(ordRef,{status:newStatus,restaurantUpdatedAt:now,...extra},{merge:true}),
       window._resSetDoc(rqRef,{status:newStatus,restaurantUpdatedAt:now,...extra},{merge:true}),
       window._resSetDoc(rsRef,{type:'rstatus',orderId,status:newStatus,updatedAt:now,restaurantId:restProfile.uid},{merge:true})
     ]);

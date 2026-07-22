@@ -3306,6 +3306,8 @@ async function openLiveRestDetail(uid){
 }
 
 function addLiveItemToCart(name,price,restUid){
+  _cartRestaurantId=restUid;
+  console.log('[LinkUp] addLiveItemToCart: _cartRestaurantId set to', restUid);
   const key='live_'+restUid+'_'+name;
   const existing=cart.find(c=>c.id===key);
   if(existing){existing.qty++;}
@@ -3333,6 +3335,7 @@ function genToken(len=24){
 }
 
 let cart=[];
+let _cartRestaurantId='';
 let modalItem=null;
 let currentUser=null;
 let selectedPayment='cod';
@@ -4153,6 +4156,7 @@ function hideRestSearch(){
 // ── CART ──────────────────────────────────────────
 function addToCart(id){
   const item=ITEMS.find(i=>i.id===id);if(!item)return;
+  if(!_cartRestaurantId && _liveRestaurants.length) _cartRestaurantId=_liveRestaurants[0].uid;
   const existing=cart.find(c=>c.id===id);
   if(existing)existing.qty++;else cart.push({...item,qty:1});
   updateCartUI();showToast(`${item.name} added! 🛒`);
@@ -4502,6 +4506,10 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   localStorage.setItem('lu_points_txns',JSON.stringify(luPointsTxns));
   updatePointsUI();
 
+  // Capture before cart is cleared — _cartRestaurantId would be wiped below
+  const _ordRestaurantId = _cartRestaurantId || (_liveRestaurants[0]?.uid) || 'default';
+  console.log('[LinkUp] cartRestaurantId:', _cartRestaurantId, '→ writing restaurantId:', _ordRestaurantId);
+
   // Show success immediately — user doesn't wait for Firestore writes
   cart=[]; updateCartUI();
   btn.textContent = '🎉 Confirm & Place Order'; btn.disabled = false;
@@ -4535,10 +4543,13 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         customerName: name, phone, email, address,
         items:        order.items.map(s=>s.replace(/ ×\d+$/,'')),
         itemDetails,
+        cartItems:     itemDetails,
         amount:        total,
         deliveryFee:   _currentDeliveryFee,
         paymentMethod: payMethod,
+        payMethod:     payMethod,
         orderType:     'food',
+        restaurantId:  _ordRestaurantId,
         status:        'placed',
         statusHistory: [{status:'placed', time: now}],
         createdAt:     now,
@@ -4552,7 +4563,7 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         statusHistory:[{status:'placed', time: now}],
         itemsSummary: order.items.join(', '),
         amount:       total,
-        deliveryFee:  deliveryFee,
+        deliveryFee:  _currentDeliveryFee,
         riderName:    null,
         riderPhone:   null,
         etaMinutes:   null,
@@ -4571,7 +4582,7 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         payMethod,
         status: 'placed',
         createdAt: now,
-        restaurantId: 'default'
+        restaurantId: _ordRestaurantId
       })
     ]).catch(e=>console.warn('Firestore background write error:',e));
   }
@@ -4648,7 +4659,7 @@ function openOrderDetail(orderId){
     subtotal=o.total;
   }
   const wD=o.walletDiscount||0, pD=o.pointsDiscount||0;
-  const canCancel=['placed','accepted','preparing','ready'].includes(o.status);
+  const canCancel=['placed','accepted','preparing'].includes(o.status);
   const tooLate=['picked_up','on_the_way'].includes(o.status);
   const done=['delivered','cancelled','delivery_failed'].includes(o.status);
   let cancelHtml='';
@@ -4702,13 +4713,14 @@ function closeOrderDetail(){
 async function cancelOrder(orderId){
   const o=orderHistory.find(x=>x.id===orderId);
   if(!o||!o.trackingToken) return;
-  if(!['placed','accepted','preparing','ready'].includes(o.status)) return;
+  if(!['placed','accepted','preparing'].includes(o.status)) return;
   const btn=document.querySelector('.od-cancel-btn');
   if(btn){btn.textContent='Cancelling…';btn.disabled=true;}
   try{
     if(window._fbReady&&window._db){
-      await window._fbUpdateDoc(window._fbDoc(window._db,'orderTracking',o.trackingToken),{status:'cancelled'});
-      window._fbUpdateDoc(window._fbDoc(window._db,'orders',orderId),{status:'cancelled',_cancelToken:o.trackingToken}).catch(()=>{});
+      await window._fbSetDoc(window._fbDoc(window._db,'counters','rq_'+orderId),{status:'cancelled'},{merge:true});
+      window._fbUpdate(window._fbDoc(window._db,'orders',orderId),{status:'cancelled'}).catch(()=>{});
+      window._fbUpdate(window._fbDoc(window._db,'orderTracking',o.trackingToken),{status:'cancelled'}).catch(()=>{});
     }
     o.status='cancelled';o.statusLabel='Cancelled ❌';
     localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
