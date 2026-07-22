@@ -3672,11 +3672,10 @@ async function doLogin(){
   try {
     const userCred = await window._fbSignIn(window._auth, email, pass);
     const fbUser   = userCred.user;
-    const isAdmin  = fbUser.email.toLowerCase() === _ADMIN_EMAIL;
     currentUser = {
-      name:  isAdmin ? 'Admin' : (fbUser.displayName || email.split('@')[0]),
+      name:  fbUser.displayName || email.split('@')[0],
       email: fbUser.email,
-      role:  isAdmin ? 'admin' : 'user',
+      role:  'user',
       uid:   fbUser.uid
     };
     localStorage.setItem('lu_session', JSON.stringify(currentUser));
@@ -4158,11 +4157,10 @@ function _setupAuthObserver() {
   window._fbOnAuth(window._auth, (fbUser) => {
     if (fbUser) {
       // Signed in — build currentUser from Firebase token
-      const isAdmin = fbUser.email.toLowerCase() === _ADMIN_EMAIL;
       const restored = {
-        name:  isAdmin ? 'Admin' : (fbUser.displayName || fbUser.email.split('@')[0]),
+        name:  fbUser.displayName || fbUser.email.split('@')[0],
         email: fbUser.email,
-        role:  isAdmin ? 'admin' : 'user',
+        role:  'user',
         uid:   fbUser.uid
       };
       if (!currentUser) {
