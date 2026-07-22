@@ -2901,12 +2901,7 @@ img[alt="LinkUp"]{
      MINIMUM ORDER POPUP
 ══════════════════════════════════════ -->
 <div class="modal-overlay" id="minOrderOverlay" onclick="closeMinOrderPopup()">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:340px;text-align:center;padding:28px 22px;">
-    <div style="font-size:40px;margin-bottom:10px;">🛒</div>
-    <h3 style="font-size:17px;font-weight:800;margin:0 0 8px;">Minimum Order ₹200</h3>
-    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 22px;">Minimum order value is ₹200 for free delivery. Please add more items to continue.</p>
-    <button onclick="closeMinOrderPopup()" style="width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange),#e55a00);color:#fff;font-size:14px;font-weight:800;cursor:pointer;">← Add More Items</button>
-  </div>
+  <div class="modal-box" onclick="event.stopPropagation()" id="minOrderBox" style="max-width:340px;text-align:center;padding:28px 22px;"></div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -4191,6 +4186,7 @@ function closeCart(){document.getElementById('cartOverlay').classList.remove('op
 // ── CHECKOUT ──────────────────────────────────────
 function goToCheckout(){
   closeCart();
+  _convenienceFeeAccepted=false; _convenienceFee=0;
   const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
   document.getElementById('codAmount').textContent=total;
   updateCheckoutTotal();
@@ -4256,15 +4252,26 @@ function _getSavingsApplied(){
   if(wAmt+pAmt>maxDiscount){const r=maxDiscount/(wAmt+pAmt);wAmt=Math.round(wAmt*r);pAmt=maxDiscount-wAmt;}
   return{wAmt,pAmt,total};
 }
+function _getDeliveryFee(sub){
+  if(sub>=200) return 0;
+  if(sub>=181) return 15;
+  if(sub>=100) return 20;
+  return 0; // <100: blocked, fee irrelevant
+}
 function updateCheckoutTotal(){
-  const{wAmt,pAmt,total}=_getSavingsApplied();
+  const{wAmt,pAmt,total}=_getSavingsApplied(); // total = cart subtotal
+  const delFee=_convenienceFeeAccepted?_convenienceFee:_getDeliveryFee(total);
+  const grandTotal=total+delFee;
+  const delDisplay=delFee===0
+    ?`<span style="color:var(--green);font-weight:700;">FREE</span>`
+    :`<span>₹${delFee}</span>`;
   const baseRows=cart.map(c=>`<div class="order-summary-item"><span>${c.name} ×${c.qty}</span><span>₹${c.price*c.qty}</span></div>`).join('')
-    +`<div class="order-summary-item"><span>Delivery Fee</span><span style="color:var(--green);font-weight:700;">FREE</span></div>`;
+    +`<div class="order-summary-item"><span>Delivery Fee</span>${delDisplay}</div>`;
   let discountRows='';
   if(wAmt>0) discountRows+=`<div class="discount-row"><span>🏦 Wallet Applied</span><span>−₹${wAmt}</span></div>`;
   if(pAmt>0) discountRows+=`<div class="discount-row"><span>⭐ Points Applied</span><span>−₹${pAmt}</span></div>`;
   document.getElementById('checkoutSummary').innerHTML=baseRows+discountRows;
-  document.getElementById('checkoutTotal').textContent=`₹${Math.max(0,total-wAmt-pAmt)}`;
+  document.getElementById('checkoutTotal').textContent=`₹${Math.max(0,grandTotal-wAmt-pAmt)}`;
 }
 function toggleSavings(type){
   const id=type==='wallet'?'applyWalletToggle':'applyPointsToggle';
@@ -4299,8 +4306,37 @@ function fmtCheckoutCard(el){
 }
 
 // ── ORDER ─────────────────────────────────────────
-function showMinOrderPopup(){document.getElementById('minOrderOverlay').classList.add('open');}
 function closeMinOrderPopup(){document.getElementById('minOrderOverlay').classList.remove('open');}
+function acceptConvenienceFee(fee){
+  _convenienceFeeAccepted=true; _convenienceFee=fee;
+  closeMinOrderPopup();
+  updateCheckoutTotal();
+  placeOrder();
+}
+function showMinOrderPopup(sub){
+  const box=document.getElementById('minOrderBox');
+  const addMore=`<button onclick="closeMinOrderPopup()" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">← Add More Items</button>`;
+  const continueBtn=(fee,label)=>`<button onclick="acceptConvenienceFee(${fee})" style="width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange),#e55a00);color:#fff;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:10px;">${label}</button>`;
+  if(sub<100){
+    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;">🛒</div>
+      <h3 style="font-size:17px;font-weight:800;margin:0 0 8px;">Minimum Order ₹100</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 22px;">Minimum order value is ₹100. Please add more items to continue.</p>
+      <button onclick="closeMinOrderPopup()" style="width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange),#e55a00);color:#fff;font-size:14px;font-weight:800;cursor:pointer;">← Add More Items</button>`;
+  } else if(sub<=180){
+    const needed=200-sub;
+    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;">🛵</div>
+      <h3 style="font-size:17px;font-weight:800;margin:0 0 8px;">Add ₹${needed} for Free Delivery!</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 22px;">Add ₹${needed} more to get free delivery, or continue with a ₹20 convenience fee.</p>
+      ${continueBtn(20,'Continue with ₹20 Fee →')}${addMore}`;
+  } else {
+    const needed=200-sub;
+    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;">🚀</div>
+      <h3 style="font-size:17px;font-weight:800;margin:0 0 8px;">Add ₹${needed} for Free Delivery!</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 22px;">You're ₹${needed} away from free delivery! Or continue with a ₹15 convenience fee.</p>
+      ${continueBtn(15,'Continue with ₹15 Fee →')}${addMore}`;
+  }
+  document.getElementById('minOrderOverlay').classList.add('open');
+}
 function placeOrder(){
   if(!cart.length) return;
   const name  = document.getElementById('cdName').value.trim();
@@ -4311,8 +4347,10 @@ function placeOrder(){
   if(!phone||!/^\d{10}$/.test(phone)){ errEl.textContent='⚠️ Enter a valid 10-digit phone number.'; errEl.style.display='block'; document.getElementById('cdPhone').focus(); return; }
   localStorage.setItem('lu_phone',phone);
   const cartSub=cart.reduce((s,i)=>s+i.price*i.qty,0);
-  if(cartSub<200){showMinOrderPopup();return;}
-  const total=cartSub; // delivery is free for all ₹200+ orders
+  if(cartSub<100){showMinOrderPopup(cartSub);return;}
+  if(cartSub<200&&!_convenienceFeeAccepted){showMinOrderPopup(cartSub);return;}
+  const deliveryFee=_convenienceFeeAccepted?_convenienceFee:_getDeliveryFee(cartSub);
+  const total=cartSub+deliveryFee;
 
   const {wAmt,pAmt}=_getSavingsApplied();
   if(selectedPayment==='upi'){
@@ -4464,7 +4502,7 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         items:        order.items.map(s=>s.replace(/ ×\d+$/,'')),
         itemDetails,
         amount:        total,
-        deliveryFee:   0,
+        deliveryFee:   deliveryFee,
         paymentMethod: payMethod,
         orderType:     'food',
         status:        'placed',
@@ -4480,7 +4518,7 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         statusHistory:[{status:'placed', time: now}],
         itemsSummary: order.items.join(', '),
         amount:       total,
-        deliveryFee:  0,
+        deliveryFee:  deliveryFee,
         riderName:    null,
         riderPhone:   null,
         etaMinutes:   null,
