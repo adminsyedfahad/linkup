@@ -486,6 +486,7 @@ body{
 .cart-btn:hover{transform:scale(1.05);}
 .cart-btn .badge{background:#000;color:var(--orange);border-radius:50%;width:18px;height:18px;font-size:11px;display:inline-flex;align-items:center;justify-content:center;margin-left:6px;}
 .notif-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;}
+.header-icon-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .notif-dot{position:absolute;top:6px;right:7px;width:8px;height:8px;background:var(--red);border-radius:50%;display:none;}
 .notif-dot.show{display:block;}
 
@@ -727,9 +728,6 @@ body{
 .area-search-wrap input:focus{border-color:var(--orange);}
 .area-search-wrap::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
 .area-sheet-empty{text-align:center;color:var(--muted);padding:24px 0;font-size:13px;}
-/* Header points badge */
-.pts-btn{background:rgba(255,140,0,0.12);color:var(--orange);font-weight:700;font-size:12px;padding:7px 11px;border-radius:20px;border:1.5px solid rgba(255,140,0,0.3);cursor:pointer;transition:background .2s;white-space:nowrap;font-family:'Poppins',sans-serif;}
-.pts-btn:hover,.pts-btn:active{background:rgba(255,140,0,0.22);}
 /* Wallet/Points sheet tabs */
 .wallet-tabs{display:flex;gap:6px;margin-bottom:18px;}
 .wallet-tab{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;font-family:'Poppins',sans-serif;}
@@ -1081,10 +1079,16 @@ button:active:not(.qty-btn):not(.cart-remove){transform:scale(.97);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* FOOTER NAV */
-.footer-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:10px 0;padding-bottom:calc(10px + env(safe-area-inset-bottom, 0px));z-index:100;}
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;transition:color 0.2s;padding:4px 10px;border-radius:10px;}
+.footer-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:7px 0;padding-bottom:calc(7px + env(safe-area-inset-bottom, 0px));z-index:100;}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--muted);cursor:pointer;transition:color 0.2s;padding:3px 10px;border-radius:10px;}
 .nav-item:hover,.nav-item.active{color:var(--orange);}
 .nav-item span{font-size:18px;}
+.nav-item.nav-points{font-weight:400;}
+.nav-item.nav-points span:last-child{
+  background:linear-gradient(135deg,#F5D68C,#C9932E);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  color:#E8B95C;font-weight:400;
+}
 .back-page-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--orange);font-size:14px;font-weight:700;cursor:pointer;padding:12px 16px 4px;font-family:'Poppins',sans-serif;}
 
 /* ══ RESTAURANT DETAIL SHEET ══ */
@@ -2330,7 +2334,8 @@ img[alt="LinkUp"]{
     <div class="logo-sub">Cravings delivered, instantly. 🔥</div>
   </div>
   <div class="header-right">
-    <button class="pts-btn" onclick="openWalletSheet()" title="LinkUp Points">⭐ <span id="headerPoints">0</span> pts</button>
+    <button class="header-icon-btn" onclick="showPage('restaurants')" title="Eats">🏪</button>
+    <button class="header-icon-btn" onclick="showPage('orders')" title="Orders">📦</button>
     <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
       🔔<span class="notif-dot" id="notifDot"></span>
     </button>
@@ -2692,8 +2697,7 @@ img[alt="LinkUp"]{
 <!-- FOOTER NAV -->
 <div class="footer-nav">
   <div class="nav-item active" id="nav-home" onclick="showPage('home')"><span>🏠</span><span data-i18n="nav_home">Home</span></div>
-  <div class="nav-item" id="nav-restaurants" onclick="showPage('restaurants')"><span>🏪</span><span data-i18n="nav_eats">Eats</span></div>
-  <div class="nav-item" id="nav-orders" onclick="showPage('orders')"><span>📦</span><span data-i18n="nav_orders">Orders</span></div>
+  <div class="nav-item nav-points" id="nav-points" onclick="openWalletSheet()"><span>👑</span><span data-i18n="nav_points">Points</span></div>
   <div class="nav-item" id="nav-profile" onclick="showPage('profile')"><span>👤</span><span data-i18n="nav_profile">Profile</span></div>
 </div>
 
@@ -3130,7 +3134,7 @@ let isRTL = localStorage.getItem('lu_rtl') === 'true';
 
 const TRANSLATIONS = {
   en: {
-    nav_home:'Home', nav_eats:'Eats', nav_orders:'Orders', nav_profile:'Profile',
+    nav_home:'Home', nav_eats:'Eats', nav_orders:'Orders', nav_profile:'Profile', nav_points:'Points',
     cat_all:'All', cat_burger:'Burger', cat_pizza:'Pizza', cat_biryani:'Biryani',
     cat_dessert:'Dessert', cat_juice:'Juice', cat_chicken:'Chicken', cat_grocery:'Grocery',
     cat_restaurants:'Restaurants', veg_filter:'Veg',
@@ -3171,7 +3175,7 @@ const TRANSLATIONS = {
     toast_fill_fields:'⚠️ Please fill all fields'
   },
   hi: {
-    nav_home:'होम', nav_eats:'खाना', nav_orders:'ऑर्डर', nav_profile:'प्रोफाइल',
+    nav_home:'होम', nav_eats:'खाना', nav_orders:'ऑर्डर', nav_profile:'प्रोफाइल', nav_points:'पॉइंट्स',
     cat_all:'सभी', cat_burger:'बर्गर', cat_pizza:'पिज़्जा', cat_biryani:'बिरयानी',
     cat_dessert:'मिठाई', cat_juice:'जूस', cat_chicken:'चिकन', cat_grocery:'किराना',
     cat_restaurants:'रेस्टोरेंट', veg_filter:'वेज',
@@ -3212,7 +3216,7 @@ const TRANSLATIONS = {
     toast_fill_fields:'⚠️ सभी फ़ील्ड भरें'
   },
   te: {
-    nav_home:'హోమ్', nav_eats:'తింటారా', nav_orders:'ఆర్డర్లు', nav_profile:'ప్రొఫైల్',
+    nav_home:'హోమ్', nav_eats:'తింటారా', nav_orders:'ఆర్డర్లు', nav_profile:'ప్రొఫైల్', nav_points:'పాయింట్లు',
     cat_all:'అన్నీ', cat_burger:'బర్గర్', cat_pizza:'పిజ్జా', cat_biryani:'బిర్యానీ',
     cat_dessert:'డెజర్ట్', cat_juice:'జ్యూస్', cat_chicken:'చికెన్', cat_grocery:'కిరాణా',
     cat_restaurants:'రెస్టారెంట్లు', veg_filter:'వెజ్',
@@ -3253,7 +3257,7 @@ const TRANSLATIONS = {
     toast_fill_fields:'⚠️ అన్ని ఫీల్డ్లు నమోదు చేయండి'
   },
   ar: {
-    nav_home:'الرئيسية', nav_eats:'طعام', nav_orders:'الطلبات', nav_profile:'الملف الشخصي',
+    nav_home:'الرئيسية', nav_eats:'طعام', nav_orders:'الطلبات', nav_profile:'الملف الشخصي', nav_points:'النقاط',
     cat_all:'الكل', cat_burger:'برغر', cat_pizza:'بيتزا', cat_biryani:'برياني',
     cat_dessert:'حلوى', cat_juice:'عصير', cat_chicken:'دجاج', cat_grocery:'بقالة',
     cat_restaurants:'مطاعم', veg_filter:'نباتي',
@@ -3294,7 +3298,7 @@ const TRANSLATIONS = {
     toast_fill_fields:'⚠️ يرجى ملء جميع الحقول'
   },
   fil: {
-    nav_home:'Tahanan', nav_eats:'Kain', nav_orders:'Mga Order', nav_profile:'Profile',
+    nav_home:'Tahanan', nav_eats:'Kain', nav_orders:'Mga Order', nav_profile:'Profile', nav_points:'Mga Puntos',
     cat_all:'Lahat', cat_burger:'Burger', cat_pizza:'Pizza', cat_biryani:'Biryani',
     cat_dessert:'Matamis', cat_juice:'Juice', cat_chicken:'Manok', cat_grocery:'Grocery',
     cat_restaurants:'Mga Restaurant', veg_filter:'Gulay',
