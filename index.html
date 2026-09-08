@@ -98,6 +98,7 @@ body.light-theme{
 html{
   height:-webkit-fill-available;
 }
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 body{
   font-family:'Poppins','Segoe UI',sans-serif;
   background:var(--bg);
@@ -661,7 +662,7 @@ body{
 .pay-fail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:500;align-items:center;justify-content:center;padding:20px;}
 .pay-fail-overlay.open{display:flex;}
 .pay-fail-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px 24px;max-width:360px;width:100%;text-align:center;}
-.pay-fail-icon{font-size:44px;margin-bottom:12px;}
+.pay-fail-icon{font-size:44px;margin-bottom:12px;color:var(--red);}
 .pay-fail-title{font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px;}
 .pay-fail-msg{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px;}
 .pay-fail-btns{display:flex;flex-direction:column;gap:10px;}
@@ -1625,7 +1626,7 @@ body.light-theme #statusBarFill{background:#FFF8ED;}
 .fp-strength-label{font-size:11px;color:#666;margin-top:4px;}
 
 /* Step 3 final success */
-.fp-done-icon{font-size:60px;text-align:center;animation:popIn 0.5s cubic-bezier(.22,1.5,.36,1);}
+.fp-done-icon{font-size:60px;text-align:center;color:var(--green);animation:popIn 0.5s cubic-bezier(.22,1.5,.36,1);}
 @keyframes popIn{from{transform:scale(0);}to{transform:scale(1);}}
 
 /* ══════════════════════════════════════
@@ -1855,6 +1856,62 @@ img[alt="LinkUp"]{
 </style>
 </head>
 <body>
+<!-- Icon sprite: every UI icon is defined once here and referenced via <svg class="ic"><use href="#ic-*"></use></svg> -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+    <symbol id="ic-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1.4"/><circle cx="19" cy="21" r="1.4"/><path d="M1.5 2h2.4l2.6 12.6a2 2 0 0 0 2 1.6h9a2 2 0 0 0 2-1.6L21.5 7H5"/></symbol>
+    <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
+    <symbol id="ic-package" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></symbol>
+    <symbol id="ic-flame" viewBox="0 0 24 24"><path d="M12 2c1.2 3.6-3.4 4.8-3.4 8.6a3.4 3.4 0 0 0 6.8 0c0-1.6-.8-2.4-.8-2.4s1.6.8 1.6 3.2a4.6 4.6 0 0 1-9.2 0C7 7.6 10 6.4 12 2Z"/></symbol>
+    <symbol id="ic-store" viewBox="0 0 24 24"><path d="M3 9l1.2-5h15.6L21 9"/><path d="M3 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 9.2V20h14V9.2"/><path d="M9.5 20v-5.5h5V20"/></symbol>
+    <symbol id="ic-repeat" viewBox="0 0 24 24"><path d="M17 1.5l4 4-4 4"/><path d="M3 11.5v-2a4 4 0 0 1 4-4h14"/><path d="M7 22.5l-4-4 4-4"/><path d="M21 12.5v2a4 4 0 0 1-4 4H3"/></symbol>
+    <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.6 1.6 7-6.2-3.9-6.2 3.9 1.6-7-5.4-4.6 7.1-.6Z"/></symbol>
+    <symbol id="ic-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5a14.5 14.5 0 0 1 0 19 14.5 14.5 0 0 1 0-19Z"/></symbol>
+    <symbol id="ic-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4"/><path d="M10.2 12.8 20 3M17 5l3 3M14 8l2.5 2.5"/></symbol>
+    <symbol id="ic-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2.2"/><path d="M2 10h20"/></symbol>
+    <symbol id="ic-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="ic-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></symbol>
+    <symbol id="ic-building" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1.2"/><path d="M9 7.5h1M14 7.5h1M9 11.5h1M14 11.5h1M9 15.5h1M14 15.5h1"/><path d="M10 21v-4h4v4"/></symbol>
+    <symbol id="ic-close" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="ic-cancel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20.3 20.3l-5-5"/></symbol>
+    <symbol id="ic-leaf" viewBox="0 0 24 24"><path d="M11 21C5 21 3 15 3 9c8 0 12 4 12 10 0-8 4-12 8-12 0 10-4 14-8 14-1.5 0-3-.4-4-1Z"/></symbol>
+    <symbol id="ic-dish" viewBox="0 0 24 24"><path d="M6 2v7a2 2 0 0 0 4 0V2"/><path d="M8 9v13"/><path d="M17 2c-1.8 0-3 2.5-3 6.5S16 15 16 15v8"/></symbol>
+    <symbol id="ic-burger" viewBox="0 0 24 24"><path d="M4 10c0-3.3 3.6-6 8-6s8 2.7 8 6"/><path d="M3.5 13h17"/><path d="M3 16.2h18a1.5 1.5 0 0 1-1.5 3h-15A1.5 1.5 0 0 1 3 16.2Z"/></symbol>
+    <symbol id="ic-pizza" viewBox="0 0 24 24"><path d="M12 3 3 21h18L12 3Z"/><path d="M7.5 21a4.5 4.5 0 0 1 9 0"/><circle cx="12" cy="11" r="1"/><circle cx="9.5" cy="16" r="1"/><circle cx="14.5" cy="16" r="1"/></symbol>
+    <symbol id="ic-bowl" viewBox="0 0 24 24"><path d="M3 12h18a9 9 0 0 1-18 0Z"/><path d="M9 3.5c0 1.3-1.5 1.3-1.5 2.8M12.5 2.5c0 1.3-1.5 1.3-1.5 2.8"/></symbol>
+    <symbol id="ic-dessert" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 1 5 5c0 1-.4 2-1 2H8c-.6 0-1-1-1-2a5 5 0 0 1 5-5Z"/><path d="M8 9.5 12 22l4-12.5"/></symbol>
+    <symbol id="ic-juice" viewBox="0 0 24 24"><path d="M6.5 3h11l-1.6 17.2a2 2 0 0 1-2 1.8h-3.8a2 2 0 0 1-2-1.8L6.5 3Z"/><path d="M6.5 3h11"/><path d="M16 1v4"/></symbol>
+    <symbol id="ic-chicken" viewBox="0 0 24 24"><path d="M14 4c3 0 5.5 2.2 5.5 5.2 0 2.3-1.7 3.8-3.3 5.2L8 22l-2-2 8.3-8.3c-1.3-1.2-2.6-2.6-2.6-4.5C11.7 5.2 12.7 4 14 4Z"/></symbol>
+    <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+    <symbol id="ic-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19.5h16"/></symbol>
+    <symbol id="ic-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.1 9.3a2.9 2.9 0 1 1 4.4 2.4c-.9.6-1.5 1.1-1.5 2.3"/><circle cx="12" cy="17.3" r="0.15" fill="currentColor" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="ic-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="ic-rocket" viewBox="0 0 24 24"><path d="M14.5 3.5c3 1 5 3 6 6-2.5 1-5 1-7-1s-2-4.5-1-5.5Z"/><path d="M13.5 10.5 5 19l-2 2 2-2 8.5-8.5"/><path d="M9 15c-2 0-3.5 1-4.5 3.5C7 17.5 8 16 8 14"/><circle cx="16.5" cy="7.5" r="1"/></symbol>
+    <symbol id="ic-map" viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/><path d="M9 3v16M15 5v16"/></symbol>
+    <symbol id="ic-receipt" viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2Z"/><path d="M9 7h6M9 11h6M9 15h4"/></symbol>
+    <symbol id="ic-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v.01M18 15v.01"/></symbol>
+    <symbol id="ic-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+    <symbol id="ic-bank" viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="9" rx="1"/><path d="M2 10 12 4l10 6"/><path d="M5 10v9M9 10v9M15 10v9M19 10v9"/></symbol>
+    <symbol id="ic-music" viewBox="0 0 24 24"><path d="M9 18V4l11-2v14"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+    <symbol id="ic-bell-off" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-9.3-5"/><path d="M5.5 5.5A6 6 0 0 0 6 8c0 7-3 9-3 9h13"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M2 2l20 20"/></symbol>
+    <symbol id="ic-vibrate" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="1.5"/><path d="M2 8v8M22 8v8M5 6v12M19 6v12"/></symbol>
+    <symbol id="ic-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M3 8h18M12 8v13"/><path d="M7.5 8a2.5 2.5 0 1 1 0-5C9.5 3 12 5 12 8M16.5 8a2.5 2.5 0 1 0 0-5C14.5 3 12 5 12 8"/></symbol>
+    <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M20 12 12.5 4.5a2 2 0 0 0-1.4-.5H5a2 2 0 0 0-2 2v6.1c0 .5.2 1 .6 1.4L11 21a2 2 0 0 0 2.8 0L20 14.8a2 2 0 0 0 0-2.8Z"/><circle cx="8" cy="8" r="1.4"/></symbol>
+    <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4V4Z"/></symbol>
+    <symbol id="ic-share" viewBox="0 0 24 24"><path d="M12 3v13"/><path d="M8 7l4-4 4 4"/><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/></symbol>
+    <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="ic-scooter" viewBox="0 0 24 24"><circle cx="5.5" cy="18" r="2.3"/><circle cx="18" cy="18" r="2.3"/><path d="M5.5 18h6.5l2.3-6h4.2"/><path d="M9 9h3.5l2 3"/><path d="M16.5 6h3"/></symbol>
+    <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></symbol>
+    <symbol id="ic-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></symbol>
+    <symbol id="ic-pan" viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><path d="M15 12h7"/><path d="M19.5 9.5l2.5 2.5-2.5 2.5"/></symbol>
+    <symbol id="ic-list" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 2v3h6V2"/><path d="M8 10h8M8 14h8M8 18h5"/></symbol>
+    <symbol id="ic-call" viewBox="0 0 24 24"><path d="M6.5 3.5c1 0 1.9.3 2.4 1.5l.9 2.1c.3.8.1 1.7-.5 2.3l-.9.9a12.5 12.5 0 0 0 5 5l.9-.9c.6-.6 1.5-.8 2.3-.5l2.1.9c1.2.5 1.5 1.4 1.5 2.4v1.9c0 1.1-.9 2-2 1.9C9.3 20.5 3.5 14.7 3.5 5.5c-.1-1.1.8-2 1.9-2Z"/></symbol>
+    <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+  </defs>
+</svg>
 <!-- Fills the iPhone notch/Dynamic Island with brand color — nothing else appears here -->
 <div id="statusBarFill" class="dark"></div>
 
@@ -2019,7 +2076,7 @@ img[alt="LinkUp"]{
 
       <!-- Sticky close -->
       <div class="lm-close">
-        <button class="lm-close-btn" onclick="closeLearnMore()" title="Close">✕</button>
+        <button class="lm-close-btn" onclick="closeLearnMore()" title="Close"><svg class="ic"><use href="#ic-close"></use></svg></button>
       </div>
 
       <div class="lm-body">
@@ -2158,14 +2215,14 @@ img[alt="LinkUp"]{
       <button class="auth-btn" id="loginBtn" onclick="doLogin()" data-i18n="sign_in_btn">Sign In →</button>
       <div class="auth-divider" data-i18n="or_continue">— or continue as —</div>
       <div class="social-btns">
-        <button class="social-btn" onclick="guestLogin()" data-i18n="guest_btn">🚀 Guest</button>
+        <button class="social-btn" onclick="guestLogin()"><svg class="ic"><use href="#ic-rocket"></use></svg> <span data-i18n="guest_btn">Guest</span></button>
       </div>
     </div>
 
     <!-- ── STATE: FP Step 1 — Enter Email ── -->
     <div id="fp-email" style="display:none;">
       <div style="text-align:center;margin-bottom:18px;">
-        <div style="font-size:42px;">🔐</div>
+        <div style="font-size:42px;"><svg class="ic"><use href="#ic-lock"></use></svg></div>
         <div style="font-family:'Righteous',cursive;font-size:20px;color:#fff;margin-top:8px;">Reset Password</div>
         <div style="font-size:13px;color:#888;margin-top:6px;line-height:1.6;">Enter your email — we'll send a 6-digit code right away.</div>
       </div>
@@ -2178,13 +2235,13 @@ img[alt="LinkUp"]{
     <!-- ── STATE: FP Step 2 — Enter OTP ── -->
     <div id="fp-otp" style="display:none;">
       <div style="text-align:center;margin-bottom:18px;">
-        <div style="font-size:42px;">📩</div>
+        <div style="font-size:42px;"><svg class="ic"><use href="#ic-mail"></use></svg></div>
         <div style="font-family:'Righteous',cursive;font-size:20px;color:#fff;margin-top:8px;">Enter the Code</div>
         <div style="font-size:13px;color:#888;margin-top:6px;line-height:1.6;">We sent a 6-digit code to <strong id="fpInEmailDisplay" style="color:#aaa;"></strong></div>
       </div>
       <!-- Dev mode: show code on screen when EmailJS not configured -->
       <div id="fpDevCodeBox" style="display:none;background:rgba(255,140,0,0.1);border:2px dashed rgba(255,140,0,0.6);border-radius:14px;padding:14px;text-align:center;margin-bottom:16px;">
-        <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">⚙️ Your Reset Code</div>
+        <div style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;"><svg class="ic"><use href="#ic-settings"></use></svg> Your Reset Code</div>
         <div id="fpDevCode" style="font-size:32px;font-weight:900;color:#fff;letter-spacing:10px;font-family:'Righteous',cursive;"></div>
         <div style="font-size:11px;color:#888;margin-top:8px;">Copy this code and enter it below</div>
       </div>
@@ -2209,7 +2266,7 @@ img[alt="LinkUp"]{
     <!-- ── STATE: FP Step 3 — New Password ── -->
     <div id="fp-newpw" style="display:none;">
       <div style="text-align:center;margin-bottom:18px;">
-        <div style="font-size:42px;">✅</div>
+        <div style="font-size:42px;color:var(--green);"><svg class="ic"><use href="#ic-check"></use></svg></div>
         <div style="font-family:'Righteous',cursive;font-size:20px;color:#fff;margin-top:8px;">Identity Verified!</div>
         <div style="font-size:13px;color:#888;margin-top:6px;line-height:1.6;">Set your new password below and you're good to go.</div>
       </div>
@@ -2243,11 +2300,11 @@ img[alt="LinkUp"]{
 ══════════════════════════════════════ -->
 <div class="fp-overlay" id="fpOverlay" onclick="handleFpOverlayClick(event)">
   <div class="fp-panel" id="fpPanel">
-    <button class="fp-close" onclick="closeForgotPassword()">✕</button>
+    <button class="fp-close" onclick="closeForgotPassword()"><svg class="ic"><use href="#ic-close"></use></svg></button>
 
     <!-- STEP 1: Enter Email -->
     <div class="fp-step active" id="fpStep1">
-      <div class="fp-icon">🔐</div>
+      <div class="fp-icon"><svg class="ic"><use href="#ic-lock"></use></svg></div>
       <div class="fp-title">Reset Your Password</div>
       <div class="fp-sub">Enter your registered email address and we'll send you a 6-digit verification code.</div>
       <div class="fp-error" id="fpErr1"></div>
@@ -2260,7 +2317,7 @@ img[alt="LinkUp"]{
 
     <!-- STEP 2: Enter OTP -->
     <div class="fp-step" id="fpStep2">
-      <div class="fp-icon">📩</div>
+      <div class="fp-icon"><svg class="ic"><use href="#ic-mail"></use></svg></div>
       <div class="fp-title">Verify Your Identity</div>
       <div class="fp-sub" id="fpStep2Sub">Enter the 6-digit code sent to <strong id="fpMaskedEmail"></strong></div>
       <div class="fp-error" id="fpErr2"></div>
@@ -2282,7 +2339,7 @@ img[alt="LinkUp"]{
 
     <!-- STEP 3: New Password -->
     <div class="fp-step" id="fpStep3">
-      <div class="fp-icon">🔑</div>
+      <div class="fp-icon"><svg class="ic"><use href="#ic-key"></use></svg></div>
       <div class="fp-title">Create New Password</div>
       <div class="fp-sub">Your identity is verified. Set a strong new password for your account.</div>
       <div class="fp-error" id="fpErr3"></div>
@@ -2301,7 +2358,7 @@ img[alt="LinkUp"]{
 
     <!-- STEP 4: Done -->
     <div class="fp-step" id="fpStep4">
-      <div class="fp-done-icon">✅</div>
+      <div class="fp-done-icon"><svg class="ic"><use href="#ic-check"></use></svg></div>
       <div class="fp-title" style="margin-top:16px;">Password Updated!</div>
       <div class="fp-sub">Your password has been reset successfully. You can now sign in with your new password.</div>
       <button class="auth-btn" onclick="closeForgotPassword()" style="margin-top:8px;">Back to Sign In →</button>
@@ -2324,18 +2381,18 @@ img[alt="LinkUp"]{
       <div>
         <div class="logo">LinkUp</div>
         <div class="area-selector" id="areaSelector" onclick="event.stopPropagation();openAreaSheet()">
-          📍 <span id="areaLabel">Tolichowki</span> <span class="area-chevron">▾</span>
+          <svg class="ic"><use href="#ic-pin"></use></svg> <span id="areaLabel">Tolichowki</span> <span class="area-chevron">▾</span>
         </div>
       </div>
     </div>
   </div>
   <div class="header-right">
     <button class="header-icon-btn" id="themeToggleBtn" onclick="headerToggleTheme()" title="Toggle theme"></button>
-    <button class="header-icon-btn" onclick="showPage('orders')" title="Orders">📦</button>
+    <button class="header-icon-btn" onclick="showPage('orders')" title="Orders"><svg class="ic"><use href="#ic-package"></use></svg></button>
     <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
-      🔔<span class="notif-dot" id="notifDot"></span>
+      <svg class="ic"><use href="#ic-bell"></use></svg><span class="notif-dot" id="notifDot"></span>
     </button>
-    <button class="cart-btn" onclick="openCart()">🛒 Cart <span class="badge" id="cartCount">0</span></button>
+    <button class="cart-btn" onclick="openCart()"><svg class="ic"><use href="#ic-cart"></use></svg> Cart <span class="badge" id="cartCount">0</span></button>
   </div>
 </div>
 <!-- Spacer so content doesn't hide under fixed header -->
@@ -2343,7 +2400,7 @@ img[alt="LinkUp"]{
 
 <div class="notif-panel" id="notifPanel">
   <div class="notif-panel-header">
-    <h3 data-i18n="notifs_title">🔔 Notifications</h3>
+    <h3><svg class="ic"><use href="#ic-bell"></use></svg> <span data-i18n="notifs_title">Notifications</span></h3>
     <button class="notif-clear" onclick="clearNotifs()" data-i18n="notifs_clear">Clear all</button>
   </div>
   <div class="notif-list" id="notifList">
@@ -2366,8 +2423,8 @@ img[alt="LinkUp"]{
           <div class="aoc-del-title" data-i18n="aoc_delivered">Order Delivered!</div>
           <div class="aoc-del-msg" id="aocDelMsg" data-i18n="aoc_thankyou">Thank you for ordering with LinkUp!</div>
           <div class="aoc-del-actions">
-            <button class="aoc-rate-btn" id="aocRateBtn" onclick="rateOrder('',true)" data-i18n="aoc_rate">⭐ Rate</button>
-            <button class="aoc-skip-btn" onclick="dismissDeliveredCard()" data-i18n="aoc_skip">✕ Skip</button>
+            <button class="aoc-rate-btn" id="aocRateBtn" onclick="rateOrder('',true)"><svg class="ic"><use href="#ic-star"></use></svg> <span data-i18n="aoc_rate">Rate</span></button>
+            <button class="aoc-skip-btn" onclick="dismissDeliveredCard()"><svg class="ic"><use href="#ic-close"></use></svg> <span data-i18n="aoc_skip">Skip</span></button>
           </div>
         </div>
       </div>
@@ -2385,7 +2442,7 @@ img[alt="LinkUp"]{
           <div class="aoc-eta-label" data-i18n="aoc_eta">ETA</div>
           <div class="aoc-eta-value" id="aocEtaValue">—</div>
           <div class="aoc-eta-unit" data-i18n="aoc_min">min</div>
-          <div class="aoc-map-hint" data-i18n="aoc_track">🗺️ Tap to track</div>
+          <div class="aoc-map-hint"><svg class="ic"><use href="#ic-map"></use></svg> <span data-i18n="aoc_track">Tap to track</span></div>
         </div>
       </div>
     </div>
@@ -2406,15 +2463,15 @@ img[alt="LinkUp"]{
   </div>
   <div style="display:flex;align-items:center;gap:0;">
     <div class="categories" style="flex:1;min-width:0;">
-      <div class="cat active" data-cat="all"       onclick="filter('all',this)">🍽️ <span data-i18n="cat_all">All</span></div>
-      <div class="cat"        data-cat="burger"    onclick="filter('burger',this)">🍔 <span data-i18n="cat_burger">Burger</span></div>
-      <div class="cat"        data-cat="pizza"     onclick="filter('pizza',this)">🍕 <span data-i18n="cat_pizza">Pizza</span></div>
-      <div class="cat"        data-cat="biryani"   onclick="filter('biryani',this)">🍛 <span data-i18n="cat_biryani">Biryani</span></div>
-      <div class="cat"        data-cat="dessert"   onclick="filter('dessert',this)">🍫 <span data-i18n="cat_dessert">Dessert</span></div>
-      <div class="cat"        data-cat="juice"     onclick="filter('juice',this)">🧃 <span data-i18n="cat_juice">Juice</span></div>
-      <div class="cat"        data-cat="chicken"   onclick="filter('chicken',this)">🍗 <span data-i18n="cat_chicken">Chicken</span></div>
-      <div class="cat"        data-cat="grocery"   onclick="filter('grocery',this)">🛒 <span data-i18n="cat_grocery">Grocery</span></div>
-      <div class="cat" onclick="showPage('restaurants')" style="background:rgba(255,140,0,0.08);border-color:rgba(255,140,0,0.4);color:var(--orange);font-weight:700;">🏪 <span data-i18n="cat_restaurants">Restaurants</span></div>
+      <div class="cat active" data-cat="all"       onclick="filter('all',this)"><svg class="ic"><use href="#ic-dish"></use></svg> <span data-i18n="cat_all">All</span></div>
+      <div class="cat"        data-cat="burger"    onclick="filter('burger',this)"><svg class="ic"><use href="#ic-burger"></use></svg> <span data-i18n="cat_burger">Burger</span></div>
+      <div class="cat"        data-cat="pizza"     onclick="filter('pizza',this)"><svg class="ic"><use href="#ic-pizza"></use></svg> <span data-i18n="cat_pizza">Pizza</span></div>
+      <div class="cat"        data-cat="biryani"   onclick="filter('biryani',this)"><svg class="ic"><use href="#ic-bowl"></use></svg> <span data-i18n="cat_biryani">Biryani</span></div>
+      <div class="cat"        data-cat="dessert"   onclick="filter('dessert',this)"><svg class="ic"><use href="#ic-dessert"></use></svg> <span data-i18n="cat_dessert">Dessert</span></div>
+      <div class="cat"        data-cat="juice"     onclick="filter('juice',this)"><svg class="ic"><use href="#ic-juice"></use></svg> <span data-i18n="cat_juice">Juice</span></div>
+      <div class="cat"        data-cat="chicken"   onclick="filter('chicken',this)"><svg class="ic"><use href="#ic-chicken"></use></svg> <span data-i18n="cat_chicken">Chicken</span></div>
+      <div class="cat"        data-cat="grocery"   onclick="filter('grocery',this)"><svg class="ic"><use href="#ic-cart"></use></svg> <span data-i18n="cat_grocery">Grocery</span></div>
+      <div class="cat" onclick="showPage('restaurants')" style="background:rgba(255,140,0,0.08);border-color:rgba(255,140,0,0.4);color:var(--orange);font-weight:700;"><svg class="ic"><use href="#ic-store"></use></svg> <span data-i18n="cat_restaurants">Restaurants</span></div>
     </div>
     <div class="veg-filter-wrap">
       <button class="veg-toggle-btn" id="vegToggleBtn" onclick="toggleVeg()">
@@ -2436,7 +2493,7 @@ img[alt="LinkUp"]{
   <!-- ORDER AGAIN SECTION -->
   <div id="orderAgainSection" class="oa-section" style="display:none;">
     <div class="oa-header">
-      <div class="home-rest-title" data-i18n="order_again">🔁 Order Again</div>
+      <div class="home-rest-title"><svg class="ic"><use href="#ic-repeat"></use></svg> <span data-i18n="order_again">Order Again</span></div>
     </div>
     <div class="oa-strip" id="oaStrip"></div>
     <div class="home-rest-divider"></div>
@@ -2445,14 +2502,14 @@ img[alt="LinkUp"]{
   <!-- RESTAURANTS STRIP -->
   <div id="homeRestSection">
     <div class="home-rest-header">
-      <div class="home-rest-title" data-i18n="top_restaurants">🏪 Top Restaurants</div>
+      <div class="home-rest-title"><svg class="ic"><use href="#ic-store"></use></svg> <span data-i18n="top_restaurants">Top Restaurants</span></div>
       <button class="home-rest-see-all" onclick="showPage('restaurants')" data-i18n="see_all">See All →</button>
     </div>
     <div class="home-rest-strip" id="homeRestStrip"></div>
     <div class="home-rest-divider"></div>
   </div>
 
-  <div class="section-title" id="sectionTitle">🔥 Popular Items</div>
+  <div class="section-title" id="sectionTitle"><svg class="ic"><use href="#ic-flame"></use></svg> Popular Items</div>
   <div class="food-row" id="foodGrid"></div>
 </div>
 
@@ -2460,7 +2517,7 @@ img[alt="LinkUp"]{
 <div id="page-orders" class="page">
   <div class="page-back-header">
     <button class="page-back-btn" onclick="showPage('home')">‹</button>
-    <div class="page-back-title" data-i18n="orders_title">📦 Your Orders</div>
+    <div class="page-back-title"><svg class="ic"><use href="#ic-package"></use></svg> <span data-i18n="orders_title">Your Orders</span></div>
   </div>
   <div id="ordersList"></div>
 </div>
@@ -2490,26 +2547,26 @@ img[alt="LinkUp"]{
   </div>
   <div class="profile-menu">
     <div class="theme-toggle-row">
-      <div class="theme-toggle-label" data-i18n="light_theme">☀️ Light Theme</div>
+      <div class="theme-toggle-label"><svg class="ic"><use href="#ic-settings"></use></svg> <span data-i18n="light_theme">Light Theme</span></div>
       <label class="toggle-switch"><input type="checkbox" id="themeToggle" onchange="toggleTheme()"><span class="toggle-slider"></span></label>
     </div>
     <!-- ★ CHANGE 3: Language option in profile -->
     <div class="profile-item" onclick="openProfileLangSheet()" style="cursor:pointer;">
-      <span data-i18n="lang_item">🌐 Language</span>
+      <span><svg class="ic"><use href="#ic-globe"></use></svg> <span data-i18n="lang_item">Language</span></span>
       <span style="display:flex;align-items:center;gap:6px;color:var(--orange);font-size:13px;">
         <span id="profileLangDisplay">English</span><span style="color:var(--muted);">›</span>
       </span>
     </div>
-    <div class="profile-item" onclick="openPsheet('addr')"><span data-i18n="addr_item">📍 Delivery Address</span><span>›</span></div>
-    <div class="profile-item" onclick="openWalletSheet()"><span data-i18n="wallet_item">⭐ My Wallet & Points</span><span class="wallet-profile-badge" id="walletBadge">₹0</span></div>
-    <div class="profile-item" onclick="openPsheet('payment')"><span data-i18n="payment_item">💳 Payment Methods</span><span>›</span></div>
-    <div class="profile-item" onclick="openPsheet('notifs')"><span data-i18n="notifs_item">🔔 Notifications</span><span>›</span></div>
-    <div class="profile-item" onclick="openFavourites()"><span data-i18n="favs_item">⭐ Favourites</span><span>›</span></div>
-    <div class="profile-item" id="adminPanelItem" onclick="showPage('admin')" style="color:var(--orange);display:none;"><span>🔧 Admin Panel</span><span>›</span></div>
-    <div class="profile-item" onclick="openPsheet('changepw')"><span data-i18n="changepw_item">🔑 Change Password</span><span>›</span></div>
-    <div class="profile-item" id="installAppItem" onclick="triggerInstall()" style="color:var(--orange);"><span data-i18n="install_item">📲 Install App</span><span style="font-size:11px;background:rgba(255,140,0,0.15);padding:2px 8px;border-radius:10px;font-weight:700;">FREE</span></div>
-    <div class="profile-item" onclick="openPsheet('help')"><span data-i18n="help_item">❓ Help & Support</span><span>›</span></div>
-    <div class="profile-item" onclick="doLogout()" style="color:var(--red);"><span data-i18n="signout_item">🚪 Sign Out</span><span>›</span></div>
+    <div class="profile-item" onclick="openPsheet('addr')"><span><svg class="ic"><use href="#ic-pin"></use></svg> <span data-i18n="addr_item">Delivery Address</span></span><span>›</span></div>
+    <div class="profile-item" onclick="openWalletSheet()"><span><svg class="ic"><use href="#ic-star"></use></svg> <span data-i18n="wallet_item">My Wallet & Points</span></span><span class="wallet-profile-badge" id="walletBadge">₹0</span></div>
+    <div class="profile-item" onclick="openPsheet('payment')"><span><svg class="ic"><use href="#ic-card"></use></svg> <span data-i18n="payment_item">Payment Methods</span></span><span>›</span></div>
+    <div class="profile-item" onclick="openPsheet('notifs')"><span><svg class="ic"><use href="#ic-bell"></use></svg> <span data-i18n="notifs_item">Notifications</span></span><span>›</span></div>
+    <div class="profile-item" onclick="openFavourites()"><span><svg class="ic"><use href="#ic-star"></use></svg> <span data-i18n="favs_item">Favourites</span></span><span>›</span></div>
+    <div class="profile-item" id="adminPanelItem" onclick="showPage('admin')" style="color:var(--orange);display:none;"><span><svg class="ic"><use href="#ic-settings"></use></svg> Admin Panel</span><span>›</span></div>
+    <div class="profile-item" onclick="openPsheet('changepw')"><span><svg class="ic"><use href="#ic-key"></use></svg> <span data-i18n="changepw_item">Change Password</span></span><span>›</span></div>
+    <div class="profile-item" id="installAppItem" onclick="triggerInstall()" style="color:var(--orange);"><span><svg class="ic"><use href="#ic-download"></use></svg> <span data-i18n="install_item">Install App</span></span><span style="font-size:11px;background:rgba(255,140,0,0.15);padding:2px 8px;border-radius:10px;font-weight:700;">FREE</span></div>
+    <div class="profile-item" onclick="openPsheet('help')"><span><svg class="ic"><use href="#ic-help"></use></svg> <span data-i18n="help_item">Help & Support</span></span><span>›</span></div>
+    <div class="profile-item" onclick="doLogout()" style="color:var(--red);"><span><svg class="ic"><use href="#ic-logout"></use></svg> <span data-i18n="signout_item">Sign Out</span></span><span>›</span></div>
   </div>
 </div>
 
@@ -2517,7 +2574,7 @@ img[alt="LinkUp"]{
 <div id="page-restaurants" class="restaurants-page">
   <div class="page-back-header">
     <button class="page-back-btn" onclick="showPage('home')">‹</button>
-    <div class="page-back-title" data-i18n="top_restaurants">🏪 Top Restaurants</div>
+    <div class="page-back-title"><svg class="ic"><use href="#ic-store"></use></svg> <span data-i18n="top_restaurants">Top Restaurants</span></div>
   </div>
   <div class="rest-grid" id="restGrid" style="padding:14px;"></div>
 </div>
@@ -2525,11 +2582,11 @@ img[alt="LinkUp"]{
 <!-- CHECKOUT PAGE -->
 <div id="page-checkout" class="checkout-page">
   <button class="back-page-btn" onclick="closeCart();showPage('home')" data-i18n="back_menu">← Back to Menu</button>
-  <div class="section-title" data-i18n="checkout_title">💳 Checkout</div>
+  <div class="section-title"><svg class="ic"><use href="#ic-card"></use></svg> <span data-i18n="checkout_title">Checkout</span></div>
 
   <!-- CUSTOMER DETAILS -->
   <div class="checkout-section">
-    <h3 data-i18n="your_details">👤 Your Details</h3>
+    <h3><svg class="ic"><use href="#ic-user"></use></svg> <span data-i18n="your_details">Your Details</span></h3>
     <div class="form-group">
       <label><span data-i18n="full_name_label">FULL NAME</span> <span style="color:var(--red);">*</span></label>
       <input type="text" id="cdName" placeholder="Enter your full name" autocomplete="name" data-i18n-ph="ph_full_name">
@@ -2547,25 +2604,25 @@ img[alt="LinkUp"]{
 
   <!-- DELIVERY ADDRESS -->
   <div class="checkout-section">
-    <h3 data-i18n="delivery_section">📍 Delivery Address</h3>
+    <h3><svg class="ic"><use href="#ic-pin"></use></svg> <span data-i18n="delivery_section">Delivery Address</span></h3>
     <div class="form-group"><label data-i18n="full_addr_label">FULL ADDRESS</label><input type="text" id="delivAddr" placeholder="House No, Street, Area..." data-i18n-ph="ph_full_addr"></div>
     <div class="form-group"><label data-i18n="city_pincode_label">CITY & PINCODE</label><input type="text" id="delivCity" placeholder="City, Pincode" data-i18n-ph="ph_city_pincode"></div>
   </div>
   <div class="checkout-section">
-    <h3 data-i18n="payment_section">💳 Payment Method</h3>
+    <h3><svg class="ic"><use href="#ic-card"></use></svg> <span data-i18n="payment_section">Payment Method</span></h3>
     <div class="pay-methods">
       <div class="pay-method selected" id="pm-cod" onclick="selectPay('cod',this)">
-        <div class="pay-method-icon">💵</div>
+        <div class="pay-method-icon"><svg class="ic"><use href="#ic-cash"></use></svg></div>
         <div class="pay-method-info"><div class="pay-method-name" data-i18n="cod_name">Cash on Delivery</div><div class="pay-method-desc" data-i18n="cod_desc">Pay when your order arrives — no hassle</div></div>
         <input type="radio" class="pay-radio" name="pay" checked>
       </div>
       <div class="pay-method" id="pm-upi" onclick="selectPay('upi',this)">
-        <div class="pay-method-icon">📱</div>
+        <div class="pay-method-icon"><svg class="ic"><use href="#ic-phone"></use></svg></div>
         <div class="pay-method-info"><div class="pay-method-name">UPI</div><div class="pay-method-desc">Google Pay · PhonePe · Paytm</div></div>
         <input type="radio" class="pay-radio" name="pay">
       </div>
       <div class="pay-method" id="pm-card" onclick="selectPay('card',this)">
-        <div class="pay-method-icon">💳</div>
+        <div class="pay-method-icon"><svg class="ic"><use href="#ic-card"></use></svg></div>
         <div class="pay-method-info"><div class="pay-method-name">Debit / Credit Card</div><div class="pay-method-desc">Visa · Mastercard · RuPay</div></div>
         <input type="radio" class="pay-radio" name="pay">
       </div>
@@ -2596,10 +2653,10 @@ img[alt="LinkUp"]{
     </div>
     <!-- Apply Savings (wallet refund + points) -->
     <div class="savings-section" id="savingsSection" style="display:none;">
-      <div class="savings-title">💰 Apply Savings</div>
+      <div class="savings-title"><svg class="ic"><use href="#ic-cash"></use></svg> Apply Savings</div>
       <div class="savings-row" id="walletSavingsRow" style="display:none;">
         <div class="savings-row-left">
-          <div class="savings-icon">🏦</div>
+          <div class="savings-icon"><svg class="ic"><use href="#ic-bank"></use></svg></div>
           <div>
             <div class="savings-name">Wallet Balance</div>
             <div class="savings-sub" id="walletSavingsSub">₹0 refund credit</div>
@@ -2609,7 +2666,7 @@ img[alt="LinkUp"]{
       </div>
       <div class="savings-row" id="pointsSavingsRow" style="display:none;">
         <div class="savings-row-left">
-          <div class="savings-icon">⭐</div>
+          <div class="savings-icon"><svg class="ic"><use href="#ic-star"></use></svg></div>
           <div>
             <div class="savings-name">LinkUp Points</div>
             <div class="savings-sub" id="pointsSavingsSub">0 pts = ₹0</div>
@@ -2620,7 +2677,7 @@ img[alt="LinkUp"]{
     </div>
   </div>
   <div class="checkout-section">
-    <h3 data-i18n="order_summary">🧾 Order Summary</h3>
+    <h3><svg class="ic"><use href="#ic-receipt"></use></svg> <span data-i18n="order_summary">Order Summary</span></h3>
     <div id="checkoutSummary"></div>
     <div class="order-summary-total"><span data-i18n="total_label">Total</span><span id="checkoutTotal" style="color:var(--orange);">₹0</span></div>
   </div>
@@ -2630,7 +2687,7 @@ img[alt="LinkUp"]{
 <!-- TRACKING PAGE -->
 <div id="page-tracking" class="tracking-page">
   <button class="back-page-btn" onclick="showPage('orders')" data-i18n="tracking_back">← Back to Orders</button>
-  <div class="section-title" data-i18n="tracking_title">🗺️ Live Order Tracking</div>
+  <div class="section-title"><svg class="ic"><use href="#ic-map"></use></svg> <span data-i18n="tracking_title">Live Order Tracking</span></div>
   <div class="track-card">
     <div class="track-order-id" id="trackOrderId">Order #LU123456</div>
     <div class="track-eta" id="trackEta">24 min</div>
@@ -2638,23 +2695,23 @@ img[alt="LinkUp"]{
   </div>
   <div class="track-map" onclick="openMapModal()" style="padding:0;overflow:hidden;">
     <div id="trackMapEl" style="width:100%;height:100%;min-height:220px;"></div>
-    <div class="track-map-tap-hint">📍 Tap to view full map</div>
+    <div class="track-map-tap-hint"><svg class="ic"><use href="#ic-pin"></use></svg> Tap to view full map</div>
   </div>
   <div class="checkout-section">
-    <h3>📋 Delivery Steps</h3>
+    <h3><svg class="ic"><use href="#ic-list"></use></svg> Delivery Steps</h3>
     <div class="track-steps" id="trackSteps"></div>
   </div>
   <div class="checkout-section" id="trackRiderCard" style="display:none;">
-    <h3>🧑‍🍳 Your Delivery Partner</h3>
+    <h3><svg class="ic"><use href="#ic-user"></use></svg> Your Delivery Partner</h3>
     <div style="display:flex;align-items:center;gap:14px;margin-top:4px;">
-      <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#ff3c3c);display:flex;align-items:center;justify-content:center;font-size:22px;">🧑</div>
+      <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#ff3c3c);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;"><svg class="ic"><use href="#ic-user"></use></svg></div>
       <div>
         <div style="font-weight:700;font-size:14px;" id="trackRiderName">Rider</div>
         <div style="font-size:12px;color:var(--muted);" id="trackRiderPhone"></div>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;">
-        <button style="padding:8px 14px;border-radius:8px;background:var(--orange);border:none;color:#000;font-weight:700;cursor:pointer;font-size:13px;">📞 Call</button>
-        <button style="padding:8px 14px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text);font-weight:700;cursor:pointer;font-size:13px;">💬 Chat</button>
+        <button style="padding:8px 14px;border-radius:8px;background:var(--orange);border:none;color:#000;font-weight:700;cursor:pointer;font-size:13px;"><svg class="ic"><use href="#ic-call"></use></svg> Call</button>
+        <button style="padding:8px 14px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text);font-weight:700;cursor:pointer;font-size:13px;"><svg class="ic"><use href="#ic-chat"></use></svg> Chat</button>
       </div>
     </div>
   </div>
@@ -2710,8 +2767,8 @@ img[alt="LinkUp"]{
 <!-- CART DRAWER -->
 <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
 <div class="cart-drawer" id="cartDrawer">
-  <div class="cart-header"><h2 data-i18n="cart_title">🛒 Your Cart</h2><button class="close-cart" onclick="closeCart()">✕</button></div>
-  <div class="cart-items" id="cartItems"><div class="cart-empty" data-i18n="cart_empty">Your cart is empty. Add some delicious items! 🍔</div></div>
+  <div class="cart-header"><h2><svg class="ic"><use href="#ic-cart"></use></svg> <span data-i18n="cart_title">Your Cart</span></h2><button class="close-cart" onclick="closeCart()"><svg class="ic"><use href="#ic-close"></use></svg></button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty"><svg class="ic" style="width:2em;height:2em;display:block;margin:0 auto 10px;"><use href="#ic-cart"></use></svg><span data-i18n="cart_empty">Your cart is empty. Add some delicious items!</span></div></div>
   <div class="cart-footer" id="cartFooter" style="display:none;">
     <div class="cart-total"><span data-i18n="cart_total">Total</span><span id="cartTotal" style="color:var(--orange);">₹0</span></div>
     <button class="checkout-btn" onclick="goToCheckout()" data-i18n="proceed_checkout">Proceed to Checkout →</button>
@@ -2771,7 +2828,7 @@ img[alt="LinkUp"]{
 <div class="favs-overlay" id="favsOverlay">
   <div class="favs-header">
     <button class="favs-back" onclick="closeFavourites()">‹</button>
-    <div class="favs-title">⭐ Favourites</div>
+    <div class="favs-title"><svg class="ic"><use href="#ic-star"></use></svg> Favourites</div>
     <div class="favs-count" id="favsCount">0 items</div>
   </div>
   <div id="favsGrid" class="food-row" style="padding:14px;"></div>
@@ -2785,19 +2842,19 @@ img[alt="LinkUp"]{
     <div class="psheet-handle"></div>
     <div class="psheet-head">
       <button class="psheet-back-btn" onclick="closePsheet('addr')">‹</button>
-      <div class="psheet-title">📍 Delivery Addresses</div>
+      <div class="psheet-title"><svg class="ic"><use href="#ic-pin"></use></svg> Delivery Addresses</div>
     </div>
     <div id="addrList"></div>
     <div id="addrAddForm" style="display:none;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:700;color:var(--orange);margin-bottom:12px;">📍 New Address</div>
+      <div style="font-size:13px;font-weight:700;color:var(--orange);margin-bottom:12px;"><svg class="ic"><use href="#ic-pin"></use></svg> New Address</div>
       <!-- Real Map -->
       <div style="border-radius:14px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;position:relative;">
         <div id="addrMapEl" style="width:100%;height:200px;"></div>
-        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;pointer-events:none;z-index:999;white-space:nowrap;">📍 Tap map to set your location</div>
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;pointer-events:none;z-index:999;white-space:nowrap;"><svg class="ic"><use href="#ic-pin"></use></svg> Tap map to set your location</div>
       </div>
       <!-- Current Location Button -->
       <button onclick="useCurrentLocation()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:rgba(255,140,0,0.1);border:1px solid rgba(255,140,0,0.4);border-radius:12px;color:var(--orange);font-size:13px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;margin-bottom:14px;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,140,0,0.18)'" onmouseout="this.style.background='rgba(255,140,0,0.1)'">
-        🎯 Use My Current Location
+        <svg class="ic"><use href="#ic-target"></use></svg> Use My Current Location
       </button>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;">
         <div class="form-group"><label>LABEL (e.g. Home, Work)</label><input type="text" id="addrLabel" placeholder="Home"></div>
@@ -2815,7 +2872,7 @@ img[alt="LinkUp"]{
         </div>
       </div>
     </div>
-    <button class="dashed-add-btn" id="addrToggleBtn" onclick="toggleAddrForm(true)">➕ Add New Address</button>
+    <button class="dashed-add-btn" id="addrToggleBtn" onclick="toggleAddrForm(true)"><svg class="ic"><use href="#ic-plus"></use></svg> Add New Address</button>
   </div>
 </div>
 
@@ -2827,14 +2884,14 @@ img[alt="LinkUp"]{
     <div class="psheet-handle"></div>
     <div class="psheet-head">
       <button class="psheet-back-btn" onclick="closePsheet('payment')">‹</button>
-      <div class="psheet-title">💳 Payment Methods</div>
+      <div class="psheet-title"><svg class="ic"><use href="#ic-card"></use></svg> Payment Methods</div>
     </div>
     <div id="pmList"></div>
     <div id="pmAddForm" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;">
       <div style="font-size:13px;font-weight:700;color:var(--orange);margin-bottom:14px;">Add Payment Method</div>
       <div class="pm-type-tabs">
-        <div class="pm-tab active" id="pmTabCard" onclick="pmSwitchType('card')">💳 Card</div>
-        <div class="pm-tab" id="pmTabUpi" onclick="pmSwitchType('upi')">📱 UPI</div>
+        <div class="pm-tab active" id="pmTabCard" onclick="pmSwitchType('card')"><svg class="ic"><use href="#ic-card"></use></svg> Card</div>
+        <div class="pm-tab" id="pmTabUpi" onclick="pmSwitchType('upi')"><svg class="ic"><use href="#ic-phone"></use></svg> UPI</div>
       </div>
       <div id="pmCardFields">
         <div class="form-group"><label>CARD NUMBER</label><input type="tel" id="pmCardNum" placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCard(this)"></div>
@@ -2852,7 +2909,7 @@ img[alt="LinkUp"]{
         <button onclick="togglePmForm(false)" style="flex:1;padding:13px;border:1px solid var(--border);border-radius:12px;background:none;color:var(--muted);cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;">Cancel</button>
       </div>
     </div>
-    <button class="dashed-add-btn" id="pmToggleBtn" onclick="togglePmForm(true)">➕ Add Payment Method</button>
+    <button class="dashed-add-btn" id="pmToggleBtn" onclick="togglePmForm(true)"><svg class="ic"><use href="#ic-plus"></use></svg> Add Payment Method</button>
   </div>
 </div>
 
@@ -2864,11 +2921,11 @@ img[alt="LinkUp"]{
     <div class="psheet-handle"></div>
     <div class="psheet-head">
       <button class="psheet-back-btn" onclick="closeWalletSheet()">‹</button>
-      <div class="psheet-title">💰 Wallet & Points</div>
+      <div class="psheet-title"><svg class="ic"><use href="#ic-cash"></use></svg> Wallet & Points</div>
     </div>
     <div class="wallet-tabs">
-      <button class="wallet-tab w-active" id="walletTabWallet" onclick="switchWalletTab('wallet')">🏦 Wallet</button>
-      <button class="wallet-tab" id="walletTabPoints" onclick="switchWalletTab('points')">⭐ Points</button>
+      <button class="wallet-tab w-active" id="walletTabWallet" onclick="switchWalletTab('wallet')"><svg class="ic"><use href="#ic-bank"></use></svg> Wallet</button>
+      <button class="wallet-tab" id="walletTabPoints" onclick="switchWalletTab('points')"><svg class="ic"><use href="#ic-star"></use></svg> Points</button>
     </div>
     <!-- WALLET PANEL -->
     <div id="walletPanel">
@@ -2908,12 +2965,12 @@ img[alt="LinkUp"]{
 ══════════════════════════════════════ -->
 <div class="pay-fail-overlay" id="payFailOverlay">
   <div class="pay-fail-box">
-    <div class="pay-fail-icon">❌</div>
+    <div class="pay-fail-icon"><svg class="ic"><use href="#ic-cancel"></use></svg></div>
     <div class="pay-fail-title">Payment Failed</div>
     <div class="pay-fail-msg" id="payFailMsg">Payment failed due to insufficient funds. Please try another payment method or switch to COD.</div>
     <div class="pay-fail-btns">
-      <button class="pay-fail-retry" onclick="retryPayment()">🔄 Retry Payment</button>
-      <button class="pay-fail-cod" onclick="switchToCOD()">💵 Switch to COD</button>
+      <button class="pay-fail-retry" onclick="retryPayment()"><svg class="ic"><use href="#ic-repeat"></use></svg> Retry Payment</button>
+      <button class="pay-fail-cod" onclick="switchToCOD()"><svg class="ic"><use href="#ic-cash"></use></svg> Switch to COD</button>
     </div>
   </div>
 </div>
@@ -2933,7 +2990,7 @@ img[alt="LinkUp"]{
     <div class="psheet-handle"></div>
     <div class="psheet-head">
       <button class="psheet-back-btn" onclick="closePsheet('notifs')">‹</button>
-      <div class="psheet-title">🔔 Notification Settings</div>
+      <div class="psheet-title"><svg class="ic"><use href="#ic-bell"></use></svg> Notification Settings</div>
     </div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;">Choose which notifications you'd like to receive from LinkUp.</p>
     <div id="notifPrefList"></div>
@@ -2948,7 +3005,7 @@ img[alt="LinkUp"]{
     <div class="psheet-handle"></div>
     <div class="psheet-head">
       <button class="psheet-back-btn" onclick="closePsheet('help')">‹</button>
-      <div class="psheet-title">❓ Help & Support</div>
+      <div class="psheet-title"><svg class="ic"><use href="#ic-help"></use></svg> Help & Support</div>
     </div>
     <div style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Frequently Asked Questions</div>
     <div class="faq-item">
@@ -2978,17 +3035,17 @@ img[alt="LinkUp"]{
     <div style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin:22px 0 14px;">Contact Us</div>
     <div class="help-contacts">
       <button class="help-cta" onclick="showToast('📞 Calling support...')">
-        <span class="hc-icon">📞</span>
+        <span class="hc-icon"><svg class="ic"><use href="#ic-call"></use></svg></span>
         <span class="hc-label">Call Us</span>
         <span class="hc-sub">Mon–Sat, 9am–9pm</span>
       </button>
       <button class="help-cta" onclick="openSupportChat()">
-        <span class="hc-icon">💬</span>
+        <span class="hc-icon"><svg class="ic"><use href="#ic-chat"></use></svg></span>
         <span class="hc-label">Live Chat</span>
         <span class="hc-sub">Avg reply: 2 min</span>
       </button>
       <button class="help-cta" onclick="showToast('📧 Opening email...')">
-        <span class="hc-icon">📧</span>
+        <span class="hc-icon"><svg class="ic"><use href="#ic-mail"></use></svg></span>
         <span class="hc-label">Email</span>
         <span class="hc-sub">support@linkup.app</span>
       </button>
@@ -3004,7 +3061,7 @@ img[alt="LinkUp"]{
     <div class="psheet-handle"></div>
     <div class="psheet-head">
       <button class="psheet-back-btn" onclick="closePsheet('changepw')">‹</button>
-      <div class="psheet-title">🔑 Change Password</div>
+      <div class="psheet-title"><svg class="ic"><use href="#ic-key"></use></svg> Change Password</div>
     </div>
     <div class="fp-error" id="cpErr" style="margin-bottom:14px;"></div>
     <div class="fp-success-msg" id="cpSuccess" style="margin-bottom:14px;"></div>
@@ -3051,12 +3108,12 @@ img[alt="LinkUp"]{
       </div>
 
       <!-- Menu items -->
-      <div class="rd-section-lbl">🍽️ Popular from this restaurant</div>
+      <div class="rd-section-lbl"><svg class="ic"><use href="#ic-dish"></use></svg> Popular from this restaurant</div>
       <div class="rd-items-strip" id="rdItemsStrip"></div>
 
       <!-- CTA -->
       <button class="rd-browse-btn" onclick="closeRestDetail();showPage('home')">
-        🛒 Browse Full Menu →
+        <svg class="ic"><use href="#ic-cart"></use></svg> Browse Full Menu →
       </button>
     </div>
   </div>
@@ -3144,33 +3201,33 @@ const TRANSLATIONS = {
     cat_all:'All', cat_burger:'Burger', cat_pizza:'Pizza', cat_biryani:'Biryani',
     cat_dessert:'Dessert', cat_juice:'Juice', cat_chicken:'Chicken', cat_grocery:'Grocery',
     cat_restaurants:'Restaurants', veg_filter:'Veg',
-    section_popular:'🔥 Popular Items', top_restaurants:'🏪 Top Restaurants',
-    see_all:'See All →', order_again:'🔁 Order Again',
+    section_popular:'Popular Items', top_restaurants:'Top Restaurants',
+    see_all:'See All →', order_again:'Order Again',
     aoc_on_way:'Your order is on its way!', aoc_eta:'ETA', aoc_min:'min',
-    aoc_track:'🗺️ Tap to track', aoc_delivered:'Order Delivered!',
+    aoc_track:'Tap to track', aoc_delivered:'Order Delivered!',
     aoc_thankyou:'Thank you for ordering with LinkUp!',
-    aoc_rate:'⭐ Rate', aoc_skip:'✕ Skip',
-    notifs_title:'🔔 Notifications', notifs_clear:'Clear all', notifs_empty:'No notifications yet',
-    orders_title:'📦 Your Orders',
-    profile_title:'Profile', light_theme:'☀️ Light Theme', lang_item:'🌐 Language',
-    addr_item:'📍 Delivery Address', wallet_item:'⭐ My Wallet & Points',
-    payment_item:'💳 Payment Methods', notifs_item:'🔔 Notifications',
-    favs_item:'⭐ Favourites', changepw_item:'🔑 Change Password',
-    install_item:'📲 Install App', help_item:'❓ Help & Support', signout_item:'🚪 Sign Out',
-    cart_title:'🛒 Your Cart', cart_empty:'Your cart is empty. Add some delicious items! 🍔',
+    aoc_rate:'Rate', aoc_skip:'Skip',
+    notifs_title:'Notifications', notifs_clear:'Clear all', notifs_empty:'No notifications yet',
+    orders_title:'Your Orders',
+    profile_title:'Profile', light_theme:'Light Theme', lang_item:'Language',
+    addr_item:'Delivery Address', wallet_item:'My Wallet & Points',
+    payment_item:'Payment Methods', notifs_item:'Notifications',
+    favs_item:'Favourites', changepw_item:'Change Password',
+    install_item:'Install App', help_item:'Help & Support', signout_item:'Sign Out',
+    cart_title:'Your Cart', cart_empty:'Your cart is empty. Add some delicious items!',
     cart_total:'Total', proceed_checkout:'Proceed to Checkout →',
-    checkout_title:'💳 Checkout', back_menu:'← Back to Menu',
-    your_details:'👤 Your Details', full_name_label:'FULL NAME', phone_label:'PHONE NUMBER',
-    email_label:'EMAIL', delivery_section:'📍 Delivery Address',
+    checkout_title:'Checkout', back_menu:'← Back to Menu',
+    your_details:'Your Details', full_name_label:'FULL NAME', phone_label:'PHONE NUMBER',
+    email_label:'EMAIL', delivery_section:'Delivery Address',
     full_addr_label:'FULL ADDRESS', city_pincode_label:'CITY & PINCODE',
-    payment_section:'💳 Payment Method', cod_name:'Cash on Delivery',
+    payment_section:'Payment Method', cod_name:'Cash on Delivery',
     cod_desc:'Pay when your order arrives — no hassle',
-    order_summary:'🧾 Order Summary', total_label:'Total',
-    tracking_back:'← Back to Orders', tracking_title:'🗺️ Live Order Tracking',
+    order_summary:'Order Summary', total_label:'Total',
+    tracking_back:'← Back to Orders', tracking_title:'Live Order Tracking',
     auth_tagline:'✨ Hot food, cold drinks — just a tap away ✨',
     sign_in_tab:'Sign In', sign_up_tab:'Sign Up', email_label_auth:'EMAIL ADDRESS',
     password_label:'PASSWORD', forgot_pw:'Forgot Password?', sign_in_btn:'Sign In →',
-    or_continue:'— or continue as —', guest_btn:'🚀 Guest',
+    or_continue:'— or continue as —', guest_btn:'Guest',
     full_name_signup:'FULL NAME', create_account:'Create Account →',
     ph_email:'you@example.com', ph_password:'Enter your password',
     ph_full_name:'Enter your full name', ph_phone:'10-digit mobile number',
@@ -3185,33 +3242,33 @@ const TRANSLATIONS = {
     cat_all:'सभी', cat_burger:'बर्गर', cat_pizza:'पिज़्जा', cat_biryani:'बिरयानी',
     cat_dessert:'मिठाई', cat_juice:'जूस', cat_chicken:'चिकन', cat_grocery:'किराना',
     cat_restaurants:'रेस्टोरेंट', veg_filter:'वेज',
-    section_popular:'🔥 लोकप्रिय आइटम', top_restaurants:'🏪 टॉप रेस्टोरेंट',
-    see_all:'सभी देखें →', order_again:'🔁 फिर ऑर्डर करें',
+    section_popular:'लोकप्रिय आइटम', top_restaurants:'टॉप रेस्टोरेंट',
+    see_all:'सभी देखें →', order_again:'फिर ऑर्डर करें',
     aoc_on_way:'आपका ऑर्डर आ रहा है!', aoc_eta:'ETA', aoc_min:'मिनट',
-    aoc_track:'🗺️ ट्रैक करें', aoc_delivered:'ऑर्डर डिलीवर!',
+    aoc_track:'ट्रैक करें', aoc_delivered:'ऑर्डर डिलीवर!',
     aoc_thankyou:'LinkUp से ऑर्डर करने के लिए धन्यवाद!',
-    aoc_rate:'⭐ रेट करें', aoc_skip:'✕ छोड़ें',
-    notifs_title:'🔔 सूचनाएं', notifs_clear:'सब हटाएं', notifs_empty:'कोई सूचना नहीं',
-    orders_title:'📦 आपके ऑर्डर',
-    profile_title:'प्रोफाइल', light_theme:'☀️ लाइट थीम', lang_item:'🌐 भाषा',
-    addr_item:'📍 डिलीवरी पता', wallet_item:'⭐ वॉलेट और पॉइंट्स',
-    payment_item:'💳 भुगतान तरीके', notifs_item:'🔔 सूचनाएं',
-    favs_item:'⭐ पसंदीदा', changepw_item:'🔑 पासवर्ड बदलें',
-    install_item:'📲 ऐप इंस्टॉल करें', help_item:'❓ सहायता और समर्थन', signout_item:'🚪 साइन आउट',
-    cart_title:'🛒 आपकी कार्ट', cart_empty:'कार्ट खाली है। कुछ स्वादिष्ट जोड़ें! 🍔',
+    aoc_rate:'रेट करें', aoc_skip:'छोड़ें',
+    notifs_title:'सूचनाएं', notifs_clear:'सब हटाएं', notifs_empty:'कोई सूचना नहीं',
+    orders_title:'आपके ऑर्डर',
+    profile_title:'प्रोफाइल', light_theme:'लाइट थीम', lang_item:'भाषा',
+    addr_item:'डिलीवरी पता', wallet_item:'वॉलेट और पॉइंट्स',
+    payment_item:'भुगतान तरीके', notifs_item:'सूचनाएं',
+    favs_item:'पसंदीदा', changepw_item:'पासवर्ड बदलें',
+    install_item:'ऐप इंस्टॉल करें', help_item:'सहायता और समर्थन', signout_item:'साइन आउट',
+    cart_title:'आपकी कार्ट', cart_empty:'कार्ट खाली है। कुछ स्वादिष्ट जोड़ें!',
     cart_total:'कुल', proceed_checkout:'चेकआउट करें →',
-    checkout_title:'💳 चेकआउट', back_menu:'← मेनू पर वापस',
-    your_details:'👤 आपकी जानकारी', full_name_label:'पूरा नाम', phone_label:'फोन नंबर',
-    email_label:'ईमेल', delivery_section:'📍 डिलीवरी पता',
+    checkout_title:'चेकआउट', back_menu:'← मेनू पर वापस',
+    your_details:'आपकी जानकारी', full_name_label:'पूरा नाम', phone_label:'फोन नंबर',
+    email_label:'ईमेल', delivery_section:'डिलीवरी पता',
     full_addr_label:'पूरा पता', city_pincode_label:'शहर और पिनकोड',
-    payment_section:'💳 भुगतान तरीका', cod_name:'कैश ऑन डिलीवरी',
+    payment_section:'भुगतान तरीका', cod_name:'कैश ऑन डिलीवरी',
     cod_desc:'ऑर्डर आने पर भुगतान करें',
-    order_summary:'🧾 ऑर्डर सारांश', total_label:'कुल',
-    tracking_back:'← ऑर्डर पर वापस', tracking_title:'🗺️ लाइव ट्रैकिंग',
+    order_summary:'ऑर्डर सारांश', total_label:'कुल',
+    tracking_back:'← ऑर्डर पर वापस', tracking_title:'लाइव ट्रैकिंग',
     auth_tagline:'✨ गर्म खाना, ठंडे पेय — बस एक टैप पर ✨',
     sign_in_tab:'साइन इन', sign_up_tab:'साइन अप', email_label_auth:'ईमेल पता',
     password_label:'पासवर्ड', forgot_pw:'पासवर्ड भूल गए?', sign_in_btn:'साइन इन →',
-    or_continue:'— या जारी रखें —', guest_btn:'🚀 अतिथि',
+    or_continue:'— या जारी रखें —', guest_btn:'अतिथि',
     full_name_signup:'पूरा नाम', create_account:'अकाउंट बनाएं →',
     ph_email:'you@example.com', ph_password:'अपना पासवर्ड दर्ज करें',
     ph_full_name:'अपना पूरा नाम दर्ज करें', ph_phone:'10 अंकों का मोबाइल नंबर',
@@ -3226,33 +3283,33 @@ const TRANSLATIONS = {
     cat_all:'అన్నీ', cat_burger:'బర్గర్', cat_pizza:'పిజ్జా', cat_biryani:'బిర్యానీ',
     cat_dessert:'డెజర్ట్', cat_juice:'జ్యూస్', cat_chicken:'చికెన్', cat_grocery:'కిరాణా',
     cat_restaurants:'రెస్టారెంట్లు', veg_filter:'వెజ్',
-    section_popular:'🔥 ప్రసిద్ధ వంటకాలు', top_restaurants:'🏪 అగ్రశ్రేణి రెస్టారెంట్లు',
-    see_all:'అన్నీ చూడు →', order_again:'🔁 మళ్ళీ ఆర్డర్ చేయి',
+    section_popular:'ప్రసిద్ధ వంటకాలు', top_restaurants:'అగ్రశ్రేణి రెస్టారెంట్లు',
+    see_all:'అన్నీ చూడు →', order_again:'మళ్ళీ ఆర్డర్ చేయి',
     aoc_on_way:'మీ ఆర్డర్ వస్తోంది!', aoc_eta:'ETA', aoc_min:'నిమిషాలు',
-    aoc_track:'🗺️ ట్రాక్ చేయి', aoc_delivered:'ఆర్డర్ డెలివర్!',
+    aoc_track:'ట్రాక్ చేయి', aoc_delivered:'ఆర్డర్ డెలివర్!',
     aoc_thankyou:'LinkUp తో ఆర్డర్ చేసినందుకు ధన్యవాదాలు!',
-    aoc_rate:'⭐ రేట్ చేయి', aoc_skip:'✕ స్కిప్',
-    notifs_title:'🔔 నోటిఫికేషన్లు', notifs_clear:'అన్నీ తొలగించు', notifs_empty:'నోటిఫికేషన్లు లేవు',
-    orders_title:'📦 మీ ఆర్డర్లు',
-    profile_title:'ప్రొఫైల్', light_theme:'☀️ లైట్ థీమ్', lang_item:'🌐 భాష',
-    addr_item:'📍 డెలివరీ చిరునామా', wallet_item:'⭐ నా వాలెట్ & పాయింట్లు',
-    payment_item:'💳 చెల్లింపు పద్ధతులు', notifs_item:'🔔 నోటిఫికేషన్లు',
-    favs_item:'⭐ ఇష్టాలు', changepw_item:'🔑 పాస్వర్డ్ మార్చు',
-    install_item:'📲 యాప్ ఇన్స్టాల్ చేయి', help_item:'❓ సహాయం & మద్దతు', signout_item:'🚪 సైన్ అవుట్',
-    cart_title:'🛒 మీ కార్ట్', cart_empty:'కార్ట్ ఖాళీగా ఉంది. ఏదైనా జోడించండి! 🍔',
+    aoc_rate:'రేట్ చేయి', aoc_skip:'స్కిప్',
+    notifs_title:'నోటిఫికేషన్లు', notifs_clear:'అన్నీ తొలగించు', notifs_empty:'నోటిఫికేషన్లు లేవు',
+    orders_title:'మీ ఆర్డర్లు',
+    profile_title:'ప్రొఫైల్', light_theme:'లైట్ థీమ్', lang_item:'భాష',
+    addr_item:'డెలివరీ చిరునామా', wallet_item:'నా వాలెట్ & పాయింట్లు',
+    payment_item:'చెల్లింపు పద్ధతులు', notifs_item:'నోటిఫికేషన్లు',
+    favs_item:'ఇష్టాలు', changepw_item:'పాస్వర్డ్ మార్చు',
+    install_item:'యాప్ ఇన్స్టాల్ చేయి', help_item:'సహాయం & మద్దతు', signout_item:'సైన్ అవుట్',
+    cart_title:'మీ కార్ట్', cart_empty:'కార్ట్ ఖాళీగా ఉంది. ఏదైనా జోడించండి!',
     cart_total:'మొత్తం', proceed_checkout:'చెక్అవుట్ చేయి →',
-    checkout_title:'💳 చెక్అవుట్', back_menu:'← మెనూకు వెనక్కి',
-    your_details:'👤 మీ వివరాలు', full_name_label:'పూర్తి పేరు', phone_label:'ఫోన్ నంబర్',
-    email_label:'ఇమెయిల్', delivery_section:'📍 డెలివరీ చిరునామా',
+    checkout_title:'చెక్అవుట్', back_menu:'← మెనూకు వెనక్కి',
+    your_details:'మీ వివరాలు', full_name_label:'పూర్తి పేరు', phone_label:'ఫోన్ నంబర్',
+    email_label:'ఇమెయిల్', delivery_section:'డెలివరీ చిరునామా',
     full_addr_label:'పూర్తి చిరునామా', city_pincode_label:'నగరం & పిన్కోడ్',
-    payment_section:'💳 చెల్లింపు పద్ధతి', cod_name:'క్యాష్ ఆన్ డెలివరీ',
+    payment_section:'చెల్లింపు పద్ధతి', cod_name:'క్యాష్ ఆన్ డెలివరీ',
     cod_desc:'ఆర్డర్ వచ్చినప్పుడు చెల్లించండి',
-    order_summary:'🧾 ఆర్డర్ సారాంశం', total_label:'మొత్తం',
-    tracking_back:'← ఆర్డర్లకు వెనక్కి', tracking_title:'🗺️ లైవ్ ట్రాకింగ్',
+    order_summary:'ఆర్డర్ సారాంశం', total_label:'మొత్తం',
+    tracking_back:'← ఆర్డర్లకు వెనక్కి', tracking_title:'లైవ్ ట్రాకింగ్',
     auth_tagline:'✨ వేడి ఆహారం, చల్లని పానీయాలు — ఒక్క ట్యాప్లో ✨',
     sign_in_tab:'సైన్ ఇన్', sign_up_tab:'సైన్ అప్', email_label_auth:'ఇమెయిల్ చిరునామా',
     password_label:'పాస్వర్డ్', forgot_pw:'పాస్వర్డ్ మర్చిపోయారా?', sign_in_btn:'సైన్ ఇన్ →',
-    or_continue:'— లేదా కొనసాగించు —', guest_btn:'🚀 అతిథి',
+    or_continue:'— లేదా కొనసాగించు —', guest_btn:'అతిథి',
     full_name_signup:'పూర్తి పేరు', create_account:'అకౌంట్ తయారు చేయి →',
     ph_email:'you@example.com', ph_password:'మీ పాస్వర్డ్ నమోదు చేయండి',
     ph_full_name:'మీ పూర్తి పేరు నమోదు చేయండి', ph_phone:'10 అంకెల మొబైల్ నంబర్',
@@ -3267,33 +3324,33 @@ const TRANSLATIONS = {
     cat_all:'الكل', cat_burger:'برغر', cat_pizza:'بيتزا', cat_biryani:'برياني',
     cat_dessert:'حلوى', cat_juice:'عصير', cat_chicken:'دجاج', cat_grocery:'بقالة',
     cat_restaurants:'مطاعم', veg_filter:'نباتي',
-    section_popular:'🔥 العناصر الشائعة', top_restaurants:'🏪 أفضل المطاعم',
-    see_all:'عرض الكل →', order_again:'🔁 اطلب مجدداً',
+    section_popular:'العناصر الشائعة', top_restaurants:'أفضل المطاعم',
+    see_all:'عرض الكل →', order_again:'اطلب مجدداً',
     aoc_on_way:'طلبك في الطريق!', aoc_eta:'الوقت', aoc_min:'دقيقة',
-    aoc_track:'🗺️ انقر للتتبع', aoc_delivered:'تم التسليم!',
+    aoc_track:'انقر للتتبع', aoc_delivered:'تم التسليم!',
     aoc_thankyou:'شكراً لطلبك من LinkUp!',
-    aoc_rate:'⭐ قيّم', aoc_skip:'✕ تخطي',
-    notifs_title:'🔔 الإشعارات', notifs_clear:'مسح الكل', notifs_empty:'لا إشعارات بعد',
-    orders_title:'📦 طلباتك',
-    profile_title:'الملف الشخصي', light_theme:'☀️ الوضع الفاتح', lang_item:'🌐 اللغة',
-    addr_item:'📍 عنوان التوصيل', wallet_item:'⭐ محفظتي والنقاط',
-    payment_item:'💳 طرق الدفع', notifs_item:'🔔 الإشعارات',
-    favs_item:'⭐ المفضلة', changepw_item:'🔑 تغيير كلمة المرور',
-    install_item:'📲 تثبيت التطبيق', help_item:'❓ المساعدة والدعم', signout_item:'🚪 تسجيل الخروج',
-    cart_title:'🛒 سلة التسوق', cart_empty:'السلة فارغة. أضف بعض العناصر! 🍔',
+    aoc_rate:'قيّم', aoc_skip:'تخطي',
+    notifs_title:'الإشعارات', notifs_clear:'مسح الكل', notifs_empty:'لا إشعارات بعد',
+    orders_title:'طلباتك',
+    profile_title:'الملف الشخصي', light_theme:'الوضع الفاتح', lang_item:'اللغة',
+    addr_item:'عنوان التوصيل', wallet_item:'محفظتي والنقاط',
+    payment_item:'طرق الدفع', notifs_item:'الإشعارات',
+    favs_item:'المفضلة', changepw_item:'تغيير كلمة المرور',
+    install_item:'تثبيت التطبيق', help_item:'المساعدة والدعم', signout_item:'تسجيل الخروج',
+    cart_title:'سلة التسوق', cart_empty:'السلة فارغة. أضف بعض العناصر!',
     cart_total:'الإجمالي', proceed_checkout:'الدفع →',
-    checkout_title:'💳 الدفع', back_menu:'← العودة للقائمة',
-    your_details:'👤 تفاصيلك', full_name_label:'الاسم الكامل', phone_label:'رقم الهاتف',
-    email_label:'البريد الإلكتروني', delivery_section:'📍 عنوان التوصيل',
+    checkout_title:'الدفع', back_menu:'← العودة للقائمة',
+    your_details:'تفاصيلك', full_name_label:'الاسم الكامل', phone_label:'رقم الهاتف',
+    email_label:'البريد الإلكتروني', delivery_section:'عنوان التوصيل',
     full_addr_label:'العنوان الكامل', city_pincode_label:'المدينة والرمز البريدي',
-    payment_section:'💳 طريقة الدفع', cod_name:'الدفع عند الاستلام',
+    payment_section:'طريقة الدفع', cod_name:'الدفع عند الاستلام',
     cod_desc:'ادفع عند استلام طلبك',
-    order_summary:'🧾 ملخص الطلب', total_label:'الإجمالي',
-    tracking_back:'← العودة للطلبات', tracking_title:'🗺️ التتبع المباشر',
+    order_summary:'ملخص الطلب', total_label:'الإجمالي',
+    tracking_back:'← العودة للطلبات', tracking_title:'التتبع المباشر',
     auth_tagline:'✨ طعام ساخن، مشروبات باردة — بنقرة واحدة ✨',
     sign_in_tab:'تسجيل الدخول', sign_up_tab:'إنشاء حساب', email_label_auth:'عنوان البريد الإلكتروني',
     password_label:'كلمة المرور', forgot_pw:'نسيت كلمة المرور؟', sign_in_btn:'تسجيل الدخول →',
-    or_continue:'— أو تابع بوصفك —', guest_btn:'🚀 زائر',
+    or_continue:'— أو تابع بوصفك —', guest_btn:'زائر',
     full_name_signup:'الاسم الكامل', create_account:'إنشاء حساب →',
     ph_email:'you@example.com', ph_password:'أدخل كلمة المرور',
     ph_full_name:'أدخل اسمك الكامل', ph_phone:'رقم الجوال',
@@ -3308,33 +3365,33 @@ const TRANSLATIONS = {
     cat_all:'Lahat', cat_burger:'Burger', cat_pizza:'Pizza', cat_biryani:'Biryani',
     cat_dessert:'Matamis', cat_juice:'Juice', cat_chicken:'Manok', cat_grocery:'Grocery',
     cat_restaurants:'Mga Restaurant', veg_filter:'Gulay',
-    section_popular:'🔥 Mga Sikat na Pagkain', top_restaurants:'🏪 Pinakamahusay na Restaurant',
-    see_all:'Tingnan Lahat →', order_again:'🔁 Umorder Ulit',
+    section_popular:'Mga Sikat na Pagkain', top_restaurants:'Pinakamahusay na Restaurant',
+    see_all:'Tingnan Lahat →', order_again:'Umorder Ulit',
     aoc_on_way:'Paparating na ang iyong order!', aoc_eta:'ETA', aoc_min:'min',
-    aoc_track:'🗺️ I-track', aoc_delivered:'Naihatid na ang Order!',
+    aoc_track:'I-track', aoc_delivered:'Naihatid na ang Order!',
     aoc_thankyou:'Salamat sa pag-order sa LinkUp!',
-    aoc_rate:'⭐ I-rate', aoc_skip:'✕ Laktawan',
-    notifs_title:'🔔 Mga Abiso', notifs_clear:'Burahin Lahat', notifs_empty:'Wala pang mga abiso',
-    orders_title:'📦 Mga Order Mo',
-    profile_title:'Profile', light_theme:'☀️ Light Theme', lang_item:'🌐 Wika',
-    addr_item:'📍 Address ng Delivery', wallet_item:'⭐ Aking Wallet at Puntos',
-    payment_item:'💳 Mga Paraan ng Bayad', notifs_item:'🔔 Mga Abiso',
-    favs_item:'⭐ Mga Paborito', changepw_item:'🔑 Baguhin ang Password',
-    install_item:'📲 I-install ang App', help_item:'❓ Tulong at Suporta', signout_item:'🚪 Mag-Sign Out',
-    cart_title:'🛒 Iyong Cart', cart_empty:'Walang laman ang cart. Magdagdag ng pagkain! 🍔',
+    aoc_rate:'I-rate', aoc_skip:'Laktawan',
+    notifs_title:'Mga Abiso', notifs_clear:'Burahin Lahat', notifs_empty:'Wala pang mga abiso',
+    orders_title:'Mga Order Mo',
+    profile_title:'Profile', light_theme:'Light Theme', lang_item:'Wika',
+    addr_item:'Address ng Delivery', wallet_item:'Aking Wallet at Puntos',
+    payment_item:'Mga Paraan ng Bayad', notifs_item:'Mga Abiso',
+    favs_item:'Mga Paborito', changepw_item:'Baguhin ang Password',
+    install_item:'I-install ang App', help_item:'Tulong at Suporta', signout_item:'Mag-Sign Out',
+    cart_title:'Iyong Cart', cart_empty:'Walang laman ang cart. Magdagdag ng pagkain!',
     cart_total:'Kabuuan', proceed_checkout:'Magbayad Na →',
-    checkout_title:'💳 Checkout', back_menu:'← Bumalik sa Menu',
-    your_details:'👤 Iyong Mga Detalye', full_name_label:'BUONG PANGALAN', phone_label:'NUMERO NG TELEPONO',
-    email_label:'EMAIL', delivery_section:'📍 Address ng Delivery',
+    checkout_title:'Checkout', back_menu:'← Bumalik sa Menu',
+    your_details:'Iyong Mga Detalye', full_name_label:'BUONG PANGALAN', phone_label:'NUMERO NG TELEPONO',
+    email_label:'EMAIL', delivery_section:'Address ng Delivery',
     full_addr_label:'BUONG ADDRESS', city_pincode_label:'LUNGSOD AT PINCODE',
-    payment_section:'💳 Paraan ng Bayad', cod_name:'Cash on Delivery',
+    payment_section:'Paraan ng Bayad', cod_name:'Cash on Delivery',
     cod_desc:'Bayad pag dating ng order — walang abala',
-    order_summary:'🧾 Buod ng Order', total_label:'Kabuuan',
-    tracking_back:'← Bumalik sa Mga Order', tracking_title:'🗺️ Live Order Tracking',
+    order_summary:'Buod ng Order', total_label:'Kabuuan',
+    tracking_back:'← Bumalik sa Mga Order', tracking_title:'Live Order Tracking',
     auth_tagline:'✨ Mainit na pagkain, malamig na inumin — isang tap lang ✨',
     sign_in_tab:'Mag-Sign In', sign_up_tab:'Mag-Sign Up', email_label_auth:'EMAIL ADDRESS',
     password_label:'PASSWORD', forgot_pw:'Nakalimutan ang Password?', sign_in_btn:'Mag-Sign In →',
-    or_continue:'— o ituloy bilang —', guest_btn:'🚀 Bisita',
+    or_continue:'— o ituloy bilang —', guest_btn:'Bisita',
     full_name_signup:'BUONG PANGALAN', create_account:'Gumawa ng Account →',
     ph_email:'ikaw@halimbawa.com', ph_password:'Ilagay ang iyong password',
     ph_full_name:'Ilagay ang iyong buong pangalan', ph_phone:'10-digit na numero ng mobile',
@@ -3371,7 +3428,7 @@ function applyLang(){
   document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
   // Section title (dynamically managed; reset to default on lang change)
   const st = document.getElementById('sectionTitle');
-  if(st) st.textContent = t('section_popular');
+  if(st) st.innerHTML = '<svg class="ic"><use href="#ic-flame"></use></svg> ' + t('section_popular');
   // Persist
   localStorage.setItem('lu_lang', currentLang);
   localStorage.setItem('lu_lang_label', currentLangLabel);
@@ -3526,7 +3583,7 @@ async function openLiveRestDetail(uid){
             ?`background-image:url('${item.image}');background-size:cover;background-position:center;`
             :`background:#1a1a26;display:flex;align-items:center;justify-content:center;font-size:28px;`;
           card.innerHTML=`
-            <div class="rd-mini-img" style="${itemImgStyle}">${item.image?'':'🍽️'}</div>
+            <div class="rd-mini-img" style="${itemImgStyle}">${item.image?'':'<svg class="ic"><use href="#ic-dish"></use></svg>'}</div>
             <div class="rd-mini-body">
               <div class="rd-mini-name">${item.name}</div>
               ${item.description?`<div style="font-size:10px;color:var(--muted);margin-bottom:4px;line-height:1.3;">${item.description}</div>`:''}
@@ -3540,7 +3597,7 @@ async function openLiveRestDetail(uid){
           strip.appendChild(card);
         });
       }else{
-        strip.innerHTML='<div class="rd-empty">Menu coming soon! 🍽️</div>';
+        strip.innerHTML='<div class="rd-empty"><svg class="ic"><use href="#ic-dish"></use></svg> Menu coming soon!</div>';
       }
     }else{
       strip.innerHTML='<div class="rd-empty">Menu not available yet.</div>';
@@ -3563,12 +3620,12 @@ function addLiveItemToCart(name,price,restUid){
 
 const TRACK_STATUS_ORDER=['placed','accepted','preparing','picked_up','on_the_way','delivered'];
 const TRACK_STEP_META=[
-  {status:'placed',    icon:'🧾', title:'Order Placed'},
-  {status:'accepted',  icon:'✅', title:'Order Accepted'},
-  {status:'preparing', icon:'🍳', title:'Preparing Your Food'},
-  {status:'picked_up', icon:'📦', title:'Picked Up by Rider'},
-  {status:'on_the_way',icon:'🛵', title:'Out for Delivery'},
-  {status:'delivered', icon:'📍', title:'Delivered'},
+  {status:'placed',    icon:'<svg class="ic"><use href="#ic-receipt"></use></svg>', title:'Order Placed'},
+  {status:'accepted',  icon:'<svg class="ic"><use href="#ic-check"></use></svg>', title:'Order Accepted'},
+  {status:'preparing', icon:'<svg class="ic"><use href="#ic-pan"></use></svg>', title:'Preparing Your Food'},
+  {status:'picked_up', icon:'<svg class="ic"><use href="#ic-package"></use></svg>', title:'Picked Up by Rider'},
+  {status:'on_the_way',icon:'<svg class="ic"><use href="#ic-scooter"></use></svg>', title:'Out for Delivery'},
+  {status:'delivered', icon:'<svg class="ic"><use href="#ic-pin"></use></svg>', title:'Delivered'},
 ];
 let trackingUnsub=null;
 const _deliveredEmailSent=new Set(); // order IDs for which delivered email has already been sent
@@ -4063,7 +4120,7 @@ async function fpResendCode() {
       return;
     }
   } else {
-    pushNotification('🔐 Dev Mode — New OTP', 'Your new reset code is: ' + _fpOtp, '🔑');
+    pushNotification('🔐 Dev Mode — New OTP', 'Your new reset code is: ' + _fpOtp, '<svg class="ic"><use href="#ic-key"></use></svg>');
   }
 
   msgEl.textContent = '✅ New code sent!';
@@ -4138,7 +4195,7 @@ function enterApp(){
   // Show Admin Panel menu item only for admin role
   document.getElementById('adminPanelItem').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
   try { applyLang(); } catch(e) { console.error('applyLang in enterApp error:', e); }
-  pushNotification('👋 Welcome back!',`Hey ${currentUser.name}, ready to order something delicious?`,'🍔');
+  pushNotification('👋 Welcome back!',`Hey ${currentUser.name}, ready to order something delicious?`,'<svg class="ic"><use href="#ic-bell"></use></svg>');
   if(localStorage.getItem('lu_theme')==='light'){document.body.classList.add('light-theme');document.getElementById('themeToggle').checked=true;}
   syncThemeIcon();
   loadWallet();
@@ -4351,14 +4408,16 @@ function filter(type,el){
   document.getElementById('searchInput').value='';
   let filtered=type==='all'?ITEMS.filter(i=>i.active):ITEMS.filter(i=>i.cat===type&&i.active);
   filtered=applyVeg(filtered);
-  const label=type==='all'?t('section_popular'):`🍽️ ${t('cat_'+type)||type}`;
-  document.getElementById('sectionTitle').textContent=label+(vegOnly?' 🌿':'');
+  const icon=type==='all'?'<svg class="ic"><use href="#ic-flame"></use></svg>':'<svg class="ic"><use href="#ic-dish"></use></svg>';
+  const label=type==='all'?t('section_popular'):(t('cat_'+type)||type);
+  document.getElementById('sectionTitle').innerHTML=`${icon} ${label}${vegOnly?' <svg class="ic"><use href="#ic-leaf"></use></svg>':''}`;
   const restSec=document.getElementById('homeRestSection');
   if(restSec)restSec.style.display=type==='all'?'block':'none';
   const oaSec=document.getElementById('orderAgainSection');
   if(oaSec)oaSec.style.display=(type==='all'&&oaSec.dataset.hasItems==='true')?'block':'none';
   renderGrid(filtered);
 }
+function escHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function handleSearch(){
   const q=document.getElementById('searchInput').value.toLowerCase().trim();
   document.querySelectorAll('.cat').forEach(c=>c.classList.remove('active'));
@@ -4372,7 +4431,7 @@ function handleSearch(){
   if(drop&&(restMatches.length||staticMatches.length)){
     const items=[
       ...staticMatches.map(r=>`<div class="rest-search-item" onmousedown="openRestDetail(${r.id})">
-        <span class="rest-search-icon">🏪</span>
+        <span class="rest-search-icon"><svg class="ic"><use href="#ic-store"></use></svg></span>
         <div class="rest-search-info">
           <div class="rest-search-name">${r.name}</div>
           <div class="rest-search-sub">${r.cuisine} &nbsp;·&nbsp; <span style="color:#22c55e;font-weight:700;">🟢 Open</span></div>
@@ -4381,7 +4440,7 @@ function handleSearch(){
       ...restMatches.map(r=>{
         const isOpen=r.isOpen!==false;
         return `<div class="rest-search-item" onmousedown="openLiveRestDetail('${r.uid}')">
-          <span class="rest-search-icon">🏪</span>
+          <span class="rest-search-icon"><svg class="ic"><use href="#ic-store"></use></svg></span>
           <div class="rest-search-info">
             <div class="rest-search-name">${r.name}</div>
             <div class="rest-search-sub">${r.address||'Local Restaurant'} &nbsp;·&nbsp; <span style="${isOpen?'color:#22c55e':'color:#ef4444'};font-weight:700;">${isOpen?'🟢 Open':'🔴 Closed'}</span></div>
@@ -4400,14 +4459,14 @@ function handleSearch(){
     if(restSec)restSec.style.display='none';
     if(oaSec)oaSec.style.display='none';
     const hasRestResults=restMatches.length||staticMatches.length;
-    document.getElementById('sectionTitle').textContent=hasRestResults
-      ?'🏪 Restaurant results — see dropdown above ↑'
-      :`🔍 No results for "${q}"`;
+    document.getElementById('sectionTitle').innerHTML=hasRestResults
+      ?'<svg class="ic"><use href="#ic-store"></use></svg> Restaurant results — see dropdown above ↑'
+      :`<svg class="ic"><use href="#ic-search"></use></svg> No results for "${escHtml(q)}"`;
     renderGrid([]);
   }else{
     if(restSec)restSec.style.display='none';
     if(oaSec)oaSec.style.display='none';
-    document.getElementById('sectionTitle').textContent=`🔍 Results for "${q}"${vegOnly?' 🌿':''}`;
+    document.getElementById('sectionTitle').innerHTML=`<svg class="ic"><use href="#ic-search"></use></svg> Results for "${escHtml(q)}"${vegOnly?' <svg class="ic"><use href="#ic-leaf"></use></svg>':''}`;
     renderGrid(results);
   }
 }
@@ -4430,7 +4489,7 @@ function updateCartUI(){
   document.getElementById('cartCount').textContent=count;
   const itemsEl=document.getElementById('cartItems');
   const footerEl=document.getElementById('cartFooter');
-  if(!cart.length){itemsEl.innerHTML=`<div class="cart-empty">${t('cart_empty')}</div>`;footerEl.style.display='none';return;}
+  if(!cart.length){itemsEl.innerHTML=`<div class="cart-empty"><svg class="ic" style="width:2em;height:2em;display:block;margin:0 auto 10px;"><use href="#ic-cart"></use></svg>${t('cart_empty')}</div>`;footerEl.style.display='none';return;}
   itemsEl.innerHTML=cart.map(c=>`
     <div class="cart-item">
       <div class="cart-item-img" style="background-image:url('${c.img}')"></div>
@@ -4588,19 +4647,19 @@ function showMinOrderPopup(sub){
   const addMore=`<button onclick="closeMinOrderPopup()" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;background:transparent;color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">← Add More Items</button>`;
   const continueBtn=(fee,label)=>`<button onclick="acceptConvenienceFee(${fee})" style="width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange),#e55a00);color:#fff;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:10px;">${label}</button>`;
   if(sub<100){
-    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;">🛒</div>
+    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;"><svg class="ic"><use href="#ic-cart"></use></svg></div>
       <h3 style="font-size:17px;font-weight:800;margin:0 0 8px;">Minimum Order ₹100</h3>
       <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 22px;">Minimum order value is ₹100. Please add more items to continue.</p>
       <button onclick="closeMinOrderPopup()" style="width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange),#e55a00);color:#fff;font-size:14px;font-weight:800;cursor:pointer;">← Add More Items</button>`;
   } else if(sub<=180){
     const needed=200-sub;
-    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;">🛵</div>
+    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;"><svg class="ic"><use href="#ic-scooter"></use></svg></div>
       <h3 style="font-size:17px;font-weight:800;margin:0 0 8px;">Add ₹${needed} for Free Delivery!</h3>
       <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 22px;">Add ₹${needed} more to get free delivery, or continue with a ₹20 convenience fee.</p>
       ${continueBtn(20,'Continue with ₹20 Fee →')}${addMore}`;
   } else {
     const needed=200-sub;
-    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;">🚀</div>
+    box.innerHTML=`<div style="font-size:40px;margin-bottom:10px;"><svg class="ic"><use href="#ic-rocket"></use></svg></div>
       <h3 style="font-size:17px;font-weight:800;margin:0 0 8px;">Add ₹${needed} for Free Delivery!</h3>
       <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 22px;">You're ₹${needed} away from free delivery! Or continue with a ₹15 convenience fee.</p>
       ${continueBtn(15,'Continue with ₹15 Fee →')}${addMore}`;
@@ -4830,8 +4889,8 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   startActiveOrderTracking();
   loadOrderAgainSection();
   showToast(t('toast_order_placed'));
-  pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'✅');
-  setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider is on the way!','🛵'),8000);
+  pushNotification('🎉 Order Confirmed!',`${orderId} is being prepared. ETA: ${eta} min`,'<svg class="ic"><use href="#ic-check"></use></svg>');
+  setTimeout(()=>pushNotification('🛵 Out for Delivery!','Your rider is on the way!','<svg class="ic"><use href="#ic-package"></use></svg>'),8000);
 
   // Send confirmation email — non-blocking, failure does not affect order flow
   const cartSub=total-_currentDeliveryFee;
@@ -4921,7 +4980,7 @@ function renderOrders(){
     const isRefundInitiated=o.status==='refund_initiated'||o.refundBy;
     const refundBadgeHtml=isRefundInitiated?`
       <div class="refund-info-badge">
-        <span class="refund-info-badge-icon">💸</span>
+        <span class="refund-info-badge-icon"><svg class="ic"><use href="#ic-bank"></use></svg></span>
         <div class="refund-info-badge-body">
           <div class="refund-info-badge-title">Refund ${o.refundBy==='admin'?'by LinkUp':o.refundBy==='restaurant'?'by Restaurant':'Initiated'}</div>
           <div class="refund-info-badge-sub">₹${(o.refundAmount||o.total||0)} · ${o.refundDest==='wallet'?'LinkUp Wallet':o.refundDest==='bank'?'Bank Account':'—'}</div>
@@ -4930,7 +4989,7 @@ function renderOrders(){
       </div>`:
       (o.status==='refunded'?`
       <div class="refund-info-badge" style="background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.2);">
-        <span class="refund-info-badge-icon">✅</span>
+        <span class="refund-info-badge-icon" style="color:#22c55e;"><svg class="ic"><use href="#ic-check"></use></svg></span>
         <div class="refund-info-badge-body">
           <div class="refund-info-badge-title" style="color:#22c55e;">Refunded ${o.refundBy==='admin'?'by LinkUp':o.refundBy==='restaurant'?'by Restaurant':''}</div>
           <div class="refund-info-badge-sub">₹${(o.refundAmount||o.total||0)} · ${o.refundDest==='wallet'?'LinkUp Wallet':o.refundDest==='bank'?'Bank Account':'—'}</div>
@@ -5003,7 +5062,7 @@ function openOrderDetail(orderId){
     <div class="od-divider"></div>
     <div class="od-section-title">Refund Info</div>
     <div class="refund-info-badge" style="${o.status==='refunded'?'background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.2);':''}">
-      <span class="refund-info-badge-icon">${o.status==='refunded'?'✅':'💸'}</span>
+      <span class="refund-info-badge-icon" style="${o.status==='refunded'?'color:#22c55e;':''}">${o.status==='refunded'?'<svg class="ic"><use href="#ic-check"></use></svg>':'<svg class="ic"><use href="#ic-bank"></use></svg>'}</span>
       <div class="refund-info-badge-body">
         <div class="refund-info-badge-title" style="${o.status==='refunded'?'color:#22c55e;':'color:#3b82f6;'}">
           ${o.status==='refunded'?'Refunded':'Refund Initiated'} ${o.refundBy==='admin'?'by LinkUp':o.refundBy==='restaurant'?'by Restaurant':''}
@@ -5016,7 +5075,7 @@ function openOrderDetail(orderId){
     </div>`:''}
     <div style="margin-top:18px;">
       ${cancelHtml}
-      <button class="od-help-btn" onclick="closeOrderDetail();openPsheet('help')">❓ Help & Support</button>
+      <button class="od-help-btn" onclick="closeOrderDetail();openPsheet('help')"><svg class="ic"><use href="#ic-help"></use></svg> Help & Support</button>
     </div>`;
   document.getElementById('odOverlay').classList.add('open');
 }
@@ -5695,7 +5754,7 @@ function loadAdminNotifications(){
     const msgs=snap.data().messages||[];
     const seen=parseInt(localStorage.getItem('lu_notif_seen')||'0');
     const fresh=msgs.slice(seen);
-    fresh.forEach(m=>pushNotification('📬 Message from LinkUp',m.text||'','📬'));
+    fresh.forEach(m=>pushNotification('📬 Message from LinkUp',m.text||'','<svg class="ic"><use href="#ic-chat"></use></svg>'));
     if(fresh.length) localStorage.setItem('lu_notif_seen',String(msgs.length));
   });
 }
@@ -5964,7 +6023,7 @@ async function updateOrderStatus(id, status, isFirestore=false){
       if(deliveryTime) updateData.deliveryTime = deliveryTime;
       await window._fbUpdate(window._fbDoc(window._db,'orders',id), updateData);
       showToast(`✅ Order ${status}`);
-      if(status==='delivered') pushNotification('📦 Order Delivered!','Your order has been delivered. Enjoy your meal! 😋','📦');
+      if(status==='delivered') pushNotification('📦 Order Delivered!','Your order has been delivered. Enjoy your meal! 😋','<svg class="ic"><use href="#ic-package"></use></svg>');
     }catch(e){ showToast('❌ Update failed: '+e.message); }
   } else {
     // Local fallback
@@ -5973,7 +6032,7 @@ async function updateOrderStatus(id, status, isFirestore=false){
     order.statusLabel=status==='delivered'?'Delivered ✅':status==='cancelled'?'Cancelled ❌':order.statusLabel;
     localStorage.setItem('lu_orders',JSON.stringify(orderHistory));
     renderAdminOrders();showToast(`Order updated to ${status}`);
-    if(status==='delivered')pushNotification('📦 Order Delivered!','Your order has been delivered. Enjoy your meal! 😋','📦');
+    if(status==='delivered')pushNotification('📦 Order Delivered!','Your order has been delivered. Enjoy your meal! 😋','<svg class="ic"><use href="#ic-package"></use></svg>');
   }
 }
 function renderAdminMenu(){
@@ -6070,7 +6129,7 @@ function openRestDetail(id) {
       strip.appendChild(card);
     });
   } else {
-    strip.innerHTML = '<div class="rd-empty">Menu coming soon! 🍽️</div>';
+    strip.innerHTML = '<div class="rd-empty"><svg class="ic"><use href="#ic-dish"></use></svg> Menu coming soon!</div>';
   }
 
   // Animate in
@@ -6191,7 +6250,7 @@ function renderAddresses() {
   }
   list.innerHTML = savedAddresses.map((a, i) => `
     <div class="addr-card${a.isDefault ? ' is-default' : ''}">
-      <div class="addr-icon">${a.type === 'home' ? '🏠' : a.type === 'work' ? '🏢' : '📍'}</div>
+      <div class="addr-icon"><svg class="ic"><use href="#ic-${a.type === 'home' ? 'home' : a.type === 'work' ? 'building' : 'pin'}"></use></svg></div>
       <div class="addr-info">
         <div class="addr-label">${a.label}</div>
         <div class="addr-text">${a.full}</div>
@@ -6332,10 +6391,10 @@ function deletePayment(i) {
 // NOTIFICATION PREFERENCES
 // ══════════════════════════════════════════════════
 const NOTIF_TONES = [
-  { key:'ping',   label:'Ping',   icon:'🔔', desc:'Quick single tone' },
-  { key:'chime',  label:'Chime',  icon:'🎵', desc:'Two-note melody' },
-  { key:'bell',   label:'Bell',   icon:'🔕', desc:'Soft bell fade' },
-  { key:'alert',  label:'Alert',  icon:'📳', desc:'Double beep' }
+  { key:'ping',   label:'Ping',   icon:'<svg class="ic"><use href="#ic-bell"></use></svg>', desc:'Quick single tone' },
+  { key:'chime',  label:'Chime',  icon:'<svg class="ic"><use href="#ic-music"></use></svg>', desc:'Two-note melody' },
+  { key:'bell',   label:'Bell',   icon:'<svg class="ic"><use href="#ic-bell-off"></use></svg>', desc:'Soft bell fade' },
+  { key:'alert',  label:'Alert',  icon:'<svg class="ic"><use href="#ic-vibrate"></use></svg>', desc:'Double beep' }
 ];
 
 let _indexAC = null;
@@ -6382,15 +6441,15 @@ function playNotifTone(type) {
 function renderNotifPrefs() {
   const selectedTone = localStorage.getItem('lu_notif_tone') || 'ping';
   const prefs = [
-    { key:'orders',  icon:'📦', title:'Order Updates',        sub:'Confirmations, tracking & delivery alerts' },
-    { key:'promos',  icon:'🎉', title:'Promotions & Offers',  sub:'Exclusive deals, discounts and new offers' },
-    { key:'nearby',  icon:'🏪', title:'New Restaurants',      sub:'New partners opening near you' },
-    { key:'chat',    icon:'💬', title:'Rider Messages',        sub:'Messages from your delivery partner' },
-    { key:'offers',  icon:'🏷️', title:'Flash Deals',          sub:'Limited-time offers just for you' }
+    { key:'orders',  icon:'<svg class="ic"><use href="#ic-package"></use></svg>', title:'Order Updates',        sub:'Confirmations, tracking & delivery alerts' },
+    { key:'promos',  icon:'<svg class="ic"><use href="#ic-gift"></use></svg>', title:'Promotions & Offers',  sub:'Exclusive deals, discounts and new offers' },
+    { key:'nearby',  icon:'<svg class="ic"><use href="#ic-store"></use></svg>', title:'New Restaurants',      sub:'New partners opening near you' },
+    { key:'chat',    icon:'<svg class="ic"><use href="#ic-chat"></use></svg>', title:'Rider Messages',        sub:'Messages from your delivery partner' },
+    { key:'offers',  icon:'<svg class="ic"><use href="#ic-tag"></use></svg>', title:'Flash Deals',          sub:'Limited-time offers just for you' }
   ];
   const tonesHTML = `
     <div style="margin-bottom:22px;">
-      <div style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">🎵 Notification Tone</div>
+      <div style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;"><svg class="ic"><use href="#ic-music"></use></svg> Notification Tone</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         ${NOTIF_TONES.map(t => `
           <div onclick="selectNotifTone('${t.key}')" id="tone_${t.key}" style="background:var(--card);border:2px solid ${selectedTone===t.key?'var(--orange)':'var(--border)'};border-radius:14px;padding:12px 14px;cursor:pointer;transition:border-color 0.2s;">
@@ -6402,7 +6461,7 @@ function renderNotifPrefs() {
       </div>
     </div>
     <div style="height:1px;background:var(--border);margin-bottom:18px;"></div>
-    <div style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">🔔 Notification Types</div>
+    <div style="font-size:11px;font-weight:700;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;"><svg class="ic"><use href="#ic-bell"></use></svg> Notification Types</div>
   `;
   document.getElementById('notifPrefList').innerHTML = tonesHTML + prefs.map(p => `
     <div class="npref-row">
@@ -7001,7 +7060,7 @@ let _riderAnimLastTs = 0;
 // ── ICONS ─────────────────────────────────────────
 function _makeRiderIcon() {
   return L.divIcon({
-    html:`<div style="width:42px;height:42px;background:linear-gradient(135deg,#ff8c00,#ff3c3c);border-radius:50%;border:3px solid #fff;box-shadow:0 3px 12px rgba(255,140,0,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">🏍</div>`,
+    html:`<div style="width:42px;height:42px;background:linear-gradient(135deg,#ff8c00,#ff3c3c);border-radius:50%;border:3px solid #fff;box-shadow:0 3px 12px rgba(255,140,0,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;"><svg class="ic"><use href="#ic-scooter"></use></svg></div>`,
     iconSize:[42,42],iconAnchor:[21,21],className:''
   });
 }
@@ -7013,7 +7072,7 @@ function _makeDestIcon() {
 }
 function _makeRestIcon() {
   return L.divIcon({
-    html:`<div style="width:38px;height:38px;background:linear-gradient(135deg,#ff8c00,#ff5500);border-radius:50%;border:3px solid #fff;box-shadow:0 3px 10px rgba(255,140,0,0.6);display:flex;align-items:center;justify-content:center;font-size:18px;">🍴</div>`,
+    html:`<div style="width:38px;height:38px;background:linear-gradient(135deg,#ff8c00,#ff5500);border-radius:50%;border:3px solid #fff;box-shadow:0 3px 10px rgba(255,140,0,0.6);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;"><svg class="ic"><use href="#ic-dish"></use></svg></div>`,
     iconSize:[38,38],iconAnchor:[19,19],className:''
   });
 }
@@ -7063,8 +7122,8 @@ function _buildTrackMap(elId, rLat, rLng, destLat, destLng, zoom) {
   const tl = L.tileLayer(ti.url,{attribution:ti.attr,subdomains:ti.sub,maxZoom:19}).addTo(map);
   if(isModal){ _modalTileLayer=tl; L.control.zoom({position:'bottomright'}).addTo(map); }
   // Restaurant + destination markers
-  L.marker([rLat,rLng],{icon:_makeRestIcon(),zIndexOffset:50}).addTo(map).bindTooltip('🍴 Restaurant',{permanent:false,direction:'top'});
-  L.marker([destLat,destLng],{icon:_makeDestIcon(),zIndexOffset:50}).addTo(map).bindTooltip('📦 Your Location',{permanent:false,direction:'top'});
+  L.marker([rLat,rLng],{icon:_makeRestIcon(),zIndexOffset:50}).addTo(map).bindTooltip('<svg class="ic"><use href="#ic-dish"></use></svg> Restaurant',{permanent:false,direction:'top'});
+  L.marker([destLat,destLng],{icon:_makeDestIcon(),zIndexOffset:50}).addTo(map).bindTooltip('<svg class="ic"><use href="#ic-pin"></use></svg> Your Location',{permanent:false,direction:'top'});
   // Fallback dashed line — replaced by OSRM result async
   L.polyline([[rLat,rLng],[destLat,destLng]],{color:'#ff8c00',weight:2,opacity:0.4,dashArray:'8 6',lineCap:'round'}).addTo(map);
   // Rider at current progress
@@ -7266,7 +7325,7 @@ function initAddrMap() {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(_addrMap);
 
   const pinIcon = L.divIcon({
-    html: '<div style="font-size:28px;filter:drop-shadow(0 2px 8px rgba(255,140,0,0.9));">📍</div>',
+    html: '<div style="font-size:28px;color:var(--orange);filter:drop-shadow(0 2px 8px rgba(255,140,0,0.9));"><svg class="ic"><use href="#ic-pin"></use></svg></div>',
     iconSize: [30, 30], iconAnchor: [15, 28], className: ''
   });
 
@@ -7306,7 +7365,7 @@ function _placeAddrPin(lat, lng) {
   if (!_addrMap) return;
   _addrMap.setView([lat, lng], 16);
   const pinIcon = L.divIcon({
-    html: '<div style="font-size:28px;filter:drop-shadow(0 2px 8px rgba(255,140,0,0.9));">📍</div>',
+    html: '<div style="font-size:28px;color:var(--orange);filter:drop-shadow(0 2px 8px rgba(255,140,0,0.9));"><svg class="ic"><use href="#ic-pin"></use></svg></div>',
     iconSize: [30, 30], iconAnchor: [15, 28], className: ''
   });
   if (_addrMarker) _addrMarker.setLatLng([lat, lng]);
@@ -7354,7 +7413,7 @@ function reverseGeocode(lat, lng) {
     <div class="install-banner-sub">Add to home screen — works like a real app, no App Store needed!</div>
   </div>
   <button class="install-btn" onclick="triggerInstall()">Install</button>
-  <button class="install-banner-close" onclick="hideInstallBanner()">✕</button>
+  <button class="install-banner-close" onclick="hideInstallBanner()"><svg class="ic"><use href="#ic-close"></use></svg></button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -7364,8 +7423,8 @@ function reverseGeocode(lat, lng) {
   <div class="psheet" onclick="event.stopPropagation()" style="max-height:82vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="psheet-handle"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 10px;flex-shrink:0;">
-      <div class="psheet-title" style="padding:0;margin:0;">📍 Choose Delivery Area</div>
-      <button onclick="closeAreaSheet()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:4px;">✕</button>
+      <div class="psheet-title" style="padding:0;margin:0;"><svg class="ic"><use href="#ic-pin"></use></svg> Choose Delivery Area</div>
+      <button onclick="closeAreaSheet()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:4px;"><svg class="ic"><use href="#ic-close"></use></svg></button>
     </div>
     <div style="padding:0 14px 10px;flex-shrink:0;">
       <div class="area-search-wrap">
@@ -7389,17 +7448,17 @@ function reverseGeocode(lat, lng) {
 
       <div class="ios-step">
         <div class="ios-step-num">1</div>
-        <div class="ios-step-icon">⬆️</div>
+        <div class="ios-step-icon"><svg class="ic"><use href="#ic-share"></use></svg></div>
         <div class="ios-step-text">Tap the <strong>Share button</strong> at the bottom of your Safari browser (the square with an arrow pointing up)</div>
       </div>
       <div class="ios-step">
         <div class="ios-step-num">2</div>
-        <div class="ios-step-icon">➕</div>
+        <div class="ios-step-icon"><svg class="ic"><use href="#ic-plus"></use></svg></div>
         <div class="ios-step-text">Scroll down and tap <strong>"Add to Home Screen"</strong></div>
       </div>
       <div class="ios-step">
         <div class="ios-step-num">3</div>
-        <div class="ios-step-icon">✅</div>
+        <div class="ios-step-icon" style="color:var(--green);"><svg class="ic"><use href="#ic-check"></use></svg></div>
         <div class="ios-step-text">Tap <strong>"Add"</strong> in the top-right corner — LinkUp is now on your home screen!</div>
       </div>
 
@@ -7487,7 +7546,7 @@ function reverseGeocode(lat, lng) {
 <!-- MAP EXPAND MODAL -->
 <div class="map-modal-overlay" id="mapModalOverlay" onclick="handleMapModalClick(event)">
   <div class="map-modal-box" onclick="event.stopPropagation()">
-    <button class="map-modal-close" onclick="closeMapModal()">✕</button>
+    <button class="map-modal-close" onclick="closeMapModal()"><svg class="ic"><use href="#ic-close"></use></svg></button>
     <div class="map-modal-eta" id="mapModalEta">📍 Live Tracking</div>
     <div id="trackMapModal" style="width:100%;height:100%;"></div>
     <div class="map-tile-btns">
