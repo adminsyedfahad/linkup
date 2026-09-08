@@ -91,8 +91,8 @@
   --green:#22c55e;--red:#ef4444;--blue:#3b82f6;
 }
 body.light-theme{
-  --bg:#f4f4f8;--surface:#fff;--card:#fff;--border:#e0e0e8;
-  --text:#1a1a2e;--muted:#666;--input-bg:#f0f0f5;--orange-glow:rgba(255,140,0,0.15);
+  --bg:#FFF8ED;--surface:#FFFDF7;--card:#FFFFFF;--border:#F0E2C8;
+  --text:#2B2118;--muted:#8A7D6D;--input-bg:#FFF3E0;--orange-glow:rgba(255,140,0,0.15);
 }
 html{
   height:-webkit-fill-available;
@@ -1309,7 +1309,7 @@ button:active:not(.qty-btn):not(.cart-remove){transform:scale(.97);}
   pointer-events:none;
   transition:background 0.3s;
 }
-body.light-theme #statusBarFill{background:#ffffff;}
+body.light-theme #statusBarFill{background:#FFF8ED;}
 /* Splash and landing page: use deep dark to match background */
 #statusBarFill.dark{background:#0b0b0f;}
 
@@ -4118,7 +4118,7 @@ function enterApp(){
   document.getElementById('authPage').classList.remove('active');
   document.getElementById('mainApp').style.display='block';
   // Status bar matches app surface color
-  _setStatusBar(document.body.classList.contains('light-theme') ? '#ffffff' : '#13131a');
+  _setStatusBar(document.body.classList.contains('light-theme') ? '#FFF8ED' : '#13131a');
   document.getElementById('profileName').textContent=currentUser.name;
   document.getElementById('profileEmail').textContent=currentUser.email;
   document.getElementById('profileAvatar').textContent=currentUser.name[0].toUpperCase();
@@ -4212,7 +4212,7 @@ function toggleTheme(){
   const isLight=document.getElementById('themeToggle').checked;
   document.body.classList.toggle('light-theme',isLight);
   localStorage.setItem('lu_theme',isLight?'light':'dark');
-  _setStatusBar(isLight?'#f4f4f8':'#13131a');
+  _setStatusBar(isLight?'#FFF8ED':'#13131a');
 }
 
 // ── GRID ──────────────────────────────────────────
