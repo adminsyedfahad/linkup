@@ -133,7 +133,7 @@ body{
 #splashScreen.fade-out{opacity:0;transform:scale(1.04);pointer-events:none;}
 
 .splash-logo{
-  font-family:'Jim Nightshade',cursive;font-size:78px;color:var(--orange);
+  font-family:'Jim Nightshade',cursive;font-size:74px;color:var(--orange);
   letter-spacing:1.5px;text-shadow:0 0 34px rgba(255,140,0,0.5);
   margin-bottom:6px;
 }
@@ -228,7 +228,7 @@ html.light-theme .lp-nav{
   background:transparent;
   border-bottom:none;
 }
-.lp-logo{font-family:'Jim Nightshade',cursive;font-size:36px;color:var(--orange);letter-spacing:1px;}
+.lp-logo{font-family:'Jim Nightshade',cursive;font-size:27px;color:var(--orange);letter-spacing:1px;}
 .lp-nav-links{display:flex;gap:20px;align-items:center;}
 .lp-nav-links a{color:var(--muted);font-size:13px;text-decoration:none;cursor:pointer;transition:color 0.2s;}
 .lp-nav-links a:hover{color:var(--orange);}
@@ -464,6 +464,11 @@ html.light-theme .lp-nav{
 }
 .lp-cta-banner h2 span{color:var(--orange);}
 .lp-cta-banner p{font-size:14px;color:#888;margin-bottom:32px;}
+/* This banner is always dark regardless of theme, so its secondary button
+   must NOT use the theme-variable text/border colour — in light theme
+   var(--text)/var(--border) resolve to dark tones that vanish here. */
+.lp-cta-banner .btn-secondary{color:#fff;border-color:rgba(255,255,255,0.35);}
+.lp-cta-banner .btn-secondary:hover{border-color:var(--orange);color:var(--orange);}
 
 /* FOOTER */
 .lp-footer{
@@ -474,7 +479,7 @@ html.light-theme .lp-nav{
   display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;
   max-width:900px;margin:0 auto 36px;
 }
-.lp-footer-brand .lp-logo{font-size:28px;display:block;margin-bottom:10px;}
+.lp-footer-brand .lp-logo{font-size:22px;display:block;margin-bottom:10px;}
 .lp-footer-brand p{font-size:12px;color:var(--muted);line-height:1.7;max-width:220px;}
 .lp-footer-col h4{font-size:12px;font-weight:700;color:var(--text);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
 .lp-footer-col a{display:block;font-size:12px;color:var(--muted);text-decoration:none;margin-bottom:8px;cursor:pointer;transition:color 0.2s;}
@@ -506,7 +511,7 @@ html.light-theme .lp-nav{
   box-shadow:0 2px 12px rgba(0,0,0,0.15);
 }
 .logo-box{cursor:pointer;display:flex;flex-direction:column;}
-.logo{font-family:'Jim Nightshade',cursive;font-size:32px;color:var(--orange);letter-spacing:0.5px;text-shadow:0 0 14px var(--orange-glow);line-height:1.15;}
+.logo{font-family:'Jim Nightshade',cursive;font-size:26px;color:var(--orange);letter-spacing:0.5px;text-shadow:0 0 14px var(--orange-glow);line-height:1.15;}
 .header-right{display:flex;gap:8px;align-items:center;}
 .cart-btn{background:var(--orange);color:#000;font-weight:700;font-size:13px;padding:8px 14px;border-radius:10px;border:none;cursor:pointer;transition:transform 0.15s;font-family:'Poppins',sans-serif;}
 .cart-btn:hover{transform:scale(1.05);}
@@ -633,7 +638,7 @@ html.light-theme .lp-nav{
 .auth-page{display:none;min-height:100vh;min-height:100dvh;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px));background:var(--bg);}
 .auth-page.active{display:flex;}
 .auth-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 30px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
-.auth-logo{font-family:'Jim Nightshade',cursive;font-size:48px;color:var(--orange);text-align:center;margin-bottom:4px;letter-spacing:1px;text-shadow:0 0 16px var(--orange-glow);}
+.auth-logo{font-family:'Jim Nightshade',cursive;font-size:52px;color:var(--orange);text-align:center;margin-bottom:4px;letter-spacing:1px;text-shadow:0 0 16px var(--orange-glow);}
 .auth-tagline{text-align:center;color:var(--muted);font-size:12px;margin-bottom:28px;}
 .auth-tabs{display:flex;background:var(--card);border-radius:12px;padding:4px;margin-bottom:24px;}
 .auth-tab{flex:1;padding:9px;text-align:center;border-radius:9px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.2s;color:var(--muted);}
@@ -1245,13 +1250,13 @@ button:active:not(.qty-btn):not(.cart-remove){transform:scale(.97);}
 /* ══ FAV BUTTON ══ */
 .fav-btn{
   position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
-  background:rgba(0,0,0,0.55);border:none;cursor:pointer;
+  background:rgba(0,0,0,0.55);border:none;cursor:pointer;color:#fff;
   display:flex;align-items:center;justify-content:center;
   font-size:15px;transition:transform 0.2s,background 0.2s;
   backdrop-filter:blur(4px);z-index:1;padding:0;
 }
 .fav-btn:hover{transform:scale(1.2);}
-.fav-btn.active{background:rgba(220,38,38,0.3);}
+.fav-btn.active{background:rgba(220,38,38,0.3);color:var(--red);}
 
 /* ══ FAVOURITES OVERLAY ══ */
 .favs-overlay{
@@ -1937,6 +1942,8 @@ img[alt="LinkUp"]{
     <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
     <symbol id="ic-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></symbol>
     <symbol id="ic-handshake" viewBox="0 0 24 24"><circle cx="8" cy="8.5" r="3.2"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9.5" r="2.6"/><path d="M12.8 20a5 5 0 0 1 8.7-3.4"/></symbol>
+    <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2 4 6.2 4c2.4 0 3.9 1.4 5.8 3.8C13.9 5.4 15.4 4 17.8 4 22 4 23.5 8.4 22 11.9c-2.5 4.5-10 9.1-10 9.1Z"/></symbol>
+    <symbol id="ic-heart-filled" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2 4 6.2 4c2.4 0 3.9 1.4 5.8 3.8C13.9 5.4 15.4 4 17.8 4 22 4 23.5 8.4 22 11.9c-2.5 4.5-10 9.1-10 9.1Z"/></symbol>
   </defs>
 </svg>
 <!-- Fills the iPhone notch/Dynamic Island with brand color — nothing else appears here -->
@@ -1947,8 +1954,8 @@ img[alt="LinkUp"]{
 ══════════════════════════════════════ -->
 <div id="splashScreen">
   <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:6px;">
-    <div style="width:110px;height:110px;border-radius:22%;overflow:hidden;flex-shrink:0;">
-      <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:110px;height:110px;display:block;border-radius:22%;background:transparent;">
+    <div style="width:130px;height:130px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
+      <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
     </div>
     <div class="splash-logo" style="margin-top:4px;">LinkUp</div>
   </div>
@@ -1974,8 +1981,8 @@ img[alt="LinkUp"]{
   <!-- NAV -->
   <nav class="lp-nav">
     <div style="display:flex;align-items:center;gap:9px;">
-      <div style="width:40px;height:40px;border-radius:22%;overflow:hidden;flex-shrink:0;">
-        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:40px;height:40px;display:block;border-radius:22%;background:transparent;">
+      <div style="width:48px;height:48px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
+        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
       </div>
       <div class="lp-logo">LinkUp</div>
     </div>
@@ -2081,8 +2088,8 @@ img[alt="LinkUp"]{
     <div class="lp-footer-grid">
       <div class="lp-footer-brand">
         <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
-          <div style="width:36px;height:36px;border-radius:22%;overflow:hidden;flex-shrink:0;">
-            <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:36px;height:36px;display:block;border-radius:22%;background:transparent;">
+          <div style="width:40px;height:40px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
+            <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
           </div>
           <span class="lp-logo">LinkUp</span>
         </div>
@@ -2226,8 +2233,8 @@ img[alt="LinkUp"]{
 <div class="auth-page" id="authPage">
   <div class="auth-box">
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:4px;">
-      <div style="width:80px;height:80px;border-radius:22%;overflow:hidden;flex-shrink:0;">
-        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:80px;height:80px;display:block;border-radius:22%;background:transparent;">
+      <div style="width:92px;height:92px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
+        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
       </div>
       <div class="auth-logo">LinkUp</div>
     </div>
@@ -2408,8 +2415,8 @@ img[alt="LinkUp"]{
 <div class="header">
   <div class="logo-box" onclick="showPage('home')">
     <div style="display:flex;align-items:center;gap:9px;">
-      <div style="width:40px;height:40px;border-radius:22%;overflow:hidden;flex-shrink:0;">
-        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:40px;height:40px;display:block;border-radius:22%;background:transparent;">
+      <div style="width:46px;height:46px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
+        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
       </div>
       <div>
         <div class="logo">LinkUp</div>
@@ -2421,7 +2428,7 @@ img[alt="LinkUp"]{
   </div>
   <div class="header-right">
     <button class="header-icon-btn" id="themeToggleBtn" onclick="headerToggleTheme()" title="Toggle theme"></button>
-    <button class="header-icon-btn" onclick="showPage('orders')" title="Orders"><svg class="ic"><use href="#ic-package"></use></svg></button>
+    <button class="header-icon-btn" onclick="showPage('orders')" title="Orders"><svg class="ic"><use href="#ic-receipt"></use></svg></button>
     <button class="notif-btn" onclick="toggleNotifPanel()" title="Notifications">
       <svg class="ic"><use href="#ic-bell"></use></svg><span class="notif-dot" id="notifDot"></span>
     </button>
@@ -2550,7 +2557,7 @@ img[alt="LinkUp"]{
 <div id="page-orders" class="page">
   <div class="page-back-header">
     <button class="page-back-btn" onclick="showPage('home')">‹</button>
-    <div class="page-back-title"><svg class="ic"><use href="#ic-package"></use></svg> <span data-i18n="orders_title">Your Orders</span></div>
+    <div class="page-back-title"><svg class="ic"><use href="#ic-receipt"></use></svg> <span data-i18n="orders_title">Your Orders</span></div>
   </div>
   <div id="ordersList"></div>
 </div>
@@ -4344,7 +4351,7 @@ function renderGrid(items){
     d.innerHTML=`
       <div class="card-img" style="background-image:url('${item.img}')">
         ${item.badge?`<div class="card-badge">${item.badge}</div>`:''}
-        <button class="fav-btn${isFav?' active':''}" data-fid="${item.id}" onclick="event.stopPropagation();toggleFav(${item.id},this)" title="${isFav?'Remove from Favourites':'Add to Favourites'}">${isFav?'❤️':'🤍'}</button>
+        <button class="fav-btn${isFav?' active':''}" data-fid="${item.id}" onclick="event.stopPropagation();toggleFav(${item.id},this)" title="${isFav?'Remove from Favourites':'Add to Favourites'}"><svg class="ic"><use href="#${isFav?'ic-heart-filled':'ic-heart'}"></use></svg></button>
       </div>
       <div class="card-body">
         <div class="card-name">${item.name}</div>
@@ -6191,13 +6198,13 @@ function toggleFav(id, btn) {
   const idx = favorites.indexOf(id);
   if (idx === -1) {
     favorites.push(id);
-    btn.textContent = '❤️';
+    btn.innerHTML = '<svg class="ic"><use href="#ic-heart-filled"></use></svg>';
     btn.classList.add('active');
     btn.title = 'Remove from Favourites';
     showToast('❤️ Added to Favourites!');
   } else {
     favorites.splice(idx, 1);
-    btn.textContent = '🤍';
+    btn.innerHTML = '<svg class="ic"><use href="#ic-heart"></use></svg>';
     btn.classList.remove('active');
     btn.title = 'Add to Favourites';
     showToast('Removed from Favourites');
@@ -6217,7 +6224,7 @@ function renderFavourites() {
   const favItems = ITEMS.filter(i => favorites.includes(i.id));
   document.getElementById('favsCount').textContent = favItems.length + ' item' + (favItems.length !== 1 ? 's' : '');
   if (!favItems.length) {
-    grid.innerHTML = `<div class="favs-empty" style="grid-column:1/-1"><div class="favs-empty-icon">🤍</div><p style="font-size:14px;line-height:1.7;">No favourites yet.<br>Tap the ♡ on any item<br>to save it here.</p></div>`;
+    grid.innerHTML = `<div class="favs-empty" style="grid-column:1/-1"><div class="favs-empty-icon"><svg class="ic"><use href="#ic-heart"></use></svg></div><p style="font-size:14px;line-height:1.7;">No favourites yet.<br>Tap the ♡ on any item<br>to save it here.</p></div>`;
     return;
   }
   grid.innerHTML = '';
@@ -6227,7 +6234,7 @@ function renderFavourites() {
     d.innerHTML = `
       <div class="card-img" style="background-image:url('${item.img}')">
         ${item.badge ? `<div class="card-badge">${item.badge}</div>` : ''}
-        <button class="fav-btn active" onclick="event.stopPropagation();removeFavAndRefresh(${item.id})" title="Remove from Favourites">❤️</button>
+        <button class="fav-btn active" onclick="event.stopPropagation();removeFavAndRefresh(${item.id})" title="Remove from Favourites"><svg class="ic"><use href="#ic-heart-filled"></use></svg></button>
       </div>
       <div class="card-body">
         <div class="card-name">${item.name}</div>
@@ -6247,7 +6254,7 @@ function removeFavAndRefresh(id) {
     renderFavourites();
     // sync heart in main grid
     const btn = document.querySelector(`.fav-btn[data-fid="${id}"]`);
-    if (btn) { btn.textContent = '🤍'; btn.classList.remove('active'); btn.title = 'Add to Favourites'; }
+    if (btn) { btn.innerHTML = '<svg class="ic"><use href="#ic-heart"></use></svg>'; btn.classList.remove('active'); btn.title = 'Add to Favourites'; }
   }
 }
 
