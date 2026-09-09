@@ -6,6 +6,13 @@
 <title>LinkUp Restaurant</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23241B12'/%3E%3Cg transform='translate(50,50) scale(1.148) translate(-40,-43.5)'%3E%3Cpath d='M29 31 A11 11 0 0 1 51 31' fill='none' stroke='%23FDF6EA' stroke-width='5.5' stroke-linecap='round'/%3E%3Crect x='15' y='30' width='50' height='40' rx='7' fill='%23FF8C00'/%3E%3Cpath d='M34 42 L34 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M30 42 L30 48 M38 42 L38 48' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='49' cy='47' rx='4.6' ry='5.6' fill='none' stroke='%23241B12' stroke-width='3.2'/%3E%3Cpath d='M49 53 L49 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="theme-color" content="#ff8c00">
+<script>
+(function(){
+  try{
+    if(localStorage.getItem('lu_theme') === 'light') document.documentElement.classList.add('light-theme');
+  }catch(e){}
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -32,7 +39,7 @@ window._resReady=true; window.dispatchEvent(new Event('resReady'));
 html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background:#0b0b0f;color:#e8e8f0;}
 :root{
   --orange:#ff8c00;--odim:rgba(255,140,0,.12);
-  --bg:#0b0b0f;--surface:#13131a;--card:#1a1a26;--border:#222235;
+  --bg:#0b0b0f;--surface:#13131a;--card:#1a1a26;--border:#222235;--input-bg:#1e1e28;
   --text:#e8e8f0;--muted:#888899;
   --green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;
   --sb:220px;
@@ -296,13 +303,13 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
 .od-item-price{font-size:13px;font-weight:700;color:var(--text);}
 .od-total .od-lbl{font-size:13px;font-weight:800;color:var(--text);}
 .od-total-val{font-size:18px;font-weight:800;color:var(--orange);}
-html.light .ord-detail-sheet{background:#fff;}
-html.light .od-items{background:#f4f4fc;}
+html.light-theme .ord-detail-sheet{background:#fff;}
+html.light-theme .od-items{background:var(--input-bg);}
 
 /* ── REFUNDS ─────────────────────────────────────── */
 .refund-form-card{background:var(--card);border:1px solid rgba(239,68,68,.25);border-radius:14px;padding:16px 18px;margin-bottom:16px;}
 .refund-form-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:14px;}
-html.light .refund-form-card{background:#fff;}
+html.light-theme .refund-form-card{background:#fff;}
 .refund-list{display:flex;flex-direction:column;gap:8px;}
 /* ── DELAYED ORDER ANIMATION ─────────────────────── */
 @keyframes ordDelayPulse{0%,100%{background:transparent;}50%{background:rgba(239,68,68,.13);}}
@@ -321,7 +328,7 @@ html.light .refund-form-card{background:#fff;}
 .refund-right{text-align:right;}
 .refund-amt{font-size:15px;font-weight:800;color:#ef4444;}
 .refund-date{font-size:10px;color:var(--muted);margin-top:2px;}
-html.light .refund-item{background:#fff;}
+html.light-theme .refund-item{background:#fff;}
 
 /* ── EARNINGS ───────────────────────────────────── */
 .earn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
@@ -440,87 +447,87 @@ html.light .refund-item{background:#fff;}
 .tone-opt:hover:not(.active){border-color:var(--orange);color:var(--text);}
 
 /* ── LIGHT THEME ────────────────────────────────── */
-html.light{
-  --bg:#f0f0f8;--surface:#ffffff;--card:#ffffff;--border:#d0d0e4;
-  --text:#111128;--muted:#484864;
+html.light-theme{
+  --bg:#FFF8ED;--surface:#FFFDF7;--card:#FFFFFF;--border:#F0E2C8;
+  --text:#2B2118;--muted:#8A7D6D;--input-bg:#FFF3E0;
 }
-html.light body{background:var(--bg);color:#111128;}
-html.light #rLogin{background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,.06) 0%,transparent 60%),#f0f0f8;}
-html.light .lb{box-shadow:0 4px 24px rgba(0,0,0,.08);}
-html.light .lf input,html.light .mo-field input,html.light .mo-field textarea,html.light .mo-field select{background:#f8f8ff;color:#111128;border-color:var(--border);}
-html.light .lf label,html.light .mo-field label{color:#484864;}
-html.light .bnav-item{color:#484864;}
-html.light .bnav-item.active{color:var(--orange);}
-html.light .rni{color:#484864;}
-html.light .rni:hover{background:rgba(255,140,0,.08);color:#111128;}
-html.light .rni.active{color:var(--orange);}
-html.light .res-sb{background:#fff;border-right-color:var(--border);}
-html.light .res-sb-logo .rsl-name{color:#111128;}
-html.light .res-sb-info{color:#484864;}
-html.light .res-topbar{background:#fff;border-bottom-color:var(--border);}
-html.light .res-topbar .tb-name{color:#111128;}
-html.light .res-bnav{background:#fff;border-top-color:var(--border);}
-html.light .oc{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-html.light .oc-id{color:var(--orange);}
-html.light .oc-time{color:#484864;}
-html.light .oc-cust{color:#111128;}
-html.light .oc-addr{color:#484864;}
-html.light .oi-name{color:#111128;}
-html.light .oi-qty{color:#484864;}
-html.light .oi-price{color:#111128;}
-html.light .oa-status{color:#484864;}
-html.light .profile-card{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-html.light .profile-card h3{color:#484864;}
-html.light .pr-lbl{color:#484864;}
-html.light .pr-val{color:#111128;}
-html.light .prow{border-bottom-color:rgba(0,0,0,.07);}
-html.light .earn-card{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-html.light .earn-card.hl{background:linear-gradient(135deg,rgba(255,140,0,.06),#fff);}
-html.light .earn-lbl{color:#484864;}
-html.light .earn-val{color:#111128;}
-html.light .earn-sub{color:#484864;}
-html.light .hist-item{background:#fff;}
-html.light .hist-cust{color:#111128;}
-html.light .hist-items{color:#484864;}
-html.light .hist-amt{color:#111128;}
-html.light .hist-date{color:#484864;}
-html.light .mi{background:#fff;}
-html.light .mi-name{color:#111128;}
-html.light .mi-desc{color:#484864;}
-html.light .mi-icnbtn{background:#f4f4fc;border-color:var(--border);}
-html.light .cat-tab{background:#f4f4fc;color:#484864;}
-html.light .cat-hdr-left h3{color:#111128;}
-html.light .cat-hdr-left p{color:#484864;}
-html.light .cat-hdr-btn{color:#484864;background:#f4f4fc;}
-html.light .ftab{background:#f4f4fc;color:#484864;}
-html.light .sec-hdr h2{color:#111128;}
-html.light .sec-hdr p{color:#484864;}
-html.light .empty-state{color:#484864;}
-html.light .mo-close:hover{background:rgba(0,0,0,.06);}
-html.light .mo-btn.secondary{background:rgba(0,0,0,.06);color:#484864;}
-html.light .mo-hdr h3{color:#111128;}
-html.light .mo-field label{color:#484864;}
-html.light #rToast{background:#111128;color:#fff;border-color:#111128;}
-html.light .oc-pay{background:var(--border);color:#111128;}
-html.light .rlogout{color:#484864;}
-html.light .rlogout:hover{background:rgba(239,68,68,.1);color:#ef4444;}
-html.light .theme-btn{color:#484864;}
-html.light .tone-opt{color:#484864;background:#f4f4fc;}
-html.light input::placeholder,html.light textarea::placeholder{color:#9999bb;}
-html.light .sb-status-lbl.online{color:#16a34a;}
-html.light .sb-status-lbl.offline{color:#dc2626;}
-html.light .mini-sl{background:#d0d0e4;}
-html.light .ord-select{background-color:#fff;color:#111128;}
-html.light .ord-table-wrap{box-shadow:0 2px 16px rgba(0,0,0,.06);}
-html.light .ord-table tbody tr:hover .ord-td{background:rgba(255,140,0,.04);}
-html.light .ord-m-card{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.05);}
-html.light .ord-m-hdr{background:#f4f4fc;}
-html.light .ord-m-pay{background:#f4f4fc;border-color:#d0d0e4;}
-html.light .ord-badge.pending{background:rgba(245,158,11,.12);color:#92400e;}
-html.light .ord-badge.preparing{background:rgba(59,130,246,.1);color:#1d4ed8;}
-html.light .ord-badge.ready{background:rgba(34,197,94,.12);color:#15803d;}
-html.light .ord-badge.rejected,html.light .ord-badge.cancelled{background:rgba(239,68,68,.08);color:#b91c1c;}
-html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
+html.light-theme body{background:var(--bg);color:var(--text);}
+html.light-theme #rLogin{background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,.06) 0%,transparent 60%),#FFF8ED;}
+html.light-theme .lb{box-shadow:0 4px 24px rgba(0,0,0,.08);}
+html.light-theme .lf input,html.light-theme .mo-field input,html.light-theme .mo-field textarea,html.light-theme .mo-field select{background:var(--input-bg);color:var(--text);border-color:var(--border);}
+html.light-theme .lf label,html.light-theme .mo-field label{color:var(--muted);}
+html.light-theme .bnav-item{color:var(--muted);}
+html.light-theme .bnav-item.active{color:var(--orange);}
+html.light-theme .rni{color:var(--muted);}
+html.light-theme .rni:hover{background:rgba(255,140,0,.08);color:var(--text);}
+html.light-theme .rni.active{color:var(--orange);}
+html.light-theme .res-sb{background:#fff;border-right-color:var(--border);}
+html.light-theme .res-sb-logo .rsl-name{color:var(--text);}
+html.light-theme .res-sb-info{color:var(--muted);}
+html.light-theme .res-topbar{background:#fff;border-bottom-color:var(--border);}
+html.light-theme .res-topbar .tb-name{color:var(--text);}
+html.light-theme .res-bnav{background:#fff;border-top-color:var(--border);}
+html.light-theme .oc{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+html.light-theme .oc-id{color:var(--orange);}
+html.light-theme .oc-time{color:var(--muted);}
+html.light-theme .oc-cust{color:var(--text);}
+html.light-theme .oc-addr{color:var(--muted);}
+html.light-theme .oi-name{color:var(--text);}
+html.light-theme .oi-qty{color:var(--muted);}
+html.light-theme .oi-price{color:var(--text);}
+html.light-theme .oa-status{color:var(--muted);}
+html.light-theme .profile-card{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+html.light-theme .profile-card h3{color:var(--muted);}
+html.light-theme .pr-lbl{color:var(--muted);}
+html.light-theme .pr-val{color:var(--text);}
+html.light-theme .prow{border-bottom-color:rgba(0,0,0,.07);}
+html.light-theme .earn-card{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+html.light-theme .earn-card.hl{background:linear-gradient(135deg,rgba(255,140,0,.06),#fff);}
+html.light-theme .earn-lbl{color:var(--muted);}
+html.light-theme .earn-val{color:var(--text);}
+html.light-theme .earn-sub{color:var(--muted);}
+html.light-theme .hist-item{background:#fff;}
+html.light-theme .hist-cust{color:var(--text);}
+html.light-theme .hist-items{color:var(--muted);}
+html.light-theme .hist-amt{color:var(--text);}
+html.light-theme .hist-date{color:var(--muted);}
+html.light-theme .mi{background:#fff;}
+html.light-theme .mi-name{color:var(--text);}
+html.light-theme .mi-desc{color:var(--muted);}
+html.light-theme .mi-icnbtn{background:var(--input-bg);border-color:var(--border);}
+html.light-theme .cat-tab{background:var(--input-bg);color:var(--muted);}
+html.light-theme .cat-hdr-left h3{color:var(--text);}
+html.light-theme .cat-hdr-left p{color:var(--muted);}
+html.light-theme .cat-hdr-btn{color:var(--muted);background:var(--input-bg);}
+html.light-theme .ftab{background:var(--input-bg);color:var(--muted);}
+html.light-theme .sec-hdr h2{color:var(--text);}
+html.light-theme .sec-hdr p{color:var(--muted);}
+html.light-theme .empty-state{color:var(--muted);}
+html.light-theme .mo-close:hover{background:rgba(0,0,0,.06);}
+html.light-theme .mo-btn.secondary{background:rgba(0,0,0,.06);color:var(--muted);}
+html.light-theme .mo-hdr h3{color:var(--text);}
+html.light-theme .mo-field label{color:var(--muted);}
+html.light-theme #rToast{background:var(--text);color:#fff;border-color:var(--text);}
+html.light-theme .oc-pay{background:var(--border);color:var(--text);}
+html.light-theme .rlogout{color:var(--muted);}
+html.light-theme .rlogout:hover{background:rgba(239,68,68,.1);color:#ef4444;}
+html.light-theme .theme-btn{color:var(--muted);}
+html.light-theme .tone-opt{color:var(--muted);background:var(--input-bg);}
+html.light-theme input::placeholder,html.light-theme textarea::placeholder{color:#B8AB90;}
+html.light-theme .sb-status-lbl.online{color:#16a34a;}
+html.light-theme .sb-status-lbl.offline{color:#dc2626;}
+html.light-theme .mini-sl{background:var(--border);}
+html.light-theme .ord-select{background-color:#fff;color:var(--text);}
+html.light-theme .ord-table-wrap{box-shadow:0 2px 16px rgba(0,0,0,.06);}
+html.light-theme .ord-table tbody tr:hover .ord-td{background:rgba(255,140,0,.04);}
+html.light-theme .ord-m-card{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.05);}
+html.light-theme .ord-m-hdr{background:var(--input-bg);}
+html.light-theme .ord-m-pay{background:var(--input-bg);border-color:var(--border);}
+html.light-theme .ord-badge.pending{background:rgba(245,158,11,.12);color:#92400e;}
+html.light-theme .ord-badge.preparing{background:rgba(59,130,246,.1);color:#1d4ed8;}
+html.light-theme .ord-badge.ready{background:rgba(34,197,94,.12);color:#15803d;}
+html.light-theme .ord-badge.rejected,html.light-theme .ord-badge.cancelled{background:rgba(239,68,68,.08);color:#b91c1c;}
+html.light-theme .ord-count{background:var(--input-bg);border-color:var(--border);}
 .ic{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 </style>
 </head>
@@ -895,7 +902,7 @@ document.addEventListener('touchstart',_ensureAudio,{passive:true});
 // ── THEME ──────────────────────────────────────────────────
 function applyTheme(theme){
   const isLight=theme==='light';
-  document.documentElement.classList.toggle('light',isLight);
+  document.documentElement.classList.toggle('light-theme',isLight);
   const icon=isLight?'☀️':'🌙';
   const label=isLight?'Light Mode':'Dark Mode';
   const sb=document.getElementById('sbThemeBtn');
@@ -904,12 +911,12 @@ function applyTheme(theme){
   if(tb){tb.textContent=icon;}
 }
 function toggleTheme(){
-  const isLight=document.documentElement.classList.contains('light');
+  const isLight=document.documentElement.classList.contains('light-theme');
   const next=isLight?'dark':'light';
-  localStorage.setItem('res_theme',next);
+  localStorage.setItem('lu_theme',next);
   applyTheme(next);
 }
-applyTheme(localStorage.getItem('res_theme')||'dark');
+applyTheme(localStorage.getItem('lu_theme')||'dark');
 
 // ── AUTH ───────────────────────────────────────────────────
 function setupResAuth(){
