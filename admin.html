@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LinkUp Admin</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111'/%3E%3Ctext x='16' y='23' font-family='Arial,sans-serif' font-size='22' font-weight='900' fill='%23ff8c00' text-anchor='middle'%3EL%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23241B12'/%3E%3Cg transform='translate(50,50) scale(1.148) translate(-40,-43.5)'%3E%3Cpath d='M29 31 A11 11 0 0 1 51 31' fill='none' stroke='%23FDF6EA' stroke-width='5.5' stroke-linecap='round'/%3E%3Crect x='15' y='30' width='50' height='40' rx='7' fill='%23FF8C00'/%3E%3Cpath d='M34 42 L34 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M30 42 L30 48 M38 42 L38 48' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='49' cy='47' rx='4.6' ry='5.6' fill='none' stroke='%23241B12' stroke-width='3.2'/%3E%3Cpath d='M49 53 L49 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="theme-color" content="#ff8c00">
-<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
@@ -48,7 +48,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,0.07) 0%,transparent 60%),#0b0b0f;}
 .login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px 36px;width:380px;max-width:calc(100vw - 32px);}
-.login-logo{font-family:'Righteous',cursive;font-size:32px;color:var(--orange);letter-spacing:3px;text-align:center;margin-bottom:4px;}
+.login-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:4px;}
+.login-logo{font-family:'Jim Nightshade',cursive;font-size:40px;color:var(--orange);letter-spacing:1px;}
 .login-sub{text-align:center;font-size:11px;color:var(--muted);margin-bottom:32px;letter-spacing:2px;text-transform:uppercase;}
 .ff{margin-bottom:16px;}
 .ff label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
@@ -67,7 +68,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 /* SIDEBAR */
 .sb{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
 .sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
-.sb-logo-txt{font-family:'Righteous',cursive;font-size:22px;color:var(--orange);letter-spacing:2px;}
+.sb-logo-row{display:flex;align-items:center;gap:8px;}
+.sb-logo-txt{font-family:'Jim Nightshade',cursive;font-size:28px;color:var(--orange);letter-spacing:0.5px;}
 .sb-logo-sub{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
 .sb-nav{padding:14px 10px;flex:1;}
 .ni{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:600;transition:all .15s;margin-bottom:3px;position:relative;}
@@ -233,7 +235,8 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
   .rg{grid-template-columns:1fr;}
 }
 .mtb{display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;align-items:center;gap:8px;}
-.mtb-logo{font-family:'Righteous',cursive;font-size:19px;color:var(--orange);flex:1;}
+.mtb-logo{font-family:'Jim Nightshade',cursive;font-size:24px;color:var(--orange);}
+.mtb-logo-row{display:flex;align-items:center;gap:6px;flex:1;}
 .mnb{padding:6px 11px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;}
 .mnb.active{background:var(--odim);color:var(--orange);}
 .snf{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;}
@@ -432,14 +435,31 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 .rev-amount{font-size:13px;font-weight:700;color:var(--green);}
 .rev-pay{font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px 7px;}
 .rev-odate{font-size:11px;color:var(--muted);}
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 </style>
 </head>
 <body>
+<!-- Brand mark sprite (shared with the customer app) -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="ic-logo" viewBox="13.5 16.5 53 54">
+      <path d="M29 31 A11 11 0 0 1 51 31" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+      <rect x="15" y="30" width="50" height="40" rx="7" fill="#FF8C00"/>
+      <path d="M34 42 L34 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <path d="M30 42 L30 48 M38 42 L38 48" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <ellipse cx="49" cy="47" rx="4.6" ry="5.6" fill="none" stroke="#241B12" stroke-width="3.2"/>
+      <path d="M49 53 L49 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
 
 <!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-box">
-    <div class="login-logo">LINKUP</div>
+    <div class="login-logo-wrap">
+      <svg class="ic" style="width:52px;height:52px;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
+      <div class="login-logo">LinkUp</div>
+    </div>
     <div class="login-sub">Admin Dashboard</div>
     <div class="ff">
       <label>Email</label>
@@ -460,7 +480,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
 
   <!-- Mobile top bar -->
   <div class="mtb">
-    <div class="mtb-logo">LINKUP</div>
+    <div class="mtb-logo-row">
+      <svg class="ic" style="width:26px;height:26px;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
+      <div class="mtb-logo">LinkUp</div>
+    </div>
     <button class="mnb active" id="mnd" onclick="showSec('dashboard')">📊 Orders</button>
     <button class="mnb" id="mns" onclick="showSec('search')">🔍 Search</button>
     <button class="mnb" id="mnw" onclick="showSec('wallet')">💰 Refunds</button>
@@ -474,7 +497,10 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);fon
   <!-- Sidebar -->
   <div class="sb">
     <div class="sb-logo">
-      <div class="sb-logo-txt">LINKUP</div>
+      <div class="sb-logo-row">
+        <svg class="ic" style="width:34px;height:34px;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
+        <div class="sb-logo-txt">LinkUp</div>
+      </div>
       <div class="sb-logo-sub">Admin Dashboard</div>
     </div>
     <div class="sb-nav">

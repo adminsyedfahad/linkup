@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>LinkUp Restaurant</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111'/%3E%3Ctext x='16' y='23' font-family='Arial,sans-serif' font-size='22' font-weight='900' fill='%23ff8c00' text-anchor='middle'%3EL%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23241B12'/%3E%3Cg transform='translate(50,50) scale(1.148) translate(-40,-43.5)'%3E%3Cpath d='M29 31 A11 11 0 0 1 51 31' fill='none' stroke='%23FDF6EA' stroke-width='5.5' stroke-linecap='round'/%3E%3Crect x='15' y='30' width='50' height='40' rx='7' fill='%23FF8C00'/%3E%3Cpath d='M34 42 L34 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M30 42 L30 48 M38 42 L38 48' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='49' cy='47' rx='4.6' ry='5.6' fill='none' stroke='%23241B12' stroke-width='3.2'/%3E%3Cpath d='M49 53 L49 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="theme-color" content="#ff8c00">
-<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
 import{getFirestore,collection,onSnapshot,query,where,doc,setDoc,getDoc,getDocs,updateDoc}
@@ -43,9 +43,9 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
   background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,.07) 0%,transparent 60%),#0b0b0f;}
 .lb{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:38px 32px;
   width:360px;max-width:calc(100vw - 32px);}
-.lb-logo{text-align:center;margin-bottom:28px;}
-.lb-logo .ll-ico{font-size:48px;margin-bottom:8px;}
-.lb-logo .ll-brand{font-family:'Righteous',cursive;font-size:26px;color:var(--orange);letter-spacing:2px;}
+.lb-logo{text-align:center;margin-bottom:28px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.lb-logo .ll-ico{width:52px;height:52px;}
+.lb-logo .ll-brand{font-family:'Jim Nightshade',cursive;font-size:34px;color:var(--orange);letter-spacing:1px;}
 .lb-logo .ll-sub{font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:3px;}
 .lf{margin-bottom:14px;}
 .lf label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;
@@ -73,7 +73,8 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
 /* ── SIDEBAR ────────────────────────────────────── */
 .res-sb{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
 .res-sb-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);}
-.res-sb-logo .rsl-brand{font-family:'Righteous',cursive;font-size:20px;color:var(--orange);letter-spacing:2px;}
+.res-sb-logo .rsl-brand-row{display:flex;align-items:center;gap:8px;}
+.res-sb-logo .rsl-brand{font-family:'Jim Nightshade',cursive;font-size:26px;color:var(--orange);letter-spacing:0.5px;}
 .res-sb-logo .rsl-name{font-size:12px;font-weight:700;color:var(--text);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .res-sb-logo .rsl-status{font-size:11px;margin-top:3px;}
 .res-sb-nav{padding:12px 8px;flex:1;}
@@ -95,7 +96,8 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
 /* ── TOPBAR (mobile) ────────────────────────────── */
 .res-topbar{display:none;align-items:center;justify-content:space-between;
   padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
-.res-topbar .tb-brand{font-family:'Righteous',cursive;font-size:16px;color:var(--orange);letter-spacing:2px;}
+.res-topbar .tb-brand-row{display:flex;align-items:center;gap:8px;}
+.res-topbar .tb-brand{font-family:'Jim Nightshade',cursive;font-size:22px;color:var(--orange);letter-spacing:0.5px;}
 .res-topbar .tb-name{font-size:12px;font-weight:700;color:var(--text);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .res-topbar .tb-status{font-size:11px;}
 
@@ -519,16 +521,30 @@ html.light .ord-badge.preparing{background:rgba(59,130,246,.1);color:#1d4ed8;}
 html.light .ord-badge.ready{background:rgba(34,197,94,.12);color:#15803d;}
 html.light .ord-badge.rejected,html.light .ord-badge.cancelled{background:rgba(239,68,68,.08);color:#b91c1c;}
 html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 </style>
 </head>
 <body>
+<!-- Brand mark sprite (shared with the customer app) -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="ic-logo" viewBox="13.5 16.5 53 54">
+      <path d="M29 31 A11 11 0 0 1 51 31" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+      <rect x="15" y="30" width="50" height="40" rx="7" fill="#FF8C00"/>
+      <path d="M34 42 L34 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <path d="M30 42 L30 48 M38 42 L38 48" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <ellipse cx="49" cy="47" rx="4.6" ry="5.6" fill="none" stroke="#241B12" stroke-width="3.2"/>
+      <path d="M49 53 L49 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
 
 <!-- LOGIN -->
 <div id="rLogin">
   <div class="lb">
     <div class="lb-logo">
-      <div class="ll-ico">🍽️</div>
-      <div class="ll-brand">LINKUP</div>
+      <svg class="ic ll-ico" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
+      <div class="ll-brand">LinkUp</div>
       <div class="ll-sub">Restaurant Panel</div>
     </div>
     <div class="lf">
@@ -552,7 +568,10 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
   <!-- SIDEBAR (desktop) -->
   <div class="res-sb">
     <div class="res-sb-logo">
-      <div class="rsl-brand">LINKUP</div>
+      <div class="rsl-brand-row">
+        <svg class="ic" style="width:30px;height:30px;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
+        <div class="rsl-brand">LinkUp</div>
+      </div>
       <div class="rsl-name" id="sbRestName">Restaurant</div>
       <div class="sb-status-row">
         <span class="sb-status-lbl online" id="sbIsOpenLbl">🟢 Online</span>
@@ -595,9 +614,12 @@ html.light .ord-count{background:#f4f4fc;border-color:#d0d0e4;}
 
     <!-- TOPBAR (mobile) -->
     <div class="res-topbar">
-      <div>
-        <div class="tb-brand">LINKUP</div>
-        <div class="tb-name" id="tbRestName">Restaurant</div>
+      <div class="tb-brand-row">
+        <svg class="ic" style="width:22px;height:22px;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
+        <div>
+          <div class="tb-brand">LinkUp</div>
+          <div class="tb-name" id="tbRestName">Restaurant</div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="sb-status-row" style="gap:6px;">

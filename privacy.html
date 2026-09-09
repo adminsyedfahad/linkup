@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy — LinkUp</title>
-<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23241B12'/%3E%3Cg transform='translate(50,50) scale(1.148) translate(-40,-43.5)'%3E%3Cpath d='M29 31 A11 11 0 0 1 51 31' fill='none' stroke='%23FDF6EA' stroke-width='5.5' stroke-linecap='round'/%3E%3Crect x='15' y='30' width='50' height='40' rx='7' fill='%23FF8C00'/%3E%3Cpath d='M34 42 L34 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M30 42 L30 48 M38 42 L38 48' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='49' cy='47' rx='4.6' ry='5.6' fill='none' stroke='%23241B12' stroke-width='3.2'/%3E%3Cpath d='M49 53 L49 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -16,7 +17,9 @@ a{color:var(--orange);text-decoration:none;}
 a:hover{text-decoration:underline;}
 
 .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:14px;position:sticky;top:0;z-index:100;}
-.nav-logo{font-family:'Righteous',sans-serif;font-size:22px;color:var(--orange);letter-spacing:.5px;}
+.nav-logo{font-family:'Jim Nightshade',cursive;font-size:28px;color:var(--orange);letter-spacing:.5px;display:inline-flex;align-items:center;gap:6px;}
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.nav-logo .ic, footer .ic{color:var(--text);}
 .nav-tag{font-size:11px;color:var(--muted);padding:3px 9px;border:1px solid var(--border);border-radius:20px;}
 .nav-back{margin-left:auto;font-size:13px;padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text);font-family:'Poppins',sans-serif;cursor:pointer;transition:border-color .15s;}
 .nav-back:hover{border-color:var(--orange);color:var(--orange);}
@@ -59,9 +62,21 @@ footer p{font-size:12px;color:var(--muted);}
 </style>
 </head>
 <body>
+<svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="ic-logo" viewBox="13.5 16.5 53 54">
+      <path d="M29 31 A11 11 0 0 1 51 31" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+      <rect x="15" y="30" width="50" height="40" rx="7" fill="#FF8C00"/>
+      <path d="M34 42 L34 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <path d="M30 42 L30 48 M38 42 L38 48" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <ellipse cx="49" cy="47" rx="4.6" ry="5.6" fill="none" stroke="#241B12" stroke-width="3.2"/>
+      <path d="M49 53 L49 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
 
 <nav class="nav">
-  <span class="nav-logo">LinkUp</span>
+  <span class="nav-logo"><svg class="ic" aria-hidden="true"><use href="#ic-logo"></use></svg>LinkUp</span>
   <span class="nav-tag">Legal</span>
   <button class="nav-back" onclick="history.back()">← Go Back</button>
 </nav>
@@ -228,7 +243,7 @@ footer p{font-size:12px;color:var(--muted);}
 </div>
 
 <footer>
-  <p style="font-family:'Righteous',sans-serif;font-size:16px;color:var(--orange);margin-bottom:8px;">LinkUp</p>
+  <p style="font-family:'Jim Nightshade',cursive;font-size:22px;color:var(--orange);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px;"><svg class="ic" aria-hidden="true"><use href="#ic-logo"></use></svg>LinkUp</p>
   <p>Fast food delivery in Hyderabad, Telangana, India</p>
   <div class="footer-links">
     <a href="index.html">Home</a>
