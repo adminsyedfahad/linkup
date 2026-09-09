@@ -702,20 +702,29 @@ html.light-theme .lp-nav{
 .pay-fail-cod:hover{opacity:.8;}
 /* Offers section (home page) — single auto-rotating card */
 .offers-section{padding:0;}
-.offer-carousel{position:relative;margin:6px 16px 14px;}
-@media(min-width:768px){.offer-carousel{margin:6px 20px 16px;}}
-.offer-slides{position:relative;min-height:112px;transition:height .3s ease;}
+.offer-carousel{position:relative;width:calc(100% - 32px);max-width:640px;margin:6px auto 14px;}
+@media(min-width:768px){.offer-carousel{width:calc(100% - 40px);}}
+.offer-slides{position:relative;min-height:80px;transition:height .3s ease;}
 .offer-slide{
-  position:absolute;inset:0;box-sizing:border-box;padding:16px 18px;border-radius:16px;
-  background:linear-gradient(135deg,rgba(255,140,0,.07),transparent 55%),var(--card);
+  position:absolute;inset:0;box-sizing:border-box;padding:14px 20px;border-radius:16px;
+  background:
+    repeating-linear-gradient(45deg,color-mix(in srgb,var(--text) 5%,transparent) 0 1px,transparent 1px 11px),
+    repeating-linear-gradient(-45deg,color-mix(in srgb,var(--text) 5%,transparent) 0 1px,transparent 1px 11px),
+    linear-gradient(135deg,rgba(255,140,0,.07),transparent 60%),
+    var(--card);
   border:1px solid var(--border);box-shadow:0 2px 14px rgba(0,0,0,.05);
-  display:flex;flex-direction:column;justify-content:center;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
   opacity:0;visibility:hidden;transition:opacity .5s ease;cursor:default;
 }
 .offer-slide.active{opacity:1;visibility:visible;}
-.offer-card-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:5px;line-height:1.3;}
-.offer-card-desc{font-size:12px;color:var(--muted);line-height:1.55;}
-.offer-card-tag{display:inline-block;background:rgba(255,140,0,.12);color:var(--orange);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:8px;letter-spacing:.4px;}
+.offer-slide-text{min-width:0;flex:1;}
+.offer-card-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:3px;line-height:1.3;}
+.offer-card-desc{font-size:12px;color:var(--muted);line-height:1.45;}
+.offer-card-tag{flex-shrink:0;align-self:center;display:inline-flex;align-items:center;background:rgba(255,140,0,.12);color:var(--orange);font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;letter-spacing:.4px;white-space:nowrap;}
+@media(max-width:479px){
+  .offer-slide{flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;}
+  .offer-card-tag{align-self:flex-start;}
+}
 .offer-dots{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:10px;}
 .offer-dot{width:6px;height:6px;padding:0;border:none;border-radius:50%;background:var(--border);cursor:pointer;transition:background .2s,width .2s,border-radius .2s;}
 .offer-dot.active{width:16px;border-radius:3px;background:var(--orange);}
@@ -2517,8 +2526,10 @@ button,a,[onclick]{
     <div class="offer-carousel" id="offerCarousel">
       <div class="offer-slides" id="offerSlides">
         <div class="offer-slide active">
-          <div class="offer-card-title">Earn LinkUp Points!</div>
-          <div class="offer-card-desc">Get 5 points (₹5 value) on every delivered order. Redeem at checkout.</div>
+          <div class="offer-slide-text">
+            <div class="offer-card-title">Earn LinkUp Points!</div>
+            <div class="offer-card-desc">Get 5 points (₹5 value) on every delivered order. Redeem at checkout.</div>
+          </div>
           <div class="offer-card-tag">Rewards</div>
         </div>
       </div>
@@ -5246,8 +5257,10 @@ async function loadOffers(){
   }
   el.innerHTML=offers.map((o,i)=>`
     <div class="offer-slide${i===0?' active':''}">
-      <div class="offer-card-title">${o.title||''}</div>
-      <div class="offer-card-desc">${o.description||''}</div>
+      <div class="offer-slide-text">
+        <div class="offer-card-title">${o.title||''}</div>
+        <div class="offer-card-desc">${o.description||''}</div>
+      </div>
       ${o.tag?`<div class="offer-card-tag">${o.tag}</div>`:''}
     </div>`).join('');
   const dotsEl=document.getElementById('offerDots');
