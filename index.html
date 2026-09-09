@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111'/%3E%3Ctext x='16' y='23' font-family='Arial,sans-serif' font-size='22' font-weight='900' fill='%23ff8c00' text-anchor='middle'%3EL%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23241B12'/%3E%3Cg transform='translate(50,50) scale(1.148) translate(-40,-43.5)'%3E%3Cpath d='M29 31 A11 11 0 0 1 51 31' fill='none' stroke='%23FDF6EA' stroke-width='5.5' stroke-linecap='round'/%3E%3Crect x='15' y='30' width='50' height='40' rx='7' fill='%23FF8C00'/%3E%3Cpath d='M34 42 L34 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M30 42 L30 48 M38 42 L38 48' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='49' cy='47' rx='4.6' ry='5.6' fill='none' stroke='%23241B12' stroke-width='3.2'/%3E%3Cpath d='M49 53 L49 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,7 +27,7 @@
 <meta property="og:description" content="Order food from your favourite local restaurants, fast.">
 <title>LinkUp — Fast Food Delivery</title>
 <link rel="manifest" href="#" id="manifestLink">
-<link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/cKNTK0Nx/icon-180-apple-touch.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@400;600;700;800&family=Tangerine:wght@400;700&family=Jim+Nightshade&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -1869,20 +1869,6 @@ button,a,[onclick]{
 .chat-addr-form input:focus{border-color:var(--orange);}
 .chat-confirm-btn{width:100%;padding:11px;background:var(--orange);color:#000;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;margin-top:4px;}
 
-/* ══ LINKUP LOGO — no white background, no borders ══ */
-img[alt="LinkUp"]{
-  display:block;
-  flex-shrink:0;
-  object-fit:contain;
-  border:none !important;
-  background:none !important;
-  box-shadow:none !important;
-  outline:none !important;
-  filter:none !important;
-  clip-path:none !important;
-  border-radius:0 !important;
-}
-
 </style>
 </head>
 <body>
@@ -1944,6 +1930,14 @@ img[alt="LinkUp"]{
     <symbol id="ic-handshake" viewBox="0 0 24 24"><circle cx="8" cy="8.5" r="3.2"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9.5" r="2.6"/><path d="M12.8 20a5 5 0 0 1 8.7-3.4"/></symbol>
     <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2 4 6.2 4c2.4 0 3.9 1.4 5.8 3.8C13.9 5.4 15.4 4 17.8 4 22 4 23.5 8.4 22 11.9c-2.5 4.5-10 9.1-10 9.1Z"/></symbol>
     <symbol id="ic-heart-filled" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2 4 6.2 4c2.4 0 3.9 1.4 5.8 3.8C13.9 5.4 15.4 4 17.8 4 22 4 23.5 8.4 22 11.9c-2.5 4.5-10 9.1-10 9.1Z"/></symbol>
+    <symbol id="ic-logo" viewBox="13.5 16.5 53 54">
+      <path d="M29 31 A11 11 0 0 1 51 31" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+      <rect x="15" y="30" width="50" height="40" rx="7" fill="#FF8C00"/>
+      <path d="M34 42 L34 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <path d="M30 42 L30 48 M38 42 L38 48" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <ellipse cx="49" cy="47" rx="4.6" ry="5.6" fill="none" stroke="#241B12" stroke-width="3.2"/>
+      <path d="M49 53 L49 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+    </symbol>
   </defs>
 </svg>
 <!-- Fills the iPhone notch/Dynamic Island with brand color — nothing else appears here -->
@@ -1954,9 +1948,7 @@ img[alt="LinkUp"]{
 ══════════════════════════════════════ -->
 <div id="splashScreen">
   <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:6px;">
-    <div style="width:130px;height:130px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
-      <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
-    </div>
+    <svg class="ic" style="width:130px;height:130px;flex-shrink:0;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
     <div class="splash-logo" style="margin-top:4px;">LinkUp</div>
   </div>
   <div class="splash-tagline" style="margin-bottom:40px;">Your cravings, delivered.</div>
@@ -1981,9 +1973,7 @@ img[alt="LinkUp"]{
   <!-- NAV -->
   <nav class="lp-nav">
     <div style="display:flex;align-items:center;gap:9px;">
-      <div style="width:48px;height:48px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
-        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
-      </div>
+      <svg class="ic" style="width:48px;height:48px;flex-shrink:0;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
       <div class="lp-logo">LinkUp</div>
     </div>
     <div class="lp-nav-links">
@@ -2088,9 +2078,7 @@ img[alt="LinkUp"]{
     <div class="lp-footer-grid">
       <div class="lp-footer-brand">
         <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">
-          <div style="width:40px;height:40px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
-            <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
-          </div>
+          <svg class="ic" style="width:40px;height:40px;flex-shrink:0;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
           <span class="lp-logo">LinkUp</span>
         </div>
         <p>Connecting hungry people with the best local food in your city. Fast, fresh, and always local.</p>
@@ -2233,9 +2221,7 @@ img[alt="LinkUp"]{
 <div class="auth-page" id="authPage">
   <div class="auth-box">
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:4px;">
-      <div style="width:92px;height:92px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
-        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
-      </div>
+      <svg class="ic" style="width:92px;height:92px;flex-shrink:0;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
       <div class="auth-logo">LinkUp</div>
     </div>
     <div class="auth-tagline" data-i18n="auth_tagline">✨ Hot food, cold drinks — just a tap away ✨</div>
@@ -2415,9 +2401,7 @@ img[alt="LinkUp"]{
 <div class="header">
   <div class="logo-box" onclick="showPage('home')">
     <div style="display:flex;align-items:center;gap:9px;">
-      <div style="width:46px;height:46px;border-radius:22%;overflow:hidden;flex-shrink:0;background:#0c0c0c;border:1px solid rgba(255,255,255,0.08);">
-        <img src="https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png" alt="LinkUp" style="width:100%;height:100%;display:block;object-fit:contain;">
-      </div>
+      <svg class="ic" style="width:46px;height:46px;flex-shrink:0;" aria-label="LinkUp"><use href="#ic-logo"></use></svg>
       <div>
         <div class="logo">LinkUp</div>
         <div class="area-selector" id="areaSelector" onclick="event.stopPropagation();openAreaSheet()">
@@ -6121,10 +6105,11 @@ function showToast(msg){
 }
 
 // ── PWA ───────────────────────────────────────────
-const _LOGO_URL     = 'https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png';
-const _ICON_180     = 'https://i.ibb.co/cKNTK0Nx/icon-180-apple-touch.png';
-const _ICON_192     = 'https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png';
-const _ICON_512     = 'https://i.ibb.co/vCz3FJQ5/Whats-App-Image-2026-06-29-at-9-12-13-PM-1-removebg-preview.png'; // same as 192 per user
+// Icons are generated locally from the same inline SVG mark used in-app
+// (see #ic-logo in the sprite) — no external image host involved.
+const _ICON_180     = 'icon-180.png';
+const _ICON_192     = 'icon-192.png';
+const _ICON_512     = 'icon-512.png';
 // Update apple-touch-icon dynamically
 const _atiLink = document.querySelector('link[rel="apple-touch-icon"]');
 if(_atiLink) _atiLink.href = _ICON_180;
