@@ -583,18 +583,18 @@ html.light-theme .lp-nav{
 .section-title{padding:12px 16px 6px;font-size:16px;font-weight:700;color:var(--orange);}
 
 /* FOOD GRID */
-.food-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:6px 14px 14px;}
+.food-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:20px;padding:6px 14px 14px;}
 .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s;cursor:pointer;}
 .card:hover{transform:translateY(-3px);border-color:var(--orange);box-shadow:0 6px 20px var(--orange-glow);}
 .card.hide{display:none;}
-.card-img{height:120px;background-size:cover;background-position:center;position:relative;}
-.card-badge{position:absolute;top:8px;left:8px;background:var(--orange);color:#000;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;}
-.card-body{padding:10px;}
-.card-name{font-size:13px;font-weight:600;margin-bottom:4px;}
-.card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
-.card-price{color:var(--orange);font-weight:700;font-size:14px;}
-.card-rating{font-size:11px;color:var(--muted);}
-.add-btn{width:100%;margin-top:8px;padding:7px;background:var(--orange);color:#000;font-weight:700;font-size:12px;border:none;border-radius:8px;cursor:pointer;transition:opacity 0.2s;font-family:'Poppins',sans-serif;}
+.card-img{height:92px;background-size:cover;background-position:center;position:relative;}
+.card-badge{position:absolute;top:8px;left:8px;background:var(--orange);color:#000;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;}
+.card-body{padding:8px;}
+.card-name{font-size:12px;font-weight:600;margin-bottom:3px;}
+.card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:5px;}
+.card-price{color:var(--orange);font-weight:700;font-size:13px;}
+.card-rating{font-size:10px;color:var(--muted);}
+.add-btn{width:100%;margin-top:6px;padding:6px;background:var(--orange);color:#000;font-weight:700;font-size:11px;border:none;border-radius:7px;cursor:pointer;transition:opacity 0.2s;font-family:'Poppins',sans-serif;}
 .add-btn:hover{opacity:0.85;}
 
 /* CART DRAWER */
@@ -700,19 +700,28 @@ html.light-theme .lp-nav{
 .pay-fail-retry:hover{opacity:.88;}
 .pay-fail-cod{padding:13px;background:var(--card);color:var(--text);font-weight:700;border:1px solid var(--border);border-radius:12px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:14px;transition:opacity .2s;}
 .pay-fail-cod:hover{opacity:.8;}
-/* Offers section (home page) */
+/* Offers section (home page) — single auto-rotating card */
 .offers-section{padding:0;}
-.offers-scroll{display:flex;gap:12px;overflow-x:auto;padding:6px 16px 14px;scrollbar-width:none;}
-.offers-scroll::-webkit-scrollbar{display:none;}
-.offer-card{flex-shrink:0;width:220px;border-radius:16px;padding:18px;position:relative;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;}
-.offer-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
-.offer-card-title{font-size:14px;font-weight:800;color:#fff;margin-bottom:5px;line-height:1.3;}
-.offer-card-desc{font-size:11px;color:rgba(255,255,255,0.85);line-height:1.55;}
-.offer-card-tag{display:inline-block;background:rgba(255,255,255,0.22);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:8px;letter-spacing:.4px;}
-/* Offers desktop: stretch cards evenly instead of scrolling */
-@media(min-width:768px){
-  .offers-scroll{display:grid;grid-template-columns:repeat(3,1fr);overflow-x:unset;gap:14px;padding:6px 20px 16px;}
-  .offer-card{flex-shrink:unset;width:auto;}
+.offer-carousel{position:relative;margin:6px 16px 14px;}
+@media(min-width:768px){.offer-carousel{margin:6px 20px 16px;}}
+.offer-slides{position:relative;min-height:112px;transition:height .3s ease;}
+.offer-slide{
+  position:absolute;inset:0;box-sizing:border-box;padding:16px 18px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(255,140,0,.07),transparent 55%),var(--card);
+  border:1px solid var(--border);box-shadow:0 2px 14px rgba(0,0,0,.05);
+  display:flex;flex-direction:column;justify-content:center;
+  opacity:0;visibility:hidden;transition:opacity .5s ease;cursor:default;
+}
+.offer-slide.active{opacity:1;visibility:visible;}
+.offer-card-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:5px;line-height:1.3;}
+.offer-card-desc{font-size:12px;color:var(--muted);line-height:1.55;}
+.offer-card-tag{display:inline-block;background:rgba(255,140,0,.12);color:var(--orange);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-top:8px;letter-spacing:.4px;}
+.offer-dots{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:10px;}
+.offer-dot{width:6px;height:6px;padding:0;border:none;border-radius:50%;background:var(--border);cursor:pointer;transition:background .2s,width .2s,border-radius .2s;}
+.offer-dot.active{width:16px;border-radius:3px;background:var(--orange);}
+@media(prefers-reduced-motion:reduce){
+  .offer-slide{transition:none;}
+  .offer-slides{transition:none;}
 }
 
 /* ══ VEG TOGGLE ══ */
@@ -2505,12 +2514,15 @@ button,a,[onclick]{
   </div>
   <!-- OFFERS SECTION -->
   <div class="offers-section" id="offersSection">
-    <div class="offers-scroll" id="offersScroll">
-      <div class="offer-card" style="background:linear-gradient(135deg,#ff8c00,#ff5500);">
-        <div class="offer-card-title">Earn LinkUp Points!</div>
-        <div class="offer-card-desc">Get 5 points (₹5 value) on every delivered order. Redeem at checkout.</div>
-        <div class="offer-card-tag">Rewards</div>
+    <div class="offer-carousel" id="offerCarousel">
+      <div class="offer-slides" id="offerSlides">
+        <div class="offer-slide active">
+          <div class="offer-card-title">Earn LinkUp Points!</div>
+          <div class="offer-card-desc">Get 5 points (₹5 value) on every delivered order. Redeem at checkout.</div>
+          <div class="offer-card-tag">Rewards</div>
+        </div>
       </div>
+      <div class="offer-dots" id="offerDots"></div>
     </div>
   </div>
 
@@ -5213,12 +5225,16 @@ function renderPointsTxns(){
 }
 
 // ── OFFERS ────────────────────────────────────────
+const OFFER_ROTATE_MS=2000; // single knob for the auto-advance interval
+let _offerIdx=0, _offerTimer=null, _offerPaused=false, _offerCount=0;
+const _offerReducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 async function loadOffers(){
-  const el=document.getElementById('offersScroll'); if(!el) return;
+  const el=document.getElementById('offerSlides'); if(!el) return;
   const defaults=[
-    {title:'Earn LinkUp Points!',description:'Get 5 points (₹5 value) on every delivered order. Redeem at checkout.',gradient:'linear-gradient(135deg,#ff8c00,#ff5500)',tag:'Rewards'},
-    {title:'Free Delivery Always',description:'Every order ships free — no minimum, no hidden charges.',gradient:'linear-gradient(135deg,#22c55e,#15803d)',tag:'Always On'},
-    {title:'Fresh & Fast',description:'Food from top local restaurants, delivered hot in under 30 min.',gradient:'linear-gradient(135deg,#3b82f6,#1d4ed8)',tag:'Quality'}
+    {title:'Earn LinkUp Points!',description:'Get 5 points (₹5 value) on every delivered order. Redeem at checkout.',tag:'Rewards'},
+    {title:'Free Delivery Always',description:'Every order ships free — no minimum, no hidden charges.',tag:'Always On'},
+    {title:'Fresh & Fast',description:'Food from top local restaurants, delivered hot in under 30 min.',tag:'Quality'}
   ];
   let offers=[...defaults];
   if(window._fbReady&&window._db){
@@ -5228,13 +5244,49 @@ async function loadOffers(){
       if(fs.length) offers=[...fs,...defaults];
     } catch(e){}
   }
-  el.innerHTML=offers.map(o=>`
-    <div class="offer-card" style="background:${o.gradient||'linear-gradient(135deg,#ff8c00,#ff5500)'};">
+  el.innerHTML=offers.map((o,i)=>`
+    <div class="offer-slide${i===0?' active':''}">
       <div class="offer-card-title">${o.title||''}</div>
       <div class="offer-card-desc">${o.description||''}</div>
       ${o.tag?`<div class="offer-card-tag">${o.tag}</div>`:''}
     </div>`).join('');
+  const dotsEl=document.getElementById('offerDots');
+  if(dotsEl) dotsEl.innerHTML=offers.length>1?offers.map((_,i)=>`<button class="offer-dot${i===0?' active':''}" onclick="_offerGoTo(${i})" aria-label="Show offer ${i+1}"></button>`).join(''):'';
+  _offerIdx=0; _offerCount=offers.length;
+  _offerSyncHeight();
+  _offerStart();
 }
+function _offerSyncHeight(){
+  const wrap=document.getElementById('offerSlides'); if(!wrap) return;
+  let max=0;
+  [...wrap.children].forEach(s=>{ max=Math.max(max,s.scrollHeight); });
+  if(max>0) wrap.style.height=max+'px';
+}
+function _offerGoTo(i){
+  const wrap=document.getElementById('offerSlides'); if(!wrap) return;
+  const slides=[...wrap.querySelectorAll('.offer-slide')];
+  slides.forEach((s,idx)=>s.classList.toggle('active',idx===i));
+  [...document.querySelectorAll('.offer-dot')].forEach((d,idx)=>d.classList.toggle('active',idx===i));
+  _offerIdx=i;
+}
+function _offerNext(){
+  if(_offerCount<2) return;
+  _offerGoTo((_offerIdx+1)%_offerCount);
+}
+function _offerStart(){
+  clearInterval(_offerTimer);
+  if(_offerCount<2||_offerReducedMotion) return;
+  _offerTimer=setInterval(()=>{ if(!_offerPaused) _offerNext(); },OFFER_ROTATE_MS);
+}
+(function(){
+  const carousel=document.getElementById('offerCarousel');
+  if(!carousel) return;
+  carousel.addEventListener('mouseenter',()=>{_offerPaused=true;});
+  carousel.addEventListener('mouseleave',()=>{_offerPaused=false;});
+  carousel.addEventListener('touchstart',()=>{_offerPaused=true;},{passive:true});
+  carousel.addEventListener('touchend',()=>{_offerPaused=false;});
+  window.addEventListener('resize',()=>{ clearTimeout(window._offerResizeT); window._offerResizeT=setTimeout(_offerSyncHeight,150); });
+})();
 
 // ── DELIVERY AREA ─────────────────────────────────
 // Edit this array to update serviceable areas — easy to maintain
