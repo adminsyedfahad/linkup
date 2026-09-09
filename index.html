@@ -573,11 +573,16 @@ html.light-theme .lp-nav{
 .rest-search-sub{font-size:11px;color:var(--muted);}
 .rest-search-arrow{font-size:18px;color:var(--muted);}
 
-/* CATEGORIES */
-.categories{display:flex;overflow-x:auto;padding:0 14px 10px;gap:8px;scrollbar-width:none;}
-.categories::-webkit-scrollbar{display:none;}
-.cat{flex-shrink:0;padding:7px 16px;border-radius:20px;background:var(--surface);border:1px solid var(--border);font-size:13px;cursor:pointer;transition:all 0.2s;white-space:nowrap;font-family:'Poppins',sans-serif;}
-.cat:hover,.cat.active{background:var(--orange);color:#000;border-color:var(--orange);font-weight:700;}
+/* CATEGORIES — icon grid */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 6px;padding:2px 14px 16px;}
+@media(min-width:768px){.cat-grid{grid-template-columns:repeat(8,1fr);}}
+.cat{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:4px 2px;border:none;background:none;border-radius:14px;font-family:'Poppins',sans-serif;transition:background 0.15s;width:100%;}
+.cat:hover{background:var(--surface);}
+.cat-circle{width:52px;height:52px;border-radius:50%;background:var(--input-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text);flex-shrink:0;transition:background 0.2s,border-color 0.2s,color 0.2s;}
+.cat-circle .ic{width:22px;height:22px;}
+.cat-label{font-size:11px;font-weight:600;color:var(--muted);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 0.2s;}
+.cat.active .cat-circle{background:var(--orange);border-color:var(--orange);color:#000;}
+.cat.active .cat-label{color:var(--orange);font-weight:800;}
 
 /* SECTION TITLE */
 .section-title{padding:12px 16px 6px;font-size:16px;font-weight:700;color:var(--orange);}
@@ -725,7 +730,8 @@ html.light-theme .lp-nav{
 }
 
 /* ══ VEG TOGGLE ══ */
-.veg-filter-wrap{display:flex;align-items:center;padding:0 14px 10px;flex-shrink:0;}
+.veg-row{display:flex;justify-content:flex-end;padding:10px 14px 0;}
+.veg-filter-wrap{display:flex;align-items:center;flex-shrink:0;}
 .veg-toggle-btn{
   display:flex;align-items:center;gap:6px;
   padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);
@@ -768,6 +774,17 @@ html.light-theme .lp-nav{
 .area-search-wrap input{width:100%;padding:11px 14px 11px 38px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;font-family:'Poppins',sans-serif;outline:none;transition:border-color .2s;}
 .area-search-wrap input:focus{border-color:var(--orange);}
 .area-search-wrap::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+
+/* MORE CATEGORIES SHEET */
+.more-sheet-list{display:flex;flex-direction:column;gap:6px;padding:0 4px 12px;}
+.more-sheet-opt{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;
+  border:1.5px solid transparent;transition:background .15s,border-color .15s;
+}
+.more-sheet-opt:hover{background:var(--surface);}
+.more-sheet-opt-circle{width:40px;height:40px;border-radius:50%;background:var(--input-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text);flex-shrink:0;}
+.more-sheet-opt-circle .ic{width:18px;height:18px;}
+.more-sheet-opt-label{font-size:14px;color:var(--text);font-weight:600;}
 .area-sheet-empty{text-align:center;color:var(--muted);padding:24px 0;font-size:13px;}
 /* Wallet/Points sheet tabs */
 .wallet-tabs{display:flex;gap:6px;margin-bottom:18px;}
@@ -1910,6 +1927,7 @@ button,a,[onclick]{
     <symbol id="ic-dessert" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 1 5 5c0 1-.4 2-1 2H8c-.6 0-1-1-1-2a5 5 0 0 1 5-5Z"/><path d="M8 9.5 12 22l4-12.5"/></symbol>
     <symbol id="ic-juice" viewBox="0 0 24 24"><path d="M6.5 3h11l-1.6 17.2a2 2 0 0 1-2 1.8h-3.8a2 2 0 0 1-2-1.8L6.5 3Z"/><path d="M6.5 3h11"/><path d="M16 1v4"/></symbol>
     <symbol id="ic-chicken" viewBox="0 0 24 24"><path d="M14 4c3 0 5.5 2.2 5.5 5.2 0 2.3-1.7 3.8-3.3 5.2L8 22l-2-2 8.3-8.3c-1.3-1.2-2.6-2.6-2.6-4.5C11.7 5.2 12.7 4 14 4Z"/></symbol>
+    <symbol id="ic-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8" style="fill:currentColor;stroke:none;"/><circle cx="12" cy="12" r="1.8" style="fill:currentColor;stroke:none;"/><circle cx="19" cy="12" r="1.8" style="fill:currentColor;stroke:none;"/></symbol>
     <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
     <symbol id="ic-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19.5h16"/></symbol>
     <symbol id="ic-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.1 9.3a2.9 2.9 0 1 1 4.4 2.4c-.9.6-1.5 1.1-1.5 2.3"/><circle cx="12" cy="17.3" r="0.15" fill="currentColor" stroke="currentColor" stroke-width="2"/></symbol>
@@ -2494,23 +2512,23 @@ button,a,[onclick]{
     <input type="text" id="searchInput" placeholder="🔍  Search food, restaurants..." oninput="handleSearch()" autocomplete="off" onblur="setTimeout(()=>hideRestSearch(),200)" data-i18n-ph="ph_search">
     <div id="restSearchDrop" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--border);border-radius:12px;z-index:200;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3);"></div>
   </div>
-  <div style="display:flex;align-items:center;gap:0;">
-    <div class="categories" style="flex:1;min-width:0;">
-      <div class="cat active" data-cat="all"       onclick="filter('all',this)"><svg class="ic"><use href="#ic-dish"></use></svg> <span data-i18n="cat_all">All</span></div>
-      <div class="cat"        data-cat="burger"    onclick="filter('burger',this)"><svg class="ic"><use href="#ic-burger"></use></svg> <span data-i18n="cat_burger">Burger</span></div>
-      <div class="cat"        data-cat="pizza"     onclick="filter('pizza',this)"><svg class="ic"><use href="#ic-pizza"></use></svg> <span data-i18n="cat_pizza">Pizza</span></div>
-      <div class="cat"        data-cat="biryani"   onclick="filter('biryani',this)"><svg class="ic"><use href="#ic-bowl"></use></svg> <span data-i18n="cat_biryani">Biryani</span></div>
-      <div class="cat"        data-cat="dessert"   onclick="filter('dessert',this)"><svg class="ic"><use href="#ic-dessert"></use></svg> <span data-i18n="cat_dessert">Dessert</span></div>
-      <div class="cat"        data-cat="juice"     onclick="filter('juice',this)"><svg class="ic"><use href="#ic-juice"></use></svg> <span data-i18n="cat_juice">Juice</span></div>
-      <div class="cat"        data-cat="chicken"   onclick="filter('chicken',this)"><svg class="ic"><use href="#ic-chicken"></use></svg> <span data-i18n="cat_chicken">Chicken</span></div>
-      <div class="cat"        data-cat="grocery"   onclick="filter('grocery',this)"><svg class="ic"><use href="#ic-cart"></use></svg> <span data-i18n="cat_grocery">Grocery</span></div>
-      <div class="cat" onclick="showPage('restaurants')" style="background:rgba(255,140,0,0.08);border-color:rgba(255,140,0,0.4);color:var(--orange);font-weight:700;"><svg class="ic"><use href="#ic-store"></use></svg> <span data-i18n="cat_restaurants">Restaurants</span></div>
-    </div>
+  <div class="veg-row">
     <div class="veg-filter-wrap">
       <button class="veg-toggle-btn" id="vegToggleBtn" onclick="toggleVeg()">
         <span class="veg-dot"></span> <span data-i18n="veg_filter">Veg</span>
       </button>
     </div>
+  </div>
+  <div class="cat-grid" id="catGrid">
+    <div class="cat active" data-cat="all"     onclick="filter('all',this)"><span class="cat-circle"><svg class="ic"><use href="#ic-dish"></use></svg></span><span class="cat-label" data-i18n="cat_all">All</span></div>
+    <div class="cat"        data-cat="burger"  onclick="filter('burger',this)"><span class="cat-circle"><svg class="ic"><use href="#ic-burger"></use></svg></span><span class="cat-label" data-i18n="cat_burger">Burger</span></div>
+    <div class="cat"        data-cat="pizza"   onclick="filter('pizza',this)"><span class="cat-circle"><svg class="ic"><use href="#ic-pizza"></use></svg></span><span class="cat-label" data-i18n="cat_pizza">Pizza</span></div>
+    <div class="cat"        data-cat="biryani" onclick="filter('biryani',this)"><span class="cat-circle"><svg class="ic"><use href="#ic-bowl"></use></svg></span><span class="cat-label" data-i18n="cat_biryani">Biryani</span></div>
+    <div class="cat"        data-cat="chicken" onclick="filter('chicken',this)"><span class="cat-circle"><svg class="ic"><use href="#ic-chicken"></use></svg></span><span class="cat-label" data-i18n="cat_chicken">Chicken</span></div>
+    <div class="cat"        data-cat="dessert" onclick="filter('dessert',this)"><span class="cat-circle"><svg class="ic"><use href="#ic-dessert"></use></svg></span><span class="cat-label" data-i18n="cat_dessert">Dessert</span></div>
+    <div class="cat"        data-cat="grocery" onclick="filter('grocery',this)"><span class="cat-circle"><svg class="ic"><use href="#ic-cart"></use></svg></span><span class="cat-label" data-i18n="cat_grocery">Grocery</span></div>
+    <div class="cat" onclick="openMoreSheet()"><span class="cat-circle"><svg class="ic"><use href="#ic-more"></use></svg></span><span class="cat-label">More</span></div>
+    <div class="cat" data-cat="juice" id="catJuiceMarker" style="display:none;"></div>
   </div>
   <!-- OFFERS SECTION -->
   <div class="offers-section" id="offersSection">
@@ -5400,6 +5418,18 @@ function closeAreaSheet(){
   const searchEl=document.getElementById('areaSearch');
   if(searchEl) searchEl.value='';
 }
+function openMoreSheet(){
+  const ov=document.getElementById('moreOverlay');
+  if(ov){ ov.classList.add('open'); document.body.style.overflow='hidden'; }
+}
+function closeMoreSheet(){
+  const ov=document.getElementById('moreOverlay');
+  if(ov){ ov.classList.remove('open'); document.body.style.overflow=''; }
+}
+function selectMoreCategory(cat){
+  closeMoreSheet();
+  filter(cat, document.getElementById('catJuiceMarker'));
+}
 function setArea(area){
   localStorage.setItem('lu_area', area);
   const el = document.getElementById('areaLabel');
@@ -7519,6 +7549,29 @@ function reverseGeocode(lat, lng) {
       </div>
     </div>
     <div class="area-sheet-list" id="areaSheetList" style="overflow-y:auto;flex:1;padding:0 12px 20px;"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MORE CATEGORIES SHEET
+══════════════════════════════════════ -->
+<div class="psheet-overlay" id="moreOverlay" onclick="closeMoreSheet()">
+  <div class="psheet" onclick="event.stopPropagation()">
+    <div class="psheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 10px;">
+      <div class="psheet-title" style="padding:0;margin:0;">More Categories</div>
+      <button onclick="closeMoreSheet()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:4px;"><svg class="ic"><use href="#ic-close"></use></svg></button>
+    </div>
+    <div class="more-sheet-list">
+      <div class="more-sheet-opt" onclick="selectMoreCategory('juice')">
+        <span class="more-sheet-opt-circle"><svg class="ic"><use href="#ic-juice"></use></svg></span>
+        <span class="more-sheet-opt-label" data-i18n="cat_juice">Juice</span>
+      </div>
+      <div class="more-sheet-opt" onclick="closeMoreSheet();showPage('restaurants');">
+        <span class="more-sheet-opt-circle"><svg class="ic"><use href="#ic-store"></use></svg></span>
+        <span class="more-sheet-opt-label" data-i18n="cat_restaurants">Restaurants</span>
+      </div>
+    </div>
   </div>
 </div>
 
