@@ -3,9 +3,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111'/%3E%3Ctext x='16' y='23' font-family='Arial,sans-serif' font-size='22' font-weight='900' fill='%23ff8c00' text-anchor='middle'%3EL%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23241B12'/%3E%3Cg transform='translate(50,50) scale(0.82) translate(-40,-40)'%3E%3Cpath d='M40 7 C52.5 7 62.5 17 62.5 29.5 C62.5 46 40 73 40 73 C40 73 17.5 46 17.5 29.5 C17.5 17 27.5 7 40 7 Z' fill='%23FF8C00'/%3E%3Cpath d='M45 15 L30 34 L38 34 L35 47 L50 28 L42 28 Z' fill='%23FDF6EA'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#ff8c00">
+<script>
+(function(){
+  try{
+    if(localStorage.getItem('lu_theme') === 'light') document.documentElement.classList.add('light-theme');
+  }catch(e){}
+})();
+</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -38,9 +45,13 @@ window._rfReady=true; window.dispatchEvent(new Event('rfReady'));
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
   --bg:#0b0b0f;--surface:#13131a;--card:#1a1a26;--card2:#1e1e2e;--border:#252538;
-  --text:#e8e8f0;--muted:#7a7a9a;--muted2:#55556a;
+  --text:#e8e8f0;--muted:#7a7a9a;--muted2:#55556a;--input-bg:#1e1e28;
   --orange:#ff8c00;--orange2:#c06000;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;
   --amber:#f59e0b;
+}
+html.light-theme{
+  --bg:#FFF8ED;--surface:#FFFDF7;--card:#FFFFFF;--card2:#FFFDF7;--border:#F0E2C8;
+  --text:#2B2118;--muted:#8A7D6D;--muted2:#B8AB90;--input-bg:#FFF3E0;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;font-size:14px;overflow:hidden;}
 
@@ -74,7 +85,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 .login-logo .ll-brand{font-family:'Righteous',cursive;font-size:24px;color:var(--orange);letter-spacing:2px;}
 .login-logo .ll-sub{font-size:10px;color:var(--muted);letter-spacing:4px;text-transform:uppercase;margin-top:4px;}
 .l-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:7px;}
-.l-inp{width:100%;padding:14px 15px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:inherit;outline:none;margin-bottom:15px;transition:border-color .2s;}
+.l-inp{width:100%;padding:14px 15px;background:var(--input-bg);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:inherit;outline:none;margin-bottom:15px;transition:border-color .2s;}
 .l-inp:focus{border-color:var(--orange);}
 .l-btn{width:100%;padding:16px;background:var(--orange);color:#000;font-weight:800;font-size:16px;border:none;border-radius:13px;cursor:pointer;font-family:inherit;margin-top:4px;transition:opacity .15s;}
 .l-btn:active{opacity:.8;}
@@ -103,12 +114,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
   flex-shrink:0;
   background:#070710;border-bottom:1px solid var(--border);
 }
-.gps-led{width:10px;height:10px;border-radius:50%;background:var(--muted2);flex-shrink:0;transition:background .3s,box-shadow .3s;}
+.gps-led{width:10px;height:10px;border-radius:50%;background:#55556a;flex-shrink:0;transition:background .3s,box-shadow .3s;}
 .gps-led.on{background:var(--green);box-shadow:0 0 8px var(--green),0 0 16px rgba(34,197,94,.3);animation:ledPulse 1.8s ease-in-out infinite;}
 @keyframes ledPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-#gpsLabel{font-size:12px;font-weight:700;color:var(--muted2);transition:color .3s;letter-spacing:.3px;}
+#gpsLabel{font-size:12px;font-weight:700;color:#55556a;transition:color .3s;letter-spacing:.3px;}
 #gpsLabel.on{color:var(--green);}
-#gpsTime{font-size:11px;color:var(--muted2);margin-left:auto;}
+#gpsTime{font-size:11px;color:#55556a;margin-left:auto;}
 
 /* HEADER — horizontal safe-area for landscape notch */
 #rHeader{
@@ -204,6 +215,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 .o-oid{font-family:'Righteous',cursive;font-size:17px;color:var(--orange);}
 .o-chip{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
 .o-chip.placed,.o-chip.accepted{background:rgba(255,255,255,.07);color:var(--muted);}
+html.light-theme .o-chip.placed,html.light-theme .o-chip.accepted{background:rgba(0,0,0,.05);}
 .o-chip.preparing{background:rgba(245,158,11,.15);color:var(--amber);}
 .o-chip.picked_up{background:rgba(59,130,246,.15);color:#60a5fa;}
 .o-chip.on_the_way{background:rgba(255,140,0,.15);color:var(--orange);}
@@ -258,7 +270,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 .map-nav-btn:active{opacity:.8;}
 .map-recenter{
   position:absolute;bottom:12px;left:12px;z-index:500;
-  background:rgba(13,13,20,.85);color:var(--text);
+  background:rgba(13,13,20,.85);color:#f0f0f0;
   border:1.5px solid var(--border);border-radius:10px;
   padding:8px 12px;font-size:12px;font-weight:600;
   cursor:pointer;font-family:inherit;
@@ -267,7 +279,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 .map-recenter:active{opacity:.7;}
 .map-route-label{
   position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:500;
-  background:rgba(13,13,20,.85);color:var(--text);
+  background:rgba(13,13,20,.85);color:#f0f0f0;
   border:1px solid var(--border);border-radius:8px;
   padding:5px 12px;font-size:11px;font-weight:600;
   backdrop-filter:blur(4px);white-space:nowrap;
@@ -356,7 +368,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
   bottom:calc(96px + constant(safe-area-inset-bottom,0px));
   bottom:calc(96px + env(safe-area-inset-bottom,0px));
   left:50%;transform:translateX(-50%) translateY(16px);
-  background:#1e1e30;color:var(--text);padding:11px 22px;border-radius:12px;
+  background:#1e1e30;color:#f0f0f0;padding:11px 22px;border-radius:12px;
   font-size:13px;font-weight:600;opacity:0;transition:all .25s;z-index:700;
   pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5);
 }
@@ -365,13 +377,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Poppin
 /* Leaflet override for dark theme */
 .leaflet-container{background:#12121e;}
 
-/* ── LIGHT THEME ──────────────────────────────────────── */
-html.light{
-  --bg:#f0f0f7;--surface:#fff;--card:#fff;--card2:#f4f4fb;--border:#e0e0ee;
-  --text:#1a1a2e;--muted:#6a6a88;--muted2:#9595b5;
-}
-html.light .leaflet-container{background:#e8e8f0;}
-html.light #gpsBar{background:#070710;}
+/* ── LEAFLET (light) ──────────────────────────────────── */
+html.light-theme .leaflet-container{background:#FFF3E0;}
 
 /* ── DELIVERY FAILED STATES ───────────────────────────── */
 .o-chip.delivery_failed{background:rgba(239,68,68,.15);color:var(--red);}
@@ -396,7 +403,7 @@ html.light #gpsBar{background:#070710;}
 .fail-chip.selected{background:rgba(239,68,68,.1);border-color:var(--red);color:var(--red);}
 .fail-txtarea{
   width:100%;min-height:78px;padding:11px 13px;
-  background:var(--bg);border:1.5px solid var(--border);border-radius:12px;
+  background:var(--input-bg);border:1.5px solid var(--border);border-radius:12px;
   color:var(--text);font-size:13px;font-family:inherit;outline:none;resize:none;
   transition:border-color .2s;
 }
@@ -424,7 +431,7 @@ html.light #gpsBar{background:#070710;}
   transition:background .15s,border-color .15s;
 }
 .rh-gear:active{background:rgba(255,140,0,.12);border-color:var(--orange);}
-html.light .rh-gear{background:rgba(0,0,0,.05);}
+html.light-theme .rh-gear{background:rgba(0,0,0,.05);}
 /* Status dropdown button */
 .rh-status{position:relative;flex-shrink:0;}
 .rh-status-btn{display:flex;align-items:center;gap:5px;padding:6px 10px;background:rgba(255,255,255,.06);border:1.5px solid var(--border);border-radius:9px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text);font-family:inherit;transition:border-color .15s,background .15s;white-space:nowrap;}
@@ -438,14 +445,9 @@ html.light .rh-gear{background:rgba(0,0,0,.05);}
 .rh-status-dd.open{display:block;}
 .rh-status-opt{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--text);transition:background .1s;}
 .rh-status-opt:active{background:rgba(255,140,0,.1);}
-html.light .rh-status-btn{background:rgba(0,0,0,.06);border-color:#c8c8de;color:#1a1a2e;}
-html.light .rh-status-dd{background:#fff;border-color:#c8c8de;box-shadow:0 8px 24px rgba(0,0,0,.15);}
-html.light .rh-status-opt{color:#1a1a2e;}
-html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
-.rh-status-dot.available{background:#16a34a;box-shadow:0 0 5px rgba(22,163,74,.5);}
-.rh-status-dot.break{background:#d97706;box-shadow:0 0 5px rgba(217,119,6,.5);}
-.rh-status-dot.finished{background:#6b7280;}
-.rh-status-dot.none{background:#6b7280;}
+html.light-theme .rh-status-btn{background:rgba(0,0,0,.05);}
+html.light-theme .rh-status-dd{box-shadow:0 8px 24px rgba(0,0,0,.15);}
+html.light-theme .rh-status-opt:active{background:rgba(0,0,0,.05);}
 
 /* Toggle switch */
 .sw-toggle{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;}
@@ -477,9 +479,19 @@ html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
 </head>
 <body>
 
+<!-- Brand mark sprite -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="ic-logo-rider" viewBox="14 4 52 72">
+      <path d="M40 7 C52.5 7 62.5 17 62.5 29.5 C62.5 46 40 73 40 73 C40 73 17.5 46 17.5 29.5 C17.5 17 27.5 7 40 7 Z" fill="#FF8C00"/>
+      <path d="M45 15 L30 34 L38 34 L35 47 L50 28 L42 28 Z" fill="#FDF6EA"/>
+    </symbol>
+  </defs>
+</svg>
+
 <!-- SPLASH -->
 <div id="rSplash">
-  <div class="spl-icon">🛵</div>
+  <svg class="spl-icon" style="width:46px;height:64px;" aria-label="LinkUp Wheels"><use href="#ic-logo-rider"></use></svg>
   <div class="spl-brand">LINKUP WHEELS</div>
   <div class="spl-sub">Rider App</div>
   <div class="spl-track"><div class="spl-fill"></div></div>
@@ -489,7 +501,7 @@ html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
 <div id="rLogin">
   <div class="login-box">
     <div class="login-logo">
-      <div class="ll-icon">🛵</div>
+      <svg class="ll-icon" style="width:36px;height:50px;" aria-label="LinkUp Wheels"><use href="#ic-logo-rider"></use></svg>
       <div class="ll-brand">LINKUP WHEELS</div>
       <div class="ll-sub">Rider App</div>
     </div>
@@ -512,7 +524,7 @@ html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
   </div>
   <div id="rHeader">
     <div class="rh-brand">
-      <span class="rh-icon">🛵</span>
+      <svg class="rh-icon" style="width:16px;height:22px;" aria-label="LinkUp Wheels"><use href="#ic-logo-rider"></use></svg>
       <span class="rh-title">Wheels</span>
     </div>
     <span id="rNameEl"></span>
@@ -528,6 +540,7 @@ html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
         <div class="rh-status-opt" onclick="pickStatus('finished')">🔴 Finished</div>
       </div>
     </div>
+    <button class="rh-gear" id="rhThemeBtn" onclick="headerToggleRiderTheme()" title="Toggle theme"></button>
     <button class="rh-gear" onclick="showSettings()" title="Settings">⚙️</button>
     <button class="rh-out" onclick="rDoLogout()">Sign Out</button>
   </div>
@@ -652,7 +665,7 @@ html.light .rh-status-opt:active{background:rgba(0,0,0,.05);}
               <div class="stg-lbl">Password</div>
               <div style="display:flex;align-items:center;gap:8px;">
                 <span id="privacyPassDisplay" style="font-size:14px;font-weight:700;letter-spacing:2px;">••••••••</span>
-                <button id="privacyPassToggle" onclick="togglePrivacyPass()" style="padding:5px 10px;background:rgba(255,255,255,.06);border:1.5px solid var(--border);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit;">Show</button>
+                <button id="privacyPassToggle" onclick="togglePrivacyPass()" style="padding:5px 10px;background:var(--card2);border:1.5px solid var(--border);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit;">Show</button>
               </div>
             </div>
           </div>
@@ -754,9 +767,6 @@ function _ensureRiderAudio(){
 }
 document.addEventListener('click',_ensureRiderAudio);
 document.addEventListener('touchstart',_ensureRiderAudio,{passive:true});
-
-// Apply saved theme immediately
-(function(){if(localStorage.getItem('rw_theme')==='light')document.documentElement.classList.add('light');})();
 
 // GPS
 let _gpsWatchId=null, _wakeLock=null;
@@ -1654,7 +1664,7 @@ function showSettings(){
   const areaInput=document.getElementById('areaInp');
   if(areaInput) areaInput.value=riderProfile?.area||'';
   const themeToggle=document.getElementById('themeToggle');
-  if(themeToggle) themeToggle.checked=document.documentElement.classList.contains('light');
+  if(themeToggle) themeToggle.checked=document.documentElement.classList.contains('light-theme');
   renderToneList();
   loadRiderOwnRating();
   loadPrivacySection();
@@ -1687,11 +1697,31 @@ function loadRiderOwnRating(){
     if(el) el.innerHTML=`<span style="color:var(--orange);font-size:20px;letter-spacing:2px;">${stars}</span>&nbsp;<span style="font-size:15px;font-weight:800;">${avg.toFixed(1)}</span>&nbsp;<span style="color:var(--muted);font-size:12px;">(${total} review${total!==1?'s':''})</span>`;
   },()=>{if(el) el.innerHTML='<span style="color:var(--muted);font-size:12px;">Could not load ratings</span>';});
 }
+const RIDER_SUN_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>';
+const RIDER_MOON_SVG='<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/></svg>';
+function syncRiderThemeIcon(){
+  const btn=document.getElementById('rhThemeBtn');
+  if(!btn) return;
+  const isLight=document.documentElement.classList.contains('light-theme');
+  btn.innerHTML=isLight?RIDER_MOON_SVG:RIDER_SUN_SVG;
+  btn.title=isLight?'Switch to dark theme':'Switch to light theme';
+}
+function headerToggleRiderTheme(){
+  const isLight=!document.documentElement.classList.contains('light-theme');
+  const cb=document.getElementById('themeToggle');
+  if(cb) cb.checked=isLight;
+  applyRiderTheme(isLight);
+}
 function toggleRiderTheme(){
   const isLight=document.getElementById('themeToggle')?.checked;
-  document.documentElement.classList.toggle('light',isLight);
-  localStorage.setItem('rw_theme',isLight?'light':'dark');
+  applyRiderTheme(isLight);
 }
+function applyRiderTheme(isLight){
+  document.documentElement.classList.toggle('light-theme',isLight);
+  localStorage.setItem('lu_theme',isLight?'light':'dark');
+  syncRiderThemeIcon();
+}
+syncRiderThemeIcon();
 async function saveNickname(){
   const input=document.getElementById('nicknameInp');
   const nick=(input?.value||'').trim();
