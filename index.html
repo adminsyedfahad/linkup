@@ -2661,12 +2661,12 @@ button,a,[onclick]{
     <div class="offer-carousel" id="offerCarousel">
       <div class="offer-slides" id="offerSlides">
         <div class="offer-slide active">
-          <img src="https://images.unsplash.com/photo-1607863680198-23d4b2565df0?w=120" alt="">
+          <img src="https://images.unsplash.com/photo-1526367790999-0150786686a2?w=120" alt="">
           <div class="offer-slide-text">
-            <div class="offer-card-title">Earn LinkUp Points!</div>
-            <div class="offer-card-desc">Get 5 points (₹5 value) on every delivered order. Redeem at checkout.</div>
+            <div class="offer-card-title">Free Delivery Always</div>
+            <div class="offer-card-desc">Every order ships free — no minimum, no hidden charges.</div>
           </div>
-          <div class="offer-card-tag">Rewards</div>
+          <div class="offer-card-tag">Always On</div>
         </div>
       </div>
       <div class="offer-dots" id="offerDots"></div>
@@ -5379,7 +5379,6 @@ const _offerReducedMotion=window.matchMedia&&window.matchMedia('(prefers-reduced
 async function loadOffers(){
   const el=document.getElementById('offerSlides'); if(!el) return;
   const defaults=[
-    {title:'Earn LinkUp Points!',description:'Get 5 points (₹5 value) on every delivered order. Redeem at checkout.',tag:'Rewards',img:'https://images.unsplash.com/photo-1607863680198-23d4b2565df0?w=120'},
     {title:'Free Delivery Always',description:'Every order ships free — no minimum, no hidden charges.',tag:'Always On',img:'https://images.unsplash.com/photo-1526367790999-0150786686a2?w=120'},
     {title:'Fresh & Fast',description:'Food from top local restaurants, delivered hot in under 30 min.',tag:'Quality',img:'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=120'}
   ];
