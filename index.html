@@ -709,6 +709,10 @@ html.light-theme .lp-nav{
 /* Offers section (home page) — single auto-rotating card, same family as .ad-card */
 .offers-section{padding:0;}
 .offer-carousel{position:relative;padding:0 14px;margin:6px 0 14px;}
+
+/* AD BANNER SLIDER — capped height, smaller on phones */
+.lu-slide{min-width:100%;height:160px;max-height:160px;border-radius:16px;overflow:hidden;position:relative;}
+@media(max-width:480px){.lu-slide{height:140px;max-height:140px;}}
 .offer-slides{position:relative;min-height:80px;transition:height .3s ease;}
 .offer-slide{
   position:absolute;inset:0;box-sizing:border-box;padding:10px 14px;border-radius:var(--radius);
@@ -2532,7 +2536,7 @@ button,a,[onclick]{
   <div style="position:relative;z-index:1;width:100%;overflow:hidden;border-radius:16px;margin-bottom:12px;">
   <div id="lu-slider" style="display:flex;transition:transform 0.5s ease;will-change:transform;">
 
-  <div style="min-width:100%;height:160px;border-radius:16px;overflow:hidden;position:relative;">
+  <div class="lu-slide">
   <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.75;">
   <div style="position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%);">
   <div style="font-size:11px;color:#FF8C00;font-weight:700;letter-spacing:1px;">🍛 LIMITED TIME</div>
@@ -2541,7 +2545,7 @@ button,a,[onclick]{
   </div>
   </div>
 
-  <div style="min-width:100%;height:160px;border-radius:16px;overflow:hidden;position:relative;">
+  <div class="lu-slide">
   <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.75;">
   <div style="position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%);">
   <div style="font-size:11px;color:#FF8C00;font-weight:700;letter-spacing:1px;">🍔 BESTSELLER</div>
@@ -2550,7 +2554,7 @@ button,a,[onclick]{
   </div>
   </div>
 
-  <div style="min-width:100%;height:160px;border-radius:16px;overflow:hidden;position:relative;">
+  <div class="lu-slide">
   <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.75;">
   <div style="position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%);">
   <div style="font-size:11px;color:#FF8C00;font-weight:700;letter-spacing:1px;">🍕 TRENDING</div>
@@ -2559,7 +2563,7 @@ button,a,[onclick]{
   </div>
   </div>
 
-  <div style="min-width:100%;height:160px;border-radius:16px;overflow:hidden;position:relative;">
+  <div class="lu-slide">
   <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80" style="width:100%;height:100%;object-fit:cover;opacity:0.75;">
   <div style="position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%);">
   <div style="font-size:11px;color:#FF8C00;font-weight:700;letter-spacing:1px;">🛒 GROCERY</div>
