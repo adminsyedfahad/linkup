@@ -351,7 +351,6 @@ html.light-theme .lp-nav{
 /* ── Global button press feel ── */
 .checkout-btn:active{transform:scale(0.97)!important;opacity:0.9;}
 .auth-btn:active{transform:scale(0.97)!important;}
-.add-btn:active{transform:scale(0.94)!important;}
 .cart-btn:active{transform:scale(0.94)!important;}
 .cat:active{transform:scale(0.93)!important;opacity:0.8;}
 .profile-item{transition:color 0.2s,opacity 0.15s;}
@@ -591,19 +590,20 @@ html.light-theme .lp-nav{
 .section-title{padding:12px 16px 6px;font-size:16px;font-weight:700;color:var(--orange);}
 
 /* FOOD GRID */
-.food-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:6px 14px 14px;}
+.food-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;padding:6px 14px 14px;}
 .card{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s;cursor:pointer;}
 .card:hover{transform:translateY(-3px);border-color:var(--orange);box-shadow:0 6px 20px var(--orange-glow);}
 .card.hide{display:none;}
 .card-img{height:100px;background-size:cover;background-position:center;position:relative;}
-.card-badge{position:absolute;top:8px;left:8px;background:var(--orange);color:#000;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;}
-.card-body{padding:8px;}
-.card-name{font-size:12px;font-weight:600;margin-bottom:3px;}
+.card-badge{position:absolute;top:6px;left:6px;background:var(--orange);color:#000;font-size:8px;font-weight:700;padding:2px 5px;border-radius:5px;}
+.card-add-btn{position:absolute;bottom:6px;right:6px;width:24px;height:24px;border-radius:50%;background:var(--orange);color:#000;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.3);z-index:1;transition:transform 0.15s;padding:0;}
+.card-add-btn .ic{width:13px;height:13px;stroke-width:2.5;}
+.card-add-btn:active{transform:scale(0.88);}
+.card-body{padding:6px;}
+.card-name{font-size:13px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:5px;}
 .card-price{color:var(--orange);font-weight:700;font-size:12px;}
-.card-rating{font-size:11px;color:var(--muted);}
-.add-btn{width:100%;height:28px;margin-top:6px;padding:0;background:var(--orange);color:#000;font-weight:700;font-size:11px;border:none;border-radius:8px;cursor:pointer;transition:opacity 0.2s;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;}
-.add-btn:hover{opacity:0.85;}
+.card-rating{font-size:12px;color:var(--muted);}
 
 /* CART DRAWER */
 .cart-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;}
@@ -1434,7 +1434,6 @@ html.light-theme #statusBarFill{background:#FFF8ED;}
 .help-cta .hc-sub{font-size:10px;color:var(--muted);}
 
 @media(max-width:480px){.cart-drawer{width:100vw;}.rest-grid{grid-template-columns:1fr;}.form-row{grid-template-columns:1fr;}.stats-grid{grid-template-columns:repeat(2,1fr);}}
-@media(min-width:768px){.food-row{grid-template-columns:repeat(3,1fr);}}
 
 /* ══════════════════════════════════════
    LEARN MORE MODAL
@@ -4456,11 +4455,11 @@ function renderGrid(items){
       <div class="card-img" style="background-image:url('${item.img}')">
         ${item.badge?`<div class="card-badge">${item.badge}</div>`:''}
         <button class="fav-btn${isFav?' active':''}" data-fid="${item.id}" onclick="event.stopPropagation();toggleFav(${item.id},this)" title="${isFav?'Remove from Favourites':'Add to Favourites'}"><svg class="ic"><use href="#${isFav?'ic-heart-filled':'ic-heart'}"></use></svg></button>
+        <button class="card-add-btn" onclick="event.stopPropagation();addToCart(${item.id})" title="Add to cart"><svg class="ic"><use href="#ic-plus"></use></svg></button>
       </div>
       <div class="card-body">
         <div class="card-name">${item.name}</div>
         <div class="card-meta"><div class="card-price">₹${item.price}</div><div class="card-rating">${item.rating}</div></div>
-        <button class="add-btn" onclick="event.stopPropagation();addToCart(${item.id})">+ Add to Cart</button>
       </div>`;
     d.onclick=()=>openModal(item);
     grid.appendChild(d);
@@ -6331,11 +6330,11 @@ function renderFavourites() {
       <div class="card-img" style="background-image:url('${item.img}')">
         ${item.badge ? `<div class="card-badge">${item.badge}</div>` : ''}
         <button class="fav-btn active" onclick="event.stopPropagation();removeFavAndRefresh(${item.id})" title="Remove from Favourites"><svg class="ic"><use href="#ic-heart-filled"></use></svg></button>
+        <button class="card-add-btn" onclick="event.stopPropagation();addToCart(${item.id})" title="Add to cart"><svg class="ic"><use href="#ic-plus"></use></svg></button>
       </div>
       <div class="card-body">
         <div class="card-name">${item.name}</div>
         <div class="card-meta"><div class="card-price">₹${item.price}</div><div class="card-rating">${item.rating}</div></div>
-        <button class="add-btn" onclick="event.stopPropagation();addToCart(${item.id})">+ Add to Cart</button>
       </div>`;
     d.onclick = () => openModal(item);
     grid.appendChild(d);
