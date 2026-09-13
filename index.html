@@ -7719,5 +7719,30 @@ function reverseGeocode(lat, lng) {
 <script>
   if('serviceWorker' in navigator) navigator.serviceWorker.register('/index-sw.js').catch(()=>{});
 </script>
+<script>
+// Deep-link handler for the marketing site (website.html): ?open=signup opens the
+// sign-up screen pre-login, ?open=support opens the in-app support chat post-login.
+// Self-contained — does not touch any other app behavior.
+(function(){
+  var open = new URLSearchParams(location.search).get('open');
+  if(!open) return;
+  if(open==='signup'){
+    var t1 = setInterval(function(){
+      if(typeof goToApp==='function' && document.getElementById('landingPage')?.classList.contains('active')){
+        clearInterval(t1); goToApp();
+      }
+    }, 200);
+    setTimeout(function(){ clearInterval(t1); }, 8000);
+  } else if(open==='support'){
+    var t2 = setInterval(function(){
+      var app = document.getElementById('mainApp');
+      if(typeof openSupportChat==='function' && app && getComputedStyle(app).display!=='none'){
+        clearInterval(t2); openSupportChat();
+      }
+    }, 300);
+    setTimeout(function(){ clearInterval(t2); }, 15000);
+  }
+})();
+</script>
 </body>
 </html> 

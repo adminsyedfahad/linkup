@@ -1,0 +1,865 @@
+<!--
+  LinkUp marketing website — image sources (all Unsplash, free for commercial use):
+  rider-1.webp   https://images.unsplash.com/photo-1727890193720-c1f19c60e966
+  rider-2.webp   https://images.unsplash.com/photo-1607273685680-6bd976c5a5ce
+  rider-3.webp   https://images.unsplash.com/photo-1648394794449-5dbe63f6a8b5
+  rider-4.webp   https://images.unsplash.com/photo-1607130232670-52123ba5be5c
+  category-food.webp        https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8
+  category-groceries.webp   https://images.unsplash.com/photo-1542838132-92c53300491e
+  category-vegetables.webp  https://images.unsplash.com/photo-1518843875459-f738682238a6
+  category-fruits.webp      https://images.unsplash.com/photo-1619566636858-adf3ef46400b
+  ad2-1.webp     https://images.unsplash.com/photo-1589302168068-964664d93dc0
+  ad2-2.webp     https://images.unsplash.com/photo-1513104890138-7c749659a591
+  ad2-3.webp     https://images.unsplash.com/photo-1551024506-0bccd828d307
+  ad3-1.webp     https://images.unsplash.com/photo-1590779033100-9f60a05a013d
+  ad3-2.webp     https://images.unsplash.com/photo-1618881158808-8a20f18d516e
+  ad3-3.webp     https://images.unsplash.com/photo-1542838132-92c53300491e
+  og-share.jpg   https://images.unsplash.com/photo-1727890193720-c1f19c60e966
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LinkUp — Online Food &amp; Grocery Delivery in Hyderabad</title>
+<meta name="description" content="LinkUp is Hyderabad's hyperlocal delivery app — food, groceries, vegetables, fruits and juices from local restaurants, cafés and kirana stores near you.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="canonical" href="https://orderlinkup.vercel.app/website.html">
+<meta name="theme-color" content="#0b0b0f">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23FDF6EA'/%3E%3Cg transform='translate(50,50) scale(1.574) translate(-40,-43.5)'%3E%3Cpath d='M29 31 A11 11 0 0 1 51 31' fill='none' stroke='%23241B12' stroke-width='5.5' stroke-linecap='round'/%3E%3Crect x='15' y='30' width='50' height='40' rx='7' fill='%23FF8C00'/%3E%3Cpath d='M34 42 L34 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M30 42 L30 48 M38 42 L38 48' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='49' cy='47' rx='4.6' ry='5.6' fill='none' stroke='%23241B12' stroke-width='3.2'/%3E%3Cpath d='M49 53 L49 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LinkUp">
+<meta property="og:title" content="LinkUp — Online Food & Grocery Delivery in Hyderabad">
+<meta property="og:description" content="Hyderabad's hyperlocal delivery app — food, groceries, vegetables, fruits and juices from local restaurants, cafés and kirana stores near you.">
+<meta property="og:url" content="https://orderlinkup.vercel.app/website.html">
+<meta property="og:image" content="https://orderlinkup.vercel.app/assets/website/og-share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LinkUp — Online Food & Grocery Delivery in Hyderabad">
+<meta name="twitter:description" content="Hyderabad's hyperlocal delivery app — food, groceries, vegetables, fruits and juices from local restaurants, cafés and kirana stores near you.">
+<meta name="twitter:image" content="https://orderlinkup.vercel.app/assets/website/og-share.jpg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "LinkUp",
+  "url": "https://orderlinkup.vercel.app/website.html",
+  "logo": "https://orderlinkup.vercel.app/assets/website/og-share.jpg",
+  "description": "LinkUp is Hyderabad's hyperlocal delivery platform for food, groceries, vegetables, fruits and juices from local restaurants, cafés and kirana stores.",
+  "areaServed": { "@type": "City", "name": "Hyderabad" },
+  "sameAs": ["https://www.linkedin.com/company/linkupdelivery"]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Jim+Nightshade&display=swap" rel="stylesheet">
+
+<style>
+/* ══════════════════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+a,button,[tabindex]{outline:none;}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible,input:focus-visible{
+  outline:2px solid var(--orange);outline-offset:3px;border-radius:6px;
+}
+.tone-ink a:focus-visible,.tone-ink button:focus-visible,
+header a:focus-visible,header button:focus-visible,
+.slider a:focus-visible,.slider button:focus-visible,
+footer a:focus-visible,footer button:focus-visible,
+.mobile-menu a:focus-visible,.mobile-menu button:focus-visible{
+  outline-color:var(--orange);outline-offset:2px;
+}
+:root{
+  --ink:#0b0b0f;--ink2:#151319;--cream:#FFF8ED;--cream-surface:#FFFDF7;
+  --orange:#FF8C00;--orange-dim:rgba(255,140,0,.14);
+  --brown:#6F4E37;--brown-light:#C89F7B;
+  --on-ink:#F5F1EA;--on-ink-muted:#B9AE9E;
+  --on-cream:#241B12;--on-cream-muted:#6F4E37;
+  --border-ink:rgba(245,241,234,.12);--border-cream:rgba(111,78,55,.18);
+  --radius:20px;--radius-sm:12px;
+  --maxw:1240px;
+}
+html,body{height:100%;}
+body{
+  font-family:'Poppins',sans-serif;background:var(--ink);color:var(--on-ink);
+  overflow-x:hidden;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+@media(max-width:600px){.wrap{padding:0 18px;}}
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.logo-mark{width:1em;height:1em;display:inline-block;}
+.wordmark{font-family:'Jim Nightshade',cursive;letter-spacing:.5px;}
+section{position:relative;z-index:1;}
+::selection{background:var(--orange);color:#000;}
+
+/* section tone helpers */
+.tone-ink{background:var(--ink);color:var(--on-ink);}
+.tone-cream{background:var(--cream);color:var(--on-cream);}
+.tone-cream .muted{color:var(--on-cream-muted);}
+.tone-ink .muted{color:var(--on-ink-muted);}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange);margin-bottom:14px;}
+.eyebrow .bar{width:22px;height:2px;background:var(--orange);border-radius:2px;}
+h1,h2,h3{font-weight:800;line-height:1.15;letter-spacing:-0.01em;}
+h2{font-size:clamp(28px,4.4vw,44px);margin-bottom:14px;}
+.section-sub{font-size:clamp(14px,1.8vw,17px);max-width:640px;line-height:1.65;}
+.section-pad{padding:88px 0;}
+@media(max-width:700px){.section-pad{padding:64px 0;}}
+
+/* ══════════════════════════════════════════════════════
+   REVEAL ANIMATION
+══════════════════════════════════════════════════════ */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1);}
+.reveal.in{opacity:1;transform:translateY(0);}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+
+/* ══════════════════════════════════════════════════════
+   FLOATING BACKGROUND (subtle, slow — same items as the app)
+══════════════════════════════════════════════════════ */
+#lu-bg{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.lu-fi{position:absolute;animation:luFloat var(--dur) ease-in-out infinite;animation-delay:var(--delay);opacity:var(--op);font-size:var(--sz);filter:saturate(.9);}
+@keyframes luFloat{0%{transform:translateY(0) rotate(0deg)}45%{transform:translateY(-14px) rotate(4deg)}75%{transform:translateY(6px) rotate(-3deg)}100%{transform:translateY(0) rotate(0deg)}}
+@media(prefers-reduced-motion:reduce){.lu-fi{animation:none;}}
+
+/* ══════════════════════════════════════════════════════
+   LOADER
+══════════════════════════════════════════════════════ */
+#loader{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s ease,visibility .5s ease;}
+#loader.hide{opacity:0;visibility:hidden;pointer-events:none;}
+#loader .logo-mark{width:56px;height:56px;color:var(--on-ink);animation:loaderPulse 1.1s ease-in-out infinite;}
+@keyframes loaderPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+#loader .wordmark{font-size:34px;color:var(--orange);}
+@media(prefers-reduced-motion:reduce){#loader .logo-mark{animation:none;}}
+
+/* ══════════════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════════════ */
+header{position:fixed;top:0;left:0;right:0;z-index:500;transition:background .3s ease,border-color .3s ease,box-shadow .3s ease;border-bottom:1px solid transparent;}
+header.solid{background:rgba(11,11,15,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:var(--border-ink);box-shadow:0 8px 30px rgba(0,0,0,.25);}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;height:76px;gap:20px;}
+.hdr-logo{display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.hdr-logo .logo-mark{width:36px;height:36px;}
+.hdr-logo .wordmark{font-size:26px;color:var(--orange);}
+.hdr-nav{display:flex;align-items:center;gap:34px;font-size:14.5px;font-weight:600;color:var(--on-ink-muted);}
+.hdr-nav a{transition:color .2s;white-space:nowrap;}
+.hdr-nav a:hover{color:var(--on-ink);}
+.hdr-actions{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:14.5px;padding:12px 22px;border-radius:12px;border:1.5px solid transparent;cursor:pointer;transition:transform .18s,opacity .18s,background .2s,border-color .2s;white-space:nowrap;}
+.btn:active{transform:scale(.96);}
+.btn-orange{background:var(--orange);color:#111;box-shadow:0 8px 22px rgba(255,140,0,.28);}
+.btn-orange:hover{opacity:.92;}
+.btn-orange:focus-visible{outline-color:#111;}
+.cta-band a:focus-visible,.cta-band button:focus-visible{outline-color:#111;}
+a[aria-disabled="true"]{pointer-events:none;opacity:.55;cursor:default;}
+.btn-ghost-ink{background:transparent;border-color:var(--border-ink);color:var(--on-ink);}
+.btn-ghost-ink:hover{border-color:var(--orange);color:var(--orange);}
+.btn-ghost-cream{background:transparent;border-color:var(--border-cream);color:var(--on-cream);}
+.btn-ghost-cream:hover{border-color:var(--orange);color:var(--orange);}
+.btn-sm{padding:9px 16px;font-size:13px;border-radius:10px;}
+.btn[disabled]{opacity:.45;cursor:default;pointer-events:none;}
+.hdr-menu-btn{display:none;width:42px;height:42px;border-radius:10px;border:1.5px solid var(--border-ink);background:rgba(255,255,255,.04);color:var(--on-ink);align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.hdr-menu-btn .ic{width:20px;height:20px;}
+@media(max-width:860px){
+  .hdr-nav{display:none;}
+  .hdr-actions .btn-ghost-ink{display:none;}
+  .hdr-menu-btn{display:flex;}
+}
+@media(max-width:420px){.hdr-actions .btn-orange span{display:none;}.hdr-actions .btn-orange{padding:12px 14px;}}
+
+.mobile-menu{position:fixed;inset:0;z-index:600;background:rgba(8,8,10,.6);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s ease;}
+.mobile-menu.open{opacity:1;visibility:visible;}
+.mm-panel{position:absolute;top:0;right:0;bottom:0;width:min(320px,86vw);background:var(--ink2);border-left:1px solid var(--border-ink);padding:26px 24px;display:flex;flex-direction:column;gap:6px;transform:translateX(100%);transition:transform .35s cubic-bezier(.32,1,.42,1);}
+.mobile-menu.open .mm-panel{transform:translateX(0);}
+.mm-close{align-self:flex-end;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.06);border:none;color:var(--on-ink);display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:14px;}
+.mm-panel a.mm-link{padding:14px 4px;font-size:17px;font-weight:700;border-bottom:1px solid var(--border-ink);color:var(--on-ink);}
+.mm-panel .btn{margin-top:18px;width:100%;}
+
+/* ══════════════════════════════════════════════════════
+   SLIDER (shared by hero + ad2 + ad3)
+══════════════════════════════════════════════════════ */
+.slider{position:relative;width:100%;overflow:hidden;background:#000;}
+.slide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease;}
+.slide.active{opacity:1;z-index:2;}
+.slide img{width:100%;height:100%;object-fit:cover;transform:scale(1.06);transition:transform 6.5s linear;}
+.slide.active img{transform:scale(1.16);}
+@media(prefers-reduced-motion:reduce){.slide img,.slide.active img{transition:none;transform:none;}}
+.slide-scrim{position:absolute;inset:0;background:linear-gradient(100deg,rgba(6,6,8,.88) 0%,rgba(6,6,8,.55) 42%,rgba(6,6,8,.15) 68%,transparent 100%),linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 40%);}
+.slide-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 6% ;max-width:640px;}
+.slide-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18);padding:6px 12px 6px 8px;border-radius:30px;width:fit-content;margin-bottom:18px;}
+.slide-badge .logo-mark{width:20px;height:20px;}
+.slide-badge span{font-size:12px;font-weight:700;letter-spacing:.5px;color:#fff;}
+.slide-title{font-size:clamp(26px,4.6vw,50px);font-weight:900;color:#fff;line-height:1.12;margin-bottom:12px;text-shadow:0 2px 20px rgba(0,0,0,.35);}
+.slide-desc{font-size:clamp(14px,1.7vw,18px);color:rgba(255,255,255,.86);max-width:480px;margin-bottom:26px;line-height:1.6;}
+.slide-content .btn{width:fit-content;}
+.slider-arrow{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.22);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;transition:background .2s,transform .15s;}
+.slider-arrow:hover{background:rgba(255,255,255,.22);}
+.slider-arrow:active{transform:translateY(-50%) scale(.9);}
+.slider-arrow.prev{left:18px;}
+.slider-arrow.next{right:18px;}
+.slider-arrow .ic{width:20px;height:20px;}
+.slider-dots{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:center;gap:10px;z-index:5;}
+.slider-dot{position:relative;width:34px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);cursor:pointer;overflow:hidden;border:none;padding:0;}
+.slider-dot .fill{position:absolute;inset:0;background:var(--orange);width:0%;}
+.slider-dot.active .fill{transition:width linear;}
+/* Below ~700px, slide text runs edge-to-edge — move the arrows out of the
+   vertical center (where they'd overlap the title/description) down to the
+   bottom corner row, level with the dots, instead of stacking a second row. */
+@media(max-width:700px){
+  .slider-arrow{top:auto;bottom:14px;transform:none;width:36px;height:36px;}
+  .slider-arrow:active{transform:scale(.9);}
+  .slider-arrow.prev{left:12px;}
+  .slider-arrow.next{right:12px;}
+  .slider-dots{bottom:22px;gap:7px;}
+  .slider-dot{width:20px;height:4px;}
+}
+
+.hero-slider{height:min(86vh,780px);min-height:520px;margin-top:0;}
+.ad-slider{height:min(58vh,460px);min-height:340px;}
+@media(max-width:700px){.hero-slider{height:88vh;min-height:560px;}.ad-slider{height:420px;}}
+@media(max-width:420px){.ad-slider{height:390px;}}
+
+/* ══════════════════════════════════════════════════════
+   CATEGORIES
+══════════════════════════════════════════════════════ */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:44px;}
+@media(max-width:900px){.cat-grid{grid-template-columns:repeat(2,1fr);}}
+.cat-card{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:4/5;cursor:pointer;border:1px solid var(--border-cream);box-shadow:0 10px 30px rgba(111,78,55,.1);transition:transform .3s ease,box-shadow .3s ease;}
+.cat-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(111,78,55,.18);}
+.cat-card img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease;}
+.cat-card:hover img{transform:scale(1.06);}
+.cat-card .scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(11,8,5,.85) 0%,rgba(11,8,5,.15) 55%,transparent 80%);}
+.cat-card .label{position:absolute;left:16px;right:16px;bottom:16px;color:#fff;}
+.cat-card .label b{display:block;font-size:18px;font-weight:800;margin-bottom:2px;}
+.cat-card .label span{font-size:12px;color:rgba(255,255,255,.78);display:flex;align-items:center;gap:5px;}
+.cat-card .label .ic{width:13px;height:13px;}
+
+/* ══════════════════════════════════════════════════════
+   WHY LINKUP
+══════════════════════════════════════════════════════ */
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px;}
+@media(max-width:900px){.why-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.why-grid{grid-template-columns:1fr;}}
+.why-card{background:rgba(255,255,255,.03);border:1px solid var(--border-ink);border-radius:var(--radius-sm);padding:26px 22px;transition:border-color .25s,background .25s,transform .25s;}
+.why-card:hover{border-color:rgba(255,140,0,.4);background:rgba(255,140,0,.05);transform:translateY(-4px);}
+.why-icon{width:46px;height:46px;border-radius:13px;background:var(--orange-dim);color:var(--orange);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.why-icon .ic{width:22px;height:22px;}
+.why-card h3{font-size:17px;margin-bottom:6px;}
+.why-card p{font-size:14px;color:var(--on-ink-muted);line-height:1.6;}
+
+/* ══════════════════════════════════════════════════════
+   ABOUT / FOUNDER
+══════════════════════════════════════════════════════ */
+.about-grid{display:grid;grid-template-columns:340px 1fr;gap:60px;align-items:start;margin-top:40px;}
+@media(max-width:820px){.about-grid{grid-template-columns:1fr;gap:34px;}}
+.founder-photo-wrap{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:4/5;border:2px solid var(--brown-light);box-shadow:0 18px 40px rgba(111,78,55,.2);}
+.founder-photo{width:100%;height:100%;object-fit:cover;}
+.founder-placeholder{position:absolute;inset:0;background:linear-gradient(155deg,var(--cream-surface),#F3E4C8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.founder-placeholder .logo-mark{width:64px;height:64px;color:var(--brown);}
+.founder-placeholder span{font-family:'Jim Nightshade',cursive;font-size:26px;color:var(--brown);}
+.quote-block{background:var(--cream-surface);border-left:4px solid var(--orange);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:22px 24px;margin:22px 0 26px;font-size:17px;font-style:italic;line-height:1.6;color:var(--on-cream);box-shadow:0 6px 20px rgba(111,78,55,.08);}
+.quote-block cite{display:block;margin-top:12px;font-style:normal;font-weight:700;font-size:13px;color:var(--brown);letter-spacing:.3px;}
+.about-body p{font-size:15.5px;line-height:1.75;color:var(--on-cream-muted);margin-bottom:16px;}
+.vision-box{margin-top:30px;background:var(--ink);color:var(--on-ink);border-radius:var(--radius);padding:30px 28px;}
+.vision-box h3{font-size:clamp(19px,2.6vw,24px);margin-bottom:10px;color:#fff;}
+.vision-box p{font-size:14.5px;color:var(--on-ink-muted);line-height:1.7;}
+
+/* ══════════════════════════════════════════════════════
+   INVESTORS / PARTNERS
+══════════════════════════════════════════════════════ */
+.split-panel{display:grid;grid-template-columns:1.1fr .9fr;gap:50px;align-items:center;}
+@media(max-width:820px){.split-panel{grid-template-columns:1fr;gap:30px;}}
+.point-list{list-style:none;display:flex;flex-direction:column;gap:14px;margin-top:26px;}
+.point-list li{display:flex;align-items:flex-start;gap:12px;font-size:15px;line-height:1.5;}
+.point-list .tick{width:24px;height:24px;border-radius:50%;background:var(--orange-dim);color:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.point-list .tick .ic{width:13px;height:13px;}
+.chip-row{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0 30px;}
+.chip{padding:9px 16px;border-radius:30px;background:var(--orange-dim);color:var(--orange);font-size:13px;font-weight:700;border:1px solid rgba(255,140,0,.28);}
+.tone-cream .chip{background:#fff;border-color:var(--border-cream);}
+.side-card{border-radius:var(--radius);overflow:hidden;aspect-ratio:1/1;position:relative;}
+.side-card img{width:100%;height:100%;object-fit:cover;}
+.side-card .scrim{position:absolute;inset:0;background:linear-gradient(160deg,rgba(255,140,0,.28),rgba(11,11,15,.55));}
+.side-card .badge{position:absolute;top:20px;left:20px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);padding:8px 14px 8px 10px;border-radius:30px;}
+.side-card .badge .logo-mark{width:20px;height:20px;color:#fff;}
+.side-card .badge span{color:#fff;font-size:12px;font-weight:700;}
+
+/* ══════════════════════════════════════════════════════
+   HELP / FAQ
+══════════════════════════════════════════════════════ */
+.help-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px;}
+@media(max-width:820px){.help-grid{grid-template-columns:1fr;}}
+.help-card{background:rgba(255,255,255,.03);border:1px solid var(--border-ink);border-radius:var(--radius-sm);padding:26px 22px;text-align:left;}
+.help-card .why-icon{margin-bottom:18px;}
+.help-card h3{font-size:16px;margin-bottom:6px;}
+.help-card p{font-size:13.5px;color:var(--on-ink-muted);margin-bottom:16px;line-height:1.6;}
+.help-card .btn{width:100%;}
+.faq-list{margin-top:56px;max-width:760px;}
+.faq-item{border-bottom:1px solid var(--border-ink);}
+.faq-q{width:100%;background:none;border:none;color:var(--on-ink);display:flex;align-items:center;justify-content:space-between;padding:20px 4px;font-size:15.5px;font-weight:700;text-align:left;cursor:pointer;gap:16px;}
+.faq-q .ic{width:18px;height:18px;flex-shrink:0;color:var(--orange);transition:transform .3s ease;}
+.faq-item.open .faq-q .ic{transform:rotate(45deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.faq-a p{padding:0 4px 20px;font-size:14.5px;color:var(--on-ink-muted);line-height:1.7;max-width:640px;}
+
+/* ══════════════════════════════════════════════════════
+   FINAL CTA
+══════════════════════════════════════════════════════ */
+.cta-band{background:linear-gradient(120deg,#ff9d1f,#ff7a00 60%,#e56900);position:relative;overflow:hidden;text-align:center;padding:80px 24px;}
+.cta-band::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.18),transparent 45%),radial-gradient(circle at 85% 80%,rgba(0,0,0,.14),transparent 50%);}
+.cta-band h2{color:#12100c;position:relative;}
+.cta-band p{position:relative;color:rgba(20,15,8,.75);font-size:16px;max-width:520px;margin:0 auto 30px;}
+.cta-btns{position:relative;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+.cta-band .btn-orange{background:#12100c;color:#fff;box-shadow:0 10px 26px rgba(0,0,0,.25);}
+.cta-band .btn-ghost-ink{border-color:rgba(20,15,8,.35);color:#12100c;}
+.cta-band .btn-ghost-ink:hover{border-color:#12100c;background:rgba(0,0,0,.06);}
+
+/* ══════════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════════ */
+footer{background:#08080b;padding:64px 0 26px;border-top:1px solid var(--border-ink);}
+.ftr-grid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:40px;padding-bottom:44px;border-bottom:1px solid var(--border-ink);}
+@media(max-width:820px){.ftr-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:520px){.ftr-grid{grid-template-columns:1fr;gap:30px;}}
+.ftr-brand .hdr-logo{margin-bottom:14px;}
+.ftr-tagline{font-size:14px;color:var(--on-ink-muted);max-width:280px;line-height:1.6;}
+.ftr-social{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.06);color:var(--on-ink);margin-top:18px;transition:background .2s,color .2s;}
+.ftr-social:hover{background:var(--orange);color:#111;}
+.ftr-social .ic{width:18px;height:18px;}
+.ftr-col h4{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--on-ink-muted);margin-bottom:16px;}
+.ftr-col a{display:block;font-size:14px;color:var(--on-ink);opacity:.82;margin-bottom:12px;transition:opacity .2s,color .2s;}
+.ftr-col a:hover{opacity:1;color:var(--orange);}
+.ftr-bottom{padding-top:22px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:12.5px;color:var(--on-ink-muted);}
+
+/* utility */
+.center-head{text-align:center;margin:0 auto;}
+.center-head .section-sub{margin-left:auto;margin-right:auto;}
+</style>
+</head>
+<body>
+
+<!-- floating background -->
+<div id="lu-bg" aria-hidden="true"></div>
+
+<!-- loader -->
+<div id="loader">
+  <svg class="logo-mark" viewBox="13.5 16.5 53 54" aria-hidden="true">
+    <path d="M29 31 A11 11 0 0 1 51 31" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="15" y="30" width="50" height="40" rx="7" fill="#FF8C00"/>
+    <path d="M34 42 L34 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M30 42 L30 48 M38 42 L38 48" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+    <ellipse cx="49" cy="47" rx="4.6" ry="5.6" fill="none" stroke="#241B12" stroke-width="3.2"/>
+    <path d="M49 53 L49 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+  </svg>
+  <span class="wordmark">LinkUp</span>
+</div>
+
+<!-- shared icon sprite -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="ic-logo" viewBox="13.5 16.5 53 54">
+      <path d="M29 31 A11 11 0 0 1 51 31" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+      <rect x="15" y="30" width="50" height="40" rx="7" fill="#FF8C00"/>
+      <path d="M34 42 L34 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <path d="M30 42 L30 48 M38 42 L38 48" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <ellipse cx="49" cy="47" rx="4.6" ry="5.6" fill="none" stroke="#241B12" stroke-width="3.2"/>
+      <path d="M49 53 L49 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ic-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+    <symbol id="ic-close" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></symbol>
+    <symbol id="ic-chevron-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="ic-chevron-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z"/><circle cx="12" cy="10" r="2.4"/></symbol>
+    <symbol id="ic-store" viewBox="0 0 24 24"><path d="M3 9l1.2-5h15.6L21 9"/><path d="M3 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0"/><path d="M5 9.2V20h14V9.2"/><path d="M9.5 20v-5.5h5V20"/></symbol>
+    <symbol id="ic-leaf" viewBox="0 0 24 24"><path d="M11 21C5 21 3 15 3 9c8 0 12 4 12 10 0-8 4-12 8-12 0 10-4 14-8 14-1.5 0-3-.4-4-1Z"/></symbol>
+    <symbol id="ic-dish" viewBox="0 0 24 24"><path d="M6 2v7a2 2 0 0 0 4 0V2"/><path d="M8 9v13"/><path d="M17 2c-1.8 0-3 2.5-3 6.5S16 15 16 15v8"/></symbol>
+    <symbol id="ic-map" viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/><path d="M9 3v16M15 5v16"/><circle cx="12" cy="10" r="2"/></symbol>
+    <symbol id="ic-gift" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="12" rx="1.5"/><path d="M3 9h18M12 9v12M12 9C10 5.5 6 4 5 6.5S8 9 12 9ZM12 9c2-3.5 6-5 7-2.5S16 9 12 9Z"/></symbol>
+    <symbol id="ic-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5a14.5 14.5 0 0 1 0 19 14.5 14.5 0 0 1 0-19Z"/></symbol>
+    <symbol id="ic-rider" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.6"/><circle cx="18" cy="18" r="2.6"/><path d="M6 18l3-8h5l3 5"/><path d="M9 10h4M14 5l2 5"/><circle cx="15" cy="4.2" r="1.4"/></symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20V10M11 20V4M18 20v-7"/><path d="M3 20h18"/></symbol>
+    <symbol id="ic-wallet" viewBox="0 0 24 24"><rect x="2" y="6" width="18" height="14" rx="2"/><path d="M16 12h4v4h-4a2 2 0 0 1 0-4Z"/><path d="M2 10h16"/></symbol>
+    <symbol id="ic-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.6"/><path d="M15.5 12.5A5.6 5.6 0 0 1 21.5 18"/></symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 2.5 20 6v6c0 5-3.5 8.5-8 9.5-4.5-1-8-4.5-8-9.5V6Z"/><path d="M8.5 12l2.5 2.5L15.5 9"/></symbol>
+    <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M2 12 12 2h8v8L10 20a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8Z"/><circle cx="15.5" cy="6.5" r="1.4"/></symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 3.5"/></symbol>
+    <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="ic-handshake" viewBox="0 0 24 24"><path d="M2 12l4-4 4 3 3-3 2 2-5 5-4-3-4 4Z"/><path d="M11 8l3-3 3 1 3 3-3 3-2-2"/></symbol>
+    <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4Z"/></symbol>
+    <symbol id="ic-phone" viewBox="0 0 24 24"><path d="M4 3h4l2 5-2.5 2a12 12 0 0 0 6.5 6.5l2-2.5 5 2v4a2 2 0 0 1-2 2C10.5 22 2 13.5 2 5a2 2 0 0 1 2-2Z"/></symbol>
+    <symbol id="ic-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></symbol>
+    <symbol id="ic-linkedin" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.7h.05c.53-1 1.83-2 3.77-2 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.6c0-1.34-.02-3.07-1.87-3.07-1.87 0-2.16 1.46-2.16 2.97V21h-4V9Z"/></symbol>
+  </defs>
+</svg>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header id="siteHeader">
+  <div class="wrap hdr-row">
+    <a href="#top" class="hdr-logo"><svg class="logo-mark" style="color:var(--on-ink)"><use href="#ic-logo"></use></svg><span class="wordmark">LinkUp</span></a>
+    <nav class="hdr-nav">
+      <a href="#top">Home</a>
+      <a href="#categories">Categories</a>
+      <a href="#about">About</a>
+      <a href="#support">Support</a>
+    </nav>
+    <div class="hdr-actions">
+      <a class="btn btn-ghost-ink" href="https://orderlinkup.vercel.app/?open=signup">Sign Up</a>
+      <a class="btn btn-orange" href="https://orderlinkup.vercel.app"><span>Order Now</span></a>
+      <button class="hdr-menu-btn" id="mmOpenBtn" aria-label="Open menu"><svg class="ic"><use href="#ic-menu"></use></svg></button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mm-panel">
+    <button class="mm-close" id="mmCloseBtn" aria-label="Close menu"><svg class="ic"><use href="#ic-close"></use></svg></button>
+    <a class="mm-link" href="#top">Home</a>
+    <a class="mm-link" href="#categories">Categories</a>
+    <a class="mm-link" href="#about">About</a>
+    <a class="mm-link" href="#support">Support</a>
+    <a class="btn btn-ghost-ink" href="https://orderlinkup.vercel.app/?open=signup">Sign Up</a>
+    <a class="btn btn-orange" href="https://orderlinkup.vercel.app">Order Now</a>
+  </div>
+</div>
+
+<main id="top">
+
+<!-- ══════════════════ HERO — AD1 RIDER SLIDER ══════════════════ -->
+<section class="tone-ink" style="padding-top:0;">
+  <div class="slider hero-slider" id="ad1" data-interval="5000" aria-roledescription="carousel" aria-label="LinkUp highlights"></div>
+</section>
+
+<!-- ══════════════════ CATEGORIES ══════════════════ -->
+<section class="tone-cream section-pad" id="categories">
+  <div class="wrap">
+    <div class="reveal center-head" style="max-width:640px;">
+      <div class="eyebrow" style="justify-content:center;"><span class="bar"></span>Categories<span class="bar"></span></div>
+      <h2>What are you craving today?</h2>
+      <p class="section-sub" style="margin:0 auto;">From dum biryani to fresh sabzi, everything your neighbourhood offers.</p>
+    </div>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════ AD2 — LOCAL FOOD SLIDER ══════════════════ -->
+<section>
+  <div class="slider ad-slider" id="ad2" data-interval="5000" aria-roledescription="carousel" aria-label="Local food offers"></div>
+</section>
+
+<!-- ══════════════════ WHY LINKUP ══════════════════ -->
+<section class="tone-ink section-pad">
+  <div class="wrap">
+    <div class="reveal center-head" style="max-width:640px;">
+      <div class="eyebrow" style="justify-content:center;"><span class="bar"></span>Why LinkUp<span class="bar"></span></div>
+      <h2 class="wordmark" style="font-family:'Jim Nightshade',cursive;font-weight:400;font-size:clamp(32px,5vw,52px);color:var(--orange);">Local hai. Isliye khaas hai.</h2>
+    </div>
+    <div class="why-grid" id="whyGrid"></div>
+  </div>
+</section>
+
+<!-- ══════════════════ AD3 — GROCERY SLIDER ══════════════════ -->
+<section>
+  <div class="slider ad-slider" id="ad3" data-interval="5000" aria-roledescription="carousel" aria-label="Grocery offers"></div>
+</section>
+
+<!-- ══════════════════ ABOUT / FOUNDER ══════════════════ -->
+<section class="tone-cream section-pad" id="about">
+  <div class="wrap">
+    <div class="reveal center-head" style="max-width:640px;">
+      <div class="eyebrow" style="justify-content:center;"><span class="bar"></span>About LinkUp<span class="bar"></span></div>
+      <h2>Built in Hyderabad. For Hyderabad.</h2>
+    </div>
+    <div class="about-grid reveal">
+      <div class="founder-photo-wrap">
+        <div class="founder-placeholder" id="founderPlaceholder">
+          <svg class="logo-mark"><use href="#ic-logo"></use></svg>
+          <span>Fahad</span>
+        </div>
+        <img class="founder-photo" id="founderPhoto" alt="Fahad, Founder of LinkUp" style="display:none;"
+             onload="this.style.display='block';document.getElementById('founderPlaceholder').style.display='none';"
+             onerror="this.remove();">
+      </div>
+      <div class="about-body">
+        <div class="quote-block">
+          "The best food in our city comes from small kitchens that big apps forget. I built LinkUp to change that."
+          <cite>— Fahad, Founder, LinkUp</cite>
+        </div>
+        <p>LinkUp started with a simple question: why should the biryani place down the road, the chai café and the kirana next door struggle to get online? I saw local owners buried under big brands, paying high fees and waiting weeks for payments. So I built LinkUp — a delivery platform made only for them.</p>
+        <div class="vision-box">
+          <h3>Every local shop in Hyderabad, one tap away.</h3>
+          <p>A city where local businesses grow online, owners get paid fairly and on time, and customers get fresh food from their own neighbourhood.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ FOR INVESTORS ══════════════════ -->
+<section class="tone-ink section-pad">
+  <div class="wrap">
+    <div class="split-panel reveal">
+      <div>
+        <div class="eyebrow"><span class="bar"></span>For Investors</div>
+        <h2>Hyderabad's local businesses are going online. LinkUp is built to lead that shift.</h2>
+        <ul class="point-list" id="investorList"></ul>
+        <a class="btn btn-orange" style="margin-top:30px;" href="mailto:adminlinkup@gmail.com?subject=Investor%20enquiry">Talk to the Founder</a>
+      </div>
+      <div class="side-card">
+        <img src="assets/website/ad2-1.webp" alt="Hyderabadi biryani plated at a local kitchen" loading="lazy" width="600" height="600">
+        <div class="scrim"></div>
+        <div class="badge"><svg class="logo-mark"><use href="#ic-logo"></use></svg><span>LinkUp</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ FOR RESTAURANT & STORE OWNERS ══════════════════ -->
+<section class="tone-cream section-pad">
+  <div class="wrap">
+    <div class="split-panel reveal">
+      <div class="side-card" style="order:2;">
+        <img src="assets/website/category-groceries.webp" alt="Local kirana store shelves" loading="lazy" width="600" height="600">
+        <div class="scrim"></div>
+        <div class="badge"><svg class="logo-mark"><use href="#ic-logo"></use></svg><span>LinkUp Partner</span></div>
+      </div>
+      <div style="order:1;">
+        <div class="eyebrow"><span class="bar"></span>For Restaurant &amp; Store Owners</div>
+        <h2>Your shop. More customers. Paid every week.</h2>
+        <div class="chip-row">
+          <span class="chip">₹0 to join</span>
+          <span class="chip">First month free</span>
+          <span class="chip">Weekly payouts</span>
+          <span class="chip">We set you up in person</span>
+        </div>
+        <a class="btn btn-orange" href="mailto:adminlinkup@gmail.com?subject=Partner%20with%20LinkUp">Become a Partner</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ HELP & SUPPORT ══════════════════ -->
+<section class="tone-ink section-pad" id="support">
+  <div class="wrap">
+    <div class="reveal center-head" style="max-width:640px;">
+      <div class="eyebrow" style="justify-content:center;"><span class="bar"></span>Help &amp; Support<span class="bar"></span></div>
+      <h2>Need help? We're one tap away.</h2>
+      <p class="section-sub" style="margin:0 auto;">Chat, call or email — a real person from the LinkUp team will help you.</p>
+    </div>
+    <div class="help-grid" id="helpGrid"></div>
+    <div class="faq-list" id="faqList"></div>
+  </div>
+</section>
+
+<!-- ══════════════════ FINAL CTA ══════════════════ -->
+<section class="cta-band">
+  <div class="reveal">
+    <h2>Hungry? Your neighbourhood is ready.</h2>
+    <p>Order food, groceries, vegetables, fruits and juices from the shops your area already trusts.</p>
+    <div class="cta-btns">
+      <a class="btn btn-orange" href="https://orderlinkup.vercel.app">Order Now</a>
+      <a class="btn btn-ghost-ink" href="https://orderlinkup.vercel.app/?open=signup">Create Free Account</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="ftr-grid">
+      <div class="ftr-brand">
+        <a href="#top" class="hdr-logo"><svg class="logo-mark" style="color:var(--on-ink)"><use href="#ic-logo"></use></svg><span class="wordmark">LinkUp</span></a>
+        <p class="ftr-tagline">LinkUp — Hyderabad ka apna delivery app.</p>
+        <a class="ftr-social" href="https://www.linkedin.com/company/linkupdelivery" target="_blank" rel="noopener" aria-label="LinkUp on LinkedIn"><svg class="ic"><use href="#ic-linkedin"></use></svg></a>
+      </div>
+      <div class="ftr-col">
+        <h4>Quick Links</h4>
+        <a href="#top">Home</a>
+        <a href="#categories">Categories</a>
+        <a href="#about">About</a>
+        <a href="https://orderlinkup.vercel.app">Order Now</a>
+      </div>
+      <div class="ftr-col">
+        <h4>Support</h4>
+        <a href="#support">Help &amp; Support</a>
+        <a href="mailto:adminlinkup@gmail.com">Email Us</a>
+        <a href="https://orderlinkup.vercel.app/?open=support">Live Chat</a>
+      </div>
+      <div class="ftr-col">
+        <h4>Legal</h4>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="https://www.linkedin.com/company/linkupdelivery" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </div>
+    <div class="ftr-bottom">
+      <span>© 2026 LinkUp · Hyderabad</span>
+      <span>LinkUp — Hyderabad ka apna delivery app.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const SUPPORT_PHONE = ""; // fill in to enable the Call card, e.g. "+91XXXXXXXXXX"
+const APP_URL = "https://orderlinkup.vercel.app";
+const SIGNUP_URL = APP_URL + "/?open=signup";
+const SUPPORT_URL = APP_URL + "/?open=support";
+
+/* ---------- Loader ---------- */
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('loader').classList.add('hide'), 350);
+});
+setTimeout(() => document.getElementById('loader').classList.add('hide'), 1000);
+
+/* ---------- Founder photo (auto-swap once assets/website/fahad.jpg exists) ---------- */
+document.getElementById('founderPhoto').src = 'assets/website/fahad.jpg';
+
+/* ---------- Floating background ---------- */
+(function(){
+  const items = [
+    {e:'🍔',top:3,left:5,dur:7,delay:0,op:.07,sz:34},
+    {e:'🍕',top:9,right:6,dur:8,delay:.6,op:.06,sz:32},
+    {e:'🍛',top:16,left:28,dur:7.5,delay:1.1,op:.06,sz:30},
+    {e:'🌮',top:22,right:3,dur:8.5,delay:1.6,op:.05,sz:26},
+    {e:'🍜',top:29,left:9,dur:7.2,delay:.4,op:.06,sz:28},
+    {e:'🥗',top:41,left:38,dur:8,delay:.3,op:.05,sz:24},
+    {e:'🛒',top:6,left:55,dur:6.8,delay:1.3,op:.05,sz:30},
+    {e:'🥛',top:57,left:20,dur:8.8,delay:.7,op:.05,sz:26},
+    {e:'🥤',top:63,right:18,dur:7.4,delay:1.8,op:.05,sz:22},
+    {e:'☕',top:69,left:5,dur:8.2,delay:2.1,op:.05,sz:26},
+    {e:'🍫',top:74,right:8,dur:7.6,delay:1,op:.05,sz:22},
+    {e:'🍉',top:80,left:40,dur:8.4,delay:.5,op:.04,sz:22},
+    {e:'🍋',top:85,left:8,dur:7,delay:1.9,op:.04,sz:20},
+    {e:'🍇',top:92,left:25,dur:8.1,delay:1.4,op:.04,sz:20},
+    {e:'🍌',top:96,right:5,dur:7.3,delay:.2,op:.04,sz:20},
+    {e:'🥦',top:19,left:2,dur:8.6,delay:2,op:.05,sz:22},
+    {e:'🥕',top:37,right:30,dur:7.7,delay:.6,op:.05,sz:20},
+    {e:'🥬',top:61,left:55,dur:8.3,delay:1.6,op:.04,sz:20},
+    {e:'🍅',top:49,left:70,dur:8.7,delay:.1,op:.04,sz:18},
+  ];
+  const host = document.getElementById('lu-bg');
+  host.innerHTML = items.map(it => {
+    const pos = it.left!==undefined ? `left:${it.left}%` : `right:${it.right}%`;
+    return `<div class="lu-fi" style="top:${it.top}%;${pos};--dur:${it.dur}s;--delay:${it.delay}s;--op:${it.op};--sz:${it.sz}px;">${it.e}</div>`;
+  }).join('');
+})();
+
+/* ---------- Sticky header background ---------- */
+(function(){
+  const hdr = document.getElementById('siteHeader');
+  function onScroll(){ hdr.classList.toggle('solid', window.scrollY > 40); }
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+})();
+
+/* ---------- Mobile menu ---------- */
+(function(){
+  const menu = document.getElementById('mobileMenu');
+  const open = document.getElementById('mmOpenBtn');
+  const close = document.getElementById('mmCloseBtn');
+  function show(){ menu.classList.add('open'); document.body.style.overflow='hidden'; }
+  function hide(){ menu.classList.remove('open'); document.body.style.overflow=''; }
+  open.addEventListener('click', show);
+  close.addEventListener('click', hide);
+  menu.addEventListener('click', e => { if(e.target === menu) hide(); });
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', hide));
+})();
+
+/* ---------- Categories ---------- */
+const CATEGORIES = [
+  { name:'Food', desc:'Restaurants & cafés', img:'category-food.webp', icon:'ic-dish' },
+  { name:'Groceries', desc:'Your local kirana', img:'category-groceries.webp', icon:'ic-store' },
+  { name:'Vegetables', desc:'Fresh from the market', img:'category-vegetables.webp', icon:'ic-leaf' },
+  { name:'Fruits & Juices', desc:'Fresh & seasonal', img:'category-fruits.webp', icon:'ic-leaf' },
+];
+document.getElementById('catGrid').innerHTML = CATEGORIES.map(c => `
+  <a class="cat-card reveal" href="${APP_URL}">
+    <img src="assets/website/${c.img}" alt="${c.name} on LinkUp" loading="lazy" width="400" height="500">
+    <div class="scrim"></div>
+    <div class="label"><b>${c.name}</b><span><svg class="ic"><use href="#${c.icon}"></use></svg>${c.desc}</span></div>
+  </a>`).join('');
+
+/* ---------- Why LinkUp ---------- */
+const WHY = [
+  { icon:'ic-store', title:'Only local businesses', desc:'No big chains. Just the kitchens and shops your area trusts.' },
+  { icon:'ic-map', title:'Live tracking', desc:'Know exactly where your order is, every second.' },
+  { icon:'ic-gift', title:'Rewards on every order', desc:'5 points per order, use them for up to half your bill.' },
+  { icon:'ic-globe', title:'In your language', desc:'Use LinkUp in English, हिन्दी or తెలుగు.' },
+  { icon:'ic-rider', title:'Neighbourhood riders', desc:'Delivered by people from your own area.' },
+];
+document.getElementById('whyGrid').innerHTML = WHY.map(w => `
+  <div class="why-card reveal">
+    <div class="why-icon"><svg class="ic"><use href="#${w.icon}"></use></svg></div>
+    <h3>${w.title}</h3>
+    <p>${w.desc}</p>
+  </div>`).join('');
+
+/* ---------- Investors ---------- */
+const INVESTOR_POINTS = [
+  'Live and working platform, not a prototype',
+  'Two revenue streams: partner commission + customer delivery fee',
+  'Hyperlocal model with weekly partner settlements',
+  'Founder-led, built in-house',
+];
+document.getElementById('investorList').innerHTML = INVESTOR_POINTS.map(p => `
+  <li><span class="tick"><svg class="ic"><use href="#ic-check"></use></svg></span><span>${p}</span></li>`).join('');
+
+/* ---------- Help cards ---------- */
+const phoneCard = SUPPORT_PHONE
+  ? { icon:'ic-phone', title:'Call Us', desc:'Talk to our team', label:'Call Now', href:'tel:'+SUPPORT_PHONE, disabled:false }
+  : { icon:'ic-phone', title:'Call Us', desc:'Talk to our team', label:'Coming soon', href:'#', disabled:true };
+const HELP_CARDS = [
+  { icon:'ic-chat', title:'Live Chat', desc:'Instant help inside the app', label:'Start Chat', href:SUPPORT_URL, disabled:false },
+  phoneCard,
+  { icon:'ic-mail', title:'Email', desc:'We reply quickly', label:'Email Us', href:'mailto:adminlinkup@gmail.com', disabled:false },
+];
+document.getElementById('helpGrid').innerHTML = HELP_CARDS.map(h => `
+  <div class="help-card reveal">
+    <div class="why-icon"><svg class="ic"><use href="#${h.icon}"></use></svg></div>
+    <h3>${h.title}</h3>
+    <p>${h.desc}</p>
+    <a class="btn ${h.disabled?'btn-ghost-ink':'btn-orange'}" ${h.disabled?'aria-disabled="true" tabindex="-1"':''} href="${h.href}">${h.label}</a>
+  </div>`).join('');
+
+/* ---------- FAQ ---------- */
+const FAQS = [
+  { q:'Where does LinkUp deliver?', a:'LinkUp currently delivers across neighbourhoods in Hyderabad, connecting you with restaurants, cafés, cloud kitchens and kirana stores near you.' },
+  { q:'What payment methods are accepted?', a:'You can pay online through the app using standard payment methods, or choose cash on delivery where available.' },
+  { q:'Can I track my order live?', a:'Yes — once your order is picked up, you can track your rider on the map in real time, right up to your doorstep.' },
+  { q:'How do LinkUp Points work?', a:'You earn 5 LinkUp Points on every order. Each point is worth ₹1, and you can redeem points for up to half your bill at checkout.' },
+];
+document.getElementById('faqList').innerHTML = FAQS.map((f,i) => `
+  <div class="faq-item reveal" id="faq-${i}">
+    <button class="faq-q" onclick="toggleFaq(${i})" aria-expanded="false">
+      <span>${f.q}</span><svg class="ic"><use href="#ic-plus"></use></svg>
+    </button>
+    <div class="faq-a"><p>${f.a}</p></div>
+  </div>`).join('');
+function toggleFaq(i){
+  const item = document.getElementById('faq-'+i);
+  const a = item.querySelector('.faq-a');
+  const q = item.querySelector('.faq-q');
+  const willOpen = !item.classList.contains('open');
+  item.classList.toggle('open', willOpen);
+  q.setAttribute('aria-expanded', String(willOpen));
+  a.style.maxHeight = willOpen ? a.scrollHeight + 'px' : '0px';
+}
+
+/* ---------- Reveal on scroll — runs after all dynamic cards above are in the DOM ---------- */
+(function(){
+  const els = document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){ els.forEach(el=>el.classList.add('in')); return; }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => { if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+  }, { threshold: .15, rootMargin: '0px 0px -60px 0px' });
+  els.forEach(el => io.observe(el));
+})();
+
+/* ══════════════════════════════════════════════════════
+   SLIDER ENGINE — shared by #ad1 / #ad2 / #ad3
+══════════════════════════════════════════════════════ */
+function buildSlider(rootId, slides, ctaLabelDefault){
+  const root = document.getElementById(rootId);
+  const total = slides.length;
+  let cur = 0, timer = null, paused = false;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const interval = parseInt(root.dataset.interval, 10) || 5000;
+
+  root.innerHTML = slides.map((s,i) => `
+    <div class="slide${i===0?' active':''}" data-i="${i}">
+      <img src="assets/website/${s.img}" alt="${s.alt}" ${i===0?'':'loading="lazy"'} width="1400" height="800">
+      <div class="slide-scrim"></div>
+      <div class="slide-content">
+        <div class="slide-badge"><svg class="logo-mark"><use href="#ic-logo"></use></svg><span>LinkUp</span></div>
+        <div class="slide-title">${s.title}</div>
+        <div class="slide-desc">${s.desc}</div>
+        <a class="btn btn-orange" href="${s.href}">${s.cta || ctaLabelDefault}</a>
+      </div>
+    </div>`).join('') +
+    `<button class="slider-arrow prev" aria-label="Previous slide"><svg class="ic"><use href="#ic-chevron-left"></use></svg></button>
+     <button class="slider-arrow next" aria-label="Next slide"><svg class="ic"><use href="#ic-chevron-right"></use></svg></button>
+     <div class="slider-dots">${slides.map((_,i)=>`<button class="slider-dot${i===0?' active':''}" data-i="${i}" aria-label="Go to slide ${i+1}"><span class="fill"></span></button>`).join('')}</div>`;
+
+  const slideEls = root.querySelectorAll('.slide');
+  const dotEls = root.querySelectorAll('.slider-dot');
+
+  function goTo(n){
+    const next = (n + total) % total;
+    slideEls[cur].classList.remove('active');
+    dotEls[cur].classList.remove('active');
+    dotEls[cur].querySelector('.fill').style.transition = 'none';
+    dotEls[cur].querySelector('.fill').style.width = '0%';
+    cur = next;
+    slideEls[cur].classList.add('active');
+    dotEls[cur].classList.add('active');
+    if(!reduced) startDotFill();
+  }
+  function startDotFill(){
+    const fill = dotEls[cur].querySelector('.fill');
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
+    requestAnimationFrame(() => {
+      fill.style.transition = `width ${interval}ms linear`;
+      fill.style.width = '100%';
+    });
+  }
+  function next(){ goTo(cur+1); }
+  function prev(){ goTo(cur-1); }
+  function start(){ if(reduced) return; stop(); timer = setInterval(()=>{ if(!paused) next(); }, interval); startDotFill(); }
+  function stop(){ if(timer) clearInterval(timer); }
+
+  root.querySelector('.prev').addEventListener('click', () => { prev(); start(); });
+  root.querySelector('.next').addEventListener('click', () => { next(); start(); });
+  dotEls.forEach(d => d.addEventListener('click', () => { goTo(parseInt(d.dataset.i,10)); start(); }));
+
+  root.addEventListener('mouseenter', () => { paused = true; });
+  root.addEventListener('mouseleave', () => { paused = false; });
+
+  let touchX = 0;
+  root.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; paused = true; }, { passive:true });
+  root.addEventListener('touchend', e => {
+    const diff = touchX - e.changedTouches[0].clientX;
+    if(Math.abs(diff) > 40){ diff > 0 ? next() : prev(); start(); }
+    paused = false;
+  }, { passive:true });
+
+  root.setAttribute('tabindex', '0');
+  root.addEventListener('keydown', e => {
+    if(e.key === 'ArrowLeft'){ prev(); start(); }
+    else if(e.key === 'ArrowRight'){ next(); start(); }
+  });
+
+  if(reduced){ dotEls.forEach(d => d.style.display='inline-block'); }
+  start();
+}
+
+buildSlider('ad1', [
+  { img:'rider-1.webp', alt:'LinkUp delivery rider on a scooter at night', title:'Hyderabad ka apna delivery app.', desc:'Hot food from your neighbourhood\'s favourite kitchens, right at your door.', cta:'Order Now', href:APP_URL },
+  { img:'rider-2.webp', alt:'LinkUp delivery rider riding through the city', title:'Garma garam. Seedha aapke ghar.', desc:'Our riders are from your area, so your food never travels across the city.', cta:'Order Now', href:APP_URL },
+  { img:'rider-3.webp', alt:'LinkUp delivery rider with an insulated delivery box', title:'Watch every turn, live.', desc:'Track your rider on the map from the kitchen to your doorstep.', cta:'Order Now', href:APP_URL },
+  { img:'rider-4.webp', alt:'LinkUp delivery rider on a motorcycle at night', title:'Every order pays you back.', desc:'Earn 5 LinkUp Points on every order. 1 point = ₹1.', cta:'Sign Up Free', href:SIGNUP_URL },
+], 'Order Now');
+
+buildSlider('ad2', [
+  { img:'ad2-1.webp', alt:'Hyderabadi biryani plated fresh', title:'The biryani your mohalla swears by.', desc:'Order from the local places Hyderabad has loved for years.', cta:'Order Now', href:APP_URL },
+  { img:'ad2-2.webp', alt:'Fresh pizza from a local kitchen', title:'Burgers. Pizza. Desserts. One tap.', desc:'All your cravings from kitchens just around the corner.', cta:'Order Now', href:APP_URL },
+  { img:'ad2-3.webp', alt:'Dessert from a local Hyderabad café', title:'Eat local. Feel good.', desc:'Every LinkUp order helps a local kitchen grow.', cta:'Order Now', href:APP_URL },
+], 'Order Now');
+
+buildSlider('ad3', [
+  { img:'ad3-1.webp', alt:'Fresh vegetables from a local kirana store', title:'Fresh sabzi from your trusted kirana.', desc:'Vegetables from shops you already know, delivered to your door.', cta:'Shop Now', href:APP_URL },
+  { img:'ad3-2.webp', alt:'Fresh fruit juice glass', title:'Fruits, juices, daily needs. Done.', desc:'Skip the queue. Your corner shop is now online.', cta:'Shop Now', href:APP_URL },
+  { img:'ad3-3.webp', alt:'Local grocery store shelves', title:'Your gali\'s shops, in your pocket.', desc:'Groceries from nearby stores, delivered in minutes, not days.', cta:'Shop Now', href:APP_URL },
+], 'Shop Now');
+</script>
+</body>
+</html>
