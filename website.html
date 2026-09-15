@@ -187,7 +187,7 @@ a[aria-disabled="true"]{pointer-events:none;opacity:.55;cursor:default;}
 .slider{position:relative;width:100%;overflow:hidden;background:#000;}
 .slide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease;}
 .slide.active{opacity:1;z-index:2;}
-.slide img{width:100%;height:100%;object-fit:cover;transform:scale(1.06);transition:transform 6.5s linear;}
+.slide img{width:100%;height:100%;object-fit:cover;object-position:var(--pos-d,center);transform:scale(1.06);transition:transform 6.5s linear;}
 .slide.active img{transform:scale(1.16);}
 @media(prefers-reduced-motion:reduce){.slide img,.slide.active img{transition:none;transform:none;}}
 .slide-scrim{position:absolute;inset:0;background:linear-gradient(100deg,rgba(6,6,8,.88) 0%,rgba(6,6,8,.55) 42%,rgba(6,6,8,.15) 68%,transparent 100%),linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 40%);}
@@ -222,8 +222,34 @@ a[aria-disabled="true"]{pointer-events:none;opacity:.55;cursor:default;}
 
 .hero-slider{height:min(86vh,780px);min-height:520px;margin-top:0;}
 .ad-slider{height:min(58vh,460px);min-height:340px;}
-@media(max-width:700px){.hero-slider{height:88vh;min-height:560px;}.ad-slider{height:420px;}}
+@media(max-width:700px){.ad-slider{height:420px;}}
 @media(max-width:420px){.ad-slider{height:390px;}}
+
+/* Hero slider — phone-only layout (below the 768px tablet breakpoint).
+   Content moves to the bottom-left with a taller bottom scrim so it never
+   overlaps the arrows/dots. 768px+ hero and the ad2/ad3 sliders are untouched. */
+@media(max-width:767px){
+  .hero-slider{height:min(78vh,620px);min-height:420px;}
+  .hero-slider .slide img{object-position:var(--pos-m,var(--pos-d,center));}
+  .hero-slider .slide-scrim{
+    background:linear-gradient(to top,rgba(6,6,8,.95) 0%,rgba(6,6,8,.85) 20%,rgba(6,6,8,.55) 40%,rgba(6,6,8,.18) 62%,transparent 82%);
+  }
+  .hero-slider .slide-content{
+    justify-content:flex-end;
+    align-items:flex-start;
+    padding:0 20px 78px;
+    max-width:100%;
+  }
+  .hero-slider .slide-badge{margin-bottom:10px;}
+  .hero-slider .slide-title{font-size:clamp(22px,6vw,28px);margin-bottom:8px;}
+  .hero-slider .slide-desc{font-size:13.5px;margin-bottom:16px;}
+  .hero-slider .slider-arrow{top:auto;bottom:14px;transform:none;width:36px;height:36px;}
+  .hero-slider .slider-arrow:active{transform:scale(.9);}
+  .hero-slider .slider-arrow.prev{left:12px;}
+  .hero-slider .slider-arrow.next{right:12px;}
+  .hero-slider .slider-dots{bottom:22px;gap:7px;}
+  .hero-slider .slider-dot{width:20px;height:4px;}
+}
 
 /* ══════════════════════════════════════════════════════
    CATEGORIES
@@ -775,7 +801,7 @@ function buildSlider(rootId, slides, ctaLabelDefault){
 
   root.innerHTML = slides.map((s,i) => `
     <div class="slide${i===0?' active':''}" data-i="${i}">
-      <img src="assets/website/${s.img}" alt="${s.alt}" ${i===0?'':'loading="lazy"'} width="1400" height="800"${s.pos?` style="object-position:${s.pos}"`:''}>
+      <img src="assets/website/${s.img}" alt="${s.alt}" ${i===0?'':'loading="lazy"'} width="1400" height="800"${(s.pos||s.posMobile)?` style="${s.pos?`--pos-d:${s.pos};`:''}${s.posMobile?`--pos-m:${s.posMobile};`:''}"`:''}>
       <div class="slide-scrim"${s.scrim?` style="background:${s.scrim}"`:''}></div>
       <div class="slide-content">
         <div class="slide-badge"><svg class="logo-mark"><use href="#ic-logo"></use></svg><span>LinkUp</span></div>
@@ -842,10 +868,10 @@ function buildSlider(rootId, slides, ctaLabelDefault){
 }
 
 buildSlider('ad1', [
-  { img:'rider-1.webp?v=2', alt:'LinkUp delivery rider on a scooter, delivery box branded with the LinkUp logo', title:'Hyderabad ka apna delivery app.', desc:'Hot food from your neighbourhood\'s favourite kitchens, right at your door.', cta:'Order Now', href:APP_URL, pos:'48% 50%' },
-  { img:'rider-2.webp?v=2', alt:'LinkUp delivery rider riding through the city at night', title:'Garma garam. Seedha aapke ghar.', desc:'Our riders are from your area, so your food never travels across the city.', cta:'Order Now', href:APP_URL, pos:'50% 38%' },
-  { img:'rider-3.webp?v=2', alt:'LinkUp delivery rider with the LinkUp-branded delivery box, riding through the city at night', title:'Watch every turn, live.', desc:'Track your rider on the map from the kitchen to your doorstep.', cta:'Order Now', href:APP_URL, pos:'50% 42%' },
-  { img:'rider-4.webp?v=2', alt:'LinkUp delivery rider on a motorcycle at night', title:'Every order pays you back.', desc:'Earn 5 LinkUp Points on every order. 1 point = ₹1.', cta:'Sign Up Free', href:SIGNUP_URL, pos:'50% 40%' },
+  { img:'rider-1.webp?v=2', alt:'LinkUp delivery rider on a scooter, delivery box branded with the LinkUp logo', title:'Hyderabad ka apna delivery app.', desc:'Hot food from your neighbourhood\'s favourite kitchens, right at your door.', cta:'Order Now', href:APP_URL, pos:'48% 50%', posMobile:'27% 42%' },
+  { img:'rider-2.webp?v=2', alt:'LinkUp delivery rider riding through the city at night', title:'Garma garam. Seedha aapke ghar.', desc:'Our riders are from your area, so your food never travels across the city.', cta:'Order Now', href:APP_URL, pos:'50% 38%', posMobile:'50% 32%' },
+  { img:'rider-3.webp?v=2', alt:'LinkUp delivery rider with the LinkUp-branded delivery box, riding through the city at night', title:'Watch every turn, live.', desc:'Track your rider on the map from the kitchen to your doorstep.', cta:'Order Now', href:APP_URL, pos:'50% 42%', posMobile:'50% 34%' },
+  { img:'rider-4.webp?v=2', alt:'LinkUp delivery rider on a motorcycle at night', title:'Every order pays you back.', desc:'Earn 5 LinkUp Points on every order. 1 point = ₹1.', cta:'Sign Up Free', href:SIGNUP_URL, pos:'50% 40%', posMobile:'50% 32%' },
 ], 'Order Now');
 
 buildSlider('ad2', [
