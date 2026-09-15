@@ -258,6 +258,7 @@ html,body{height:100%;font-family:'Poppins',sans-serif;font-size:14px;background
   font-size:13px;transition:all .15s;}
 .mi-icnbtn:hover{border-color:var(--orange);}
 .mi-icnbtn.del:hover{border-color:var(--red);}
+.mi-icnbtn.bogo-on{background:var(--odim);border-color:var(--orange);}
 .toggle-wrap{display:flex;align-items:center;cursor:pointer;}
 .toggle-wrap input{display:none;}
 .toggle-sl{width:38px;height:22px;background:var(--border);border-radius:11px;position:relative;transition:background .2s;}
@@ -609,6 +610,9 @@ html.light-theme .ord-count{background:var(--input-bg);border-color:var(--border
       <div class="rni" id="rn-refunds" onclick="showSec('refunds')">
         <span class="ico">💸</span> Refunds
       </div>
+      <div class="rni" id="rn-offers" onclick="showSec('offers')">
+        <span class="ico">🎁</span> Offers
+      </div>
       <div class="rni" id="rn-profile" onclick="showSec('profile')">
         <span class="ico">⚙️</span> Profile
       </div>
@@ -791,6 +795,30 @@ html.light-theme .ord-count{background:var(--input-bg);border-color:var(--border
       <div id="histList"></div>
     </div>
 
+    <!-- OFFERS -->
+    <div class="sec" id="sec-offers">
+      <div class="sec-hdr">
+        <h2>🎁 Offers</h2>
+        <p>Set your weekend discount</p>
+      </div>
+      <div class="profile-card">
+        <h3>Weekend Discount</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;">
+          Set a discount that automatically applies to your menu on weekend days. This only applies
+          on the days LinkUp has configured as weekend, and only while weekend offers are enabled platform-wide.
+        </p>
+        <div class="mo-field">
+          <label>Your Weekend Discount % (0–50)</label>
+          <input id="rOffWeekendPct" type="number" min="0" max="50" step="1" placeholder="0" oninput="updateOffersPreview()">
+        </div>
+        <div id="offersPreviewLine" style="font-size:13px;font-weight:700;color:var(--orange);background:var(--odim);border:1px solid rgba(255,140,0,.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;">
+          Your customers will see 0% off on Saturday and Sunday.
+        </div>
+        <div id="offersMsg" style="display:none;margin-bottom:12px;padding:10px 13px;border-radius:8px;font-size:12px;font-weight:600;"></div>
+        <button class="lbtn" onclick="saveRestOffers()" id="offersSaveBtn">💾 Save Offer</button>
+      </div>
+    </div>
+
     <!-- PROFILE -->
     <div class="sec" id="sec-profile">
       <div class="sec-hdr">
@@ -842,6 +870,9 @@ html.light-theme .ord-count{background:var(--input-bg);border-color:var(--border
       </button>
       <button class="bnav-item" id="bn-history" onclick="showSec('history')">
         <span class="bico">📋</span>History
+      </button>
+      <button class="bnav-item" id="bn-offers" onclick="showSec('offers')">
+        <span class="bico">🎁</span> Offers
       </button>
       <button class="bnav-item" id="bn-refunds" onclick="showSec('refunds')">
         <span class="bico">💸</span>Refunds
@@ -1074,6 +1105,7 @@ function showSec(name){
   if(name==='earnings') renderEarnings();
   if(name==='history') renderHistory();
   if(name==='refunds') renderRefunds();
+  if(name==='offers') loadRestOffers();
 }
 
 // ── ORDERS ─────────────────────────────────────────────────
@@ -1403,6 +1435,59 @@ async function orderAction(orderId,action){
 }
 
 // ── MENU ───────────────────────────────────────────────────
+// ── OFFERS (restaurant's own weekend discount) ──────────────
+const DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+let _resWeekendDays=[0,6]; // fallback until offers/globalSettings loads
+function _fmtWeekendDays(days){
+  const names=(days||[0,6]).slice().sort((a,b)=>(a+6)%7-(b+6)%7).map(d=>DAY_NAMES[d]); // week starts Monday, so Sat,Sun reads naturally
+  if(names.length<=1) return names[0]||'the weekend';
+  return names.slice(0,-1).join(', ')+' and '+names[names.length-1];
+}
+function updateOffersPreview(){
+  const pct=Number(document.getElementById('rOffWeekendPct').value)||0;
+  document.getElementById('offersPreviewLine').textContent=
+    `Your customers will see ${pct}% off on ${_fmtWeekendDays(_resWeekendDays)}.`;
+}
+async function loadRestOffers(){
+  if(!window._resDb||!restProfile?.uid) return;
+  try{
+    const gSnap=await window._resGetDoc(window._resDoc(window._resDb,'offers','globalSettings'));
+    if(gSnap.exists()&&Array.isArray(gSnap.data().weekendDays)&&gSnap.data().weekendDays.length){
+      _resWeekendDays=gSnap.data().weekendDays.map(Number);
+    }
+  }catch(e){}
+  document.getElementById('rOffWeekendPct').value=restProfile.weekendDiscountPercent||0;
+  updateOffersPreview();
+}
+async function saveRestOffers(){
+  const msg=document.getElementById('offersMsg');
+  const btn=document.getElementById('offersSaveBtn');
+  msg.style.display='none';
+  const pct=Number(document.getElementById('rOffWeekendPct').value);
+  if(!Number.isFinite(pct)||pct<0||pct>50){
+    msg.style.display='block'; msg.style.background='rgba(239,68,68,.1)'; msg.style.color='#ef4444';
+    msg.textContent='⚠️ Discount must be between 0 and 50%.';
+    return;
+  }
+  if(!restProfile?.uid){ rToast('⚠️ Login required.'); return; }
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    await window._resSetDoc(window._resDoc(window._resDb,'counters','rest_'+restProfile.uid),
+      {weekendDiscountPercent:pct},{merge:true});
+    try{
+      await window._resSetDoc(window._resDoc(window._resDb,'restaurants',restProfile.uid),
+        {weekendDiscountPercent:pct},{merge:true});
+    }catch(e){}
+    restProfile.weekendDiscountPercent=pct;
+    msg.style.display='block'; msg.style.background='rgba(34,197,94,.1)'; msg.style.color='#22c55e';
+    msg.textContent='✅ Weekend offer saved!';
+  }catch(e){
+    msg.style.display='block'; msg.style.background='rgba(239,68,68,.1)'; msg.style.color='#ef4444';
+    msg.textContent='❌ Save failed: '+e.message;
+  }
+  btn.disabled=false; btn.textContent='💾 Save Offer';
+}
+
 async function loadMenu(){
   if(!window._resDb||!restProfile?.uid) return;
   try{
@@ -1513,6 +1598,7 @@ function renderMenuItem(catId,item){
     </div>
     <div class="mi-right">
       <div class="mi-btns">
+        <div class="mi-icnbtn ${item.bogo?'bogo-on':''}" onclick="toggleItemBogo('${catId}','${item.id}',${!item.bogo})" title="${item.bogo?'BOGO is ON for this item':'Mark as Buy 1 Get 1'}">🎁</div>
         <div class="mi-icnbtn" onclick="openEditItemModal('${catId}','${item.id}')" title="Edit">✏️</div>
         <div class="mi-icnbtn del" onclick="deleteItem('${catId}','${item.id}')" title="Delete">🗑️</div>
       </div>
@@ -1548,6 +1634,16 @@ function toggleItemAvail(catId,itemId,val){
   const item=(cat.items||[]).find(i=>i.id===itemId);
   if(item){item.available=val;}
   saveMenu(); renderMenuUI();
+}
+
+// bogo flag is data-only prep work — hidden from customers until offers/globalSettings.bogoEnabled is true
+function toggleItemBogo(catId,itemId,val){
+  const cat=(rMenu.categories||[]).find(c=>c.id===catId);
+  if(!cat) return;
+  const item=(cat.items||[]).find(i=>i.id===itemId);
+  if(item){item.bogo=val;}
+  saveMenu(); renderMenuUI();
+  rToast(val?'🎁 Marked as Buy 1 Get 1':'BOGO removed from item');
 }
 
 // ── MODALS ─────────────────────────────────────────────────

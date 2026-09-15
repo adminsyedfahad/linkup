@@ -530,6 +530,14 @@ html.light-theme .lp-nav{
 }
 .punchline-banner span{font-style:italic;opacity:0.9;}
 .home-tagline{text-align:center;font-size:11.5px;color:var(--muted);font-style:italic;letter-spacing:0.3px;margin:14px 0 6px;}
+.offer-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--orange),#e55a00);border-radius:16px;padding:14px 16px;margin-bottom:14px;box-shadow:0 8px 22px var(--orange-glow);}
+.offer-banner .ic{width:26px;height:26px;color:#111;flex-shrink:0;}
+.offer-banner-title{font-size:14.5px;font-weight:800;color:#111;line-height:1.3;}
+.offer-banner-sub{font-size:11.5px;color:rgba(17,17,17,.72);margin-top:2px;}
+.offer-strip{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card);border:1px solid var(--orange);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;font-weight:700;color:var(--orange);text-align:center;}
+.offer-strip .ic{width:16px;height:16px;flex-shrink:0;}
+.rb-offer{background:rgba(34,197,94,.14);color:#22c55e;border:1px solid rgba(34,197,94,.3);}
+.rb-weekend{background:var(--orange-glow);color:var(--orange);border:1px solid rgba(255,140,0,.35);}
 
 /* NOTIFICATION PANEL */
 .notif-panel{position:fixed;top:65px;right:14px;width:320px;max-width:95vw;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);z-index:400;box-shadow:0 8px 30px rgba(0,0,0,0.4);display:none;}
@@ -1955,6 +1963,7 @@ button,a,[onclick]{
     <symbol id="ic-share" viewBox="0 0 24 24"><path d="M12 3v13"/><path d="M8 7l4-4 4 4"/><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/></symbol>
     <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="ic-scooter" viewBox="0 0 24 24"><circle cx="5.5" cy="18" r="2.3"/><circle cx="18" cy="18" r="2.3"/><path d="M5.5 18h6.5l2.3-6h4.2"/><path d="M9 9h3.5l2 3"/><path d="M16.5 6h3"/></symbol>
+    <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
     <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></symbol>
     <symbol id="ic-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></symbol>
     <symbol id="ic-pan" viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><path d="M15 12h7"/><path d="M19.5 9.5l2.5 2.5-2.5 2.5"/></symbol>
@@ -2472,6 +2481,17 @@ button,a,[onclick]{
 <!-- HOME PAGE -->
 <div id="page-home" class="page active">
   <div class="home-tagline">Cravings delivered, instantly. 🔥</div>
+  <div id="firstOrderBanner" class="offer-banner" style="display:none;">
+    <svg class="ic"><use href="#ic-gift"></use></svg>
+    <div>
+      <div class="offer-banner-title">50% OFF your first order</div>
+      <div class="offer-banner-sub">Applied automatically at checkout — no code needed</div>
+    </div>
+  </div>
+  <div id="weekendStrip" class="offer-strip" style="display:none;">
+    <svg class="ic"><use href="#ic-calendar"></use></svg>
+    <span>Weekend offers are live — up to 50% off</span>
+  </div>
   <!-- ACTIVE ORDER CARD — auto-shown when user has a live order -->
   <div id="aocWrap" class="aoc-wrap" style="display:none;">
     <!-- delivered thank-you card (replaces tracking card after delivery) -->
@@ -2737,7 +2757,7 @@ button,a,[onclick]{
     </div>
     <div class="form-group">
       <label><span data-i18n="phone_label">PHONE NUMBER</span> <span style="color:var(--red);">*</span></label>
-      <input type="tel" id="cdPhone" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" autocomplete="tel" data-i18n-ph="ph_phone">
+      <input type="tel" id="cdPhone" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" autocomplete="tel" data-i18n-ph="ph_phone" oninput="refreshFirstOrderEligibility()">
     </div>
     <div class="form-group">
       <label data-i18n="email_label">EMAIL</label>
@@ -2820,10 +2840,15 @@ button,a,[onclick]{
       </div>
     </div>
   </div>
+  <div id="firstOrderCheckoutNote" style="display:none;align-items:center;gap:8px;background:linear-gradient(135deg,var(--orange-glow),transparent);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin:0 16px 14px;font-size:13px;font-weight:700;color:var(--orange);">
+    <svg class="ic" style="width:18px;height:18px;flex-shrink:0;"><use href="#ic-gift"></use></svg>
+    <span>This is your first order — the discount is already applied below!</span>
+  </div>
   <div class="checkout-section">
     <h3><svg class="ic"><use href="#ic-receipt"></use></svg> <span data-i18n="order_summary">Order Summary</span></h3>
     <div id="checkoutSummary"></div>
     <div class="order-summary-total"><span data-i18n="total_label">Total</span><span id="checkoutTotal" style="color:var(--orange);">₹0</span></div>
+    <div id="checkoutSavedLine" style="display:none;margin-top:10px;font-size:13px;font-weight:700;color:var(--green);"></div>
   </div>
   <button class="checkout-btn" id="confirmOrderBtn" onclick="placeOrder()" style="margin-bottom:20px;">🎉 Confirm & Place Order</button>
 </div>
@@ -3802,6 +3827,130 @@ let _convenienceFeeAccepted=false;
 let _convenienceFee=0;
 let _currentDeliveryFee=0;
 let _adminNotifsUnsub=null;
+
+/* ══════════════════════════════════════════════════════
+   OFFERS ENGINE
+   Global settings: offers/globalSettings (public read, admin-only write —
+   matches the pre-existing firestore.rules "offers" collection exactly, so
+   no rules changes were needed). Falls back to safe "offers off / normal
+   pricing" defaults if the document is missing or unreadable.
+══════════════════════════════════════════════════════ */
+const OFFERS_DEFAULTS={
+  firstOrderEnabled:true, firstOrderPercent:50, firstOrderMaxDiscount:100,
+  freeDeliveryKm:5,
+  cashbackPercent:5, cashbackMaxPerOrder:50,
+  weekendOffersEnabled:true, weekendDays:[0,6], // 0=Sun..6=Sat
+  bogoEnabled:false
+};
+let _offers={...OFFERS_DEFAULTS};
+let _offersLoaded=false;
+async function loadOffersSettings(){
+  if(!window._fbReady||!window._db) return _offers;
+  try{
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'offers','globalSettings'));
+    _offers=snap.exists()?{...OFFERS_DEFAULTS,...snap.data()}:{...OFFERS_DEFAULTS};
+  }catch(e){ _offers={...OFFERS_DEFAULTS}; }
+  _offersLoaded=true;
+  if(typeof refreshOfferUI==='function') refreshOfferUI();
+  return _offers;
+}
+window.addEventListener('firebaseReady',loadOffersSettings);
+if(window._fbReady) loadOffersSettings();
+
+function isWeekendToday(){
+  if(_offers.weekendOffersEnabled===false) return false;
+  const days=(Array.isArray(_offers.weekendDays)&&_offers.weekendDays.length)?_offers.weekendDays.map(Number):[0,6];
+  return days.includes(new Date().getDay());
+}
+const DAY_NAMES=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function fmtWeekendDayNames(){
+  const days=(Array.isArray(_offers.weekendDays)&&_offers.weekendDays.length)?_offers.weekendDays.map(Number):[0,6];
+  const names=days.slice().sort((a,b)=>(a+6)%7-(b+6)%7).map(d=>DAY_NAMES[d]); // week starts Monday, so Sat,Sun reads naturally
+  if(names.length<=1) return names[0]||'the weekend';
+  return names.slice(0,-1).join(', ')+' and '+names[names.length-1];
+}
+function haversineKm(lat1,lng1,lat2,lng2){
+  if([lat1,lng1,lat2,lng2].some(v=>typeof v!=='number'||isNaN(v))) return null;
+  const R=6371, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+// Only live (Firestore-backed) restaurants carry real lat/lng today — the
+// static demo catalog has no restaurant linkage in the cart at all (pre-existing).
+function getRestaurantCoords(restUid){
+  const r=_liveRestaurants.find(x=>x.uid===restUid);
+  if(r&&typeof r.lat==='number'&&typeof r.lng==='number') return {lat:r.lat,lng:r.lng};
+  return null;
+}
+function getRestaurantWeekendPercent(restUid){
+  const r=_liveRestaurants.find(x=>x.uid===restUid);
+  const pct=Number(r?.weekendDiscountPercent)||0;
+  return Math.min(50,Math.max(0,pct));
+}
+function getSelectedAddressCoords(){
+  if(!savedAddresses.length) return null;
+  const def=savedAddresses.find(a=>a.isDefault)||savedAddresses[0];
+  if(def&&typeof def.lat==='number'&&typeof def.lng==='number') return {lat:def.lat,lng:def.lng};
+  return null;
+}
+function getDeliveryDistanceKm(restUid){
+  const rc=getRestaurantCoords(restUid);
+  const ac=getSelectedAddressCoords();
+  if(!rc||!ac) return null;
+  return haversineKm(rc.lat,rc.lng,ac.lat,ac.lng);
+}
+// Step b: restaurant weekend discount on the item subtotal
+function getWeekendDiscount(itemSubtotal,restUid){
+  if(!isWeekendToday()) return 0;
+  const pct=getRestaurantWeekendPercent(restUid);
+  if(pct<=0) return 0;
+  return Math.round(itemSubtotal*pct/100);
+}
+// Step c: 50% (configurable) of the remaining item total, capped, first order only
+function getFirstOrderDiscount(remainingTotal,eligible){
+  if(!_offers.firstOrderEnabled||!eligible||remainingTotal<=0) return 0;
+  const pct=Number(_offers.firstOrderPercent)||0;
+  const raw=Math.round(remainingTotal*pct/100);
+  const cap=Number(_offers.firstOrderMaxDiscount)||0;
+  return cap>0?Math.min(raw,cap):raw;
+}
+// Server-side-checked first-order eligibility — never trust a client flag alone.
+// counters/first_{phone} is created only once, the first time a phone places an
+// order (see confirmOrder's transaction); its mere existence means "not eligible".
+let _firstOrderEligibleCache={}; // phone -> bool, memoized per checkout session
+async function checkFirstOrderEligible(phone){
+  if(!phone||!/^\d{10}$/.test(phone)) return false;
+  if(phone in _firstOrderEligibleCache) return _firstOrderEligibleCache[phone];
+  if(!window._fbReady||!window._db) return true; // offline — assume eligible, server-side txn re-checks at order time
+  try{
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'counters','first_'+phone));
+    const eligible=!snap.exists();
+    _firstOrderEligibleCache[phone]=eligible;
+    return eligible;
+  }catch(e){ return true; }
+}
+// Step e: free delivery within freeDeliveryKm, else the existing tiered fee (unchanged)
+function getDeliveryFeeTiered(itemTotalAfterDiscounts){
+  if(itemTotalAfterDiscounts>=200) return 0;
+  if(itemTotalAfterDiscounts>=181) return 15;
+  if(itemTotalAfterDiscounts>=100) return 20;
+  return 0; // <100: blocked, fee irrelevant
+}
+function getDeliveryFee(itemTotalAfterDiscounts,restUid){
+  const km=getDeliveryDistanceKm(restUid);
+  if(km!=null && km<=(Number(_offers.freeDeliveryKm)||0)) return 0;
+  return getDeliveryFeeTiered(itemTotalAfterDiscounts);
+}
+// Central UI sync point — call after settings load, order placement, or address change.
+function refreshOfferUI(){
+  const banner=document.getElementById('firstOrderBanner');
+  if(banner) banner.style.display=(_offers.firstOrderEnabled!==false && orderHistory.length===0)?'flex':'none';
+  const strip=document.getElementById('weekendStrip');
+  if(strip) strip.style.display=isWeekendToday()?'flex':'none';
+  if(typeof renderRestaurants==='function') renderRestaurants();
+  if(typeof renderHomeRestaurants==='function') renderHomeRestaurants();
+}
 // One 24-char secret token per device — used as doc ID for wallets/ and notifications/
 // Mirrors the orderTracking/{token} security model: path IS the secret, no Firebase auth needed
 const walletToken=(()=>{
@@ -4497,11 +4646,25 @@ function renderHomeRestaurants(){
         <div class="rest-badge-row">
           <span class="rb ${isOpen?'rb-rating':'rb-time'}" style="${isOpen?'color:#22c55e;':'color:#ef4444;'}">${isOpen?'🟢 Open':'🔴 Closed'}</span>
           <span class="rb rb-time">⏰ ${r.openTime||'09:00'}–${r.closeTime||'22:00'}</span>
+          ${offerBadgesHtml(r)}
         </div>
       </div>`;
     d.onclick=()=>openLiveRestDetail(r.uid);
     strip.appendChild(d);
   });
+}
+// Shared badge markup for live restaurants — inline SVG only, no emojis (per offers UI spec)
+function offerBadgesHtml(r){
+  let html='';
+  const km=getDeliveryDistanceKm(r.uid);
+  if(km!=null && km<=(Number(_offers.freeDeliveryKm)||0)){
+    html+=`<span class="rb rb-offer"><svg class="ic"><use href="#ic-scooter"></use></svg> FREE DELIVERY</span>`;
+  }
+  if(isWeekendToday()){
+    const pct=getRestaurantWeekendPercent(r.uid);
+    if(pct>0) html+=`<span class="rb rb-weekend"><svg class="ic"><use href="#ic-calendar"></use></svg> ${pct}% OFF Weekend</span>`;
+  }
+  return html;
 }
 function renderRestaurants(){
   const grid=document.getElementById('restGrid');grid.innerHTML='';
@@ -4539,6 +4702,7 @@ function renderRestaurants(){
         <div class="rest-badge-row">
           <span class="rb ${isOpen?'rb-rating':'rb-time'}" style="${isOpen?'color:#22c55e;border-color:rgba(34,197,94,.3);':'color:#ef4444;border-color:rgba(239,68,68,.3);'}">${isOpen?'🟢 Open':'🔴 Closed'}</span>
           ${r.phone?`<span class="rb rb-time">📞 ${r.phone}</span>`:''}
+          ${offerBadgesHtml(r)}
         </div>
       </div>`;
     d.onclick=()=>openLiveRestDetail(r.uid);
@@ -4693,6 +4857,7 @@ function goToCheckout(){
   if(nameEl && !nameEl.value) nameEl.value = uName;
   if(phoneEl && !phoneEl.value) phoneEl.value = savedPhone;
   if(emailEl && !emailEl.value) emailEl.value = uEmail;
+  refreshFirstOrderEligibility();
 
   // Auto-fill delivery address from saved addresses
   if(savedAddresses.length){
@@ -4718,36 +4883,79 @@ function selectPay(type,el){
   const btn=document.getElementById('confirmOrderBtn');
   btn.textContent=type==='cod'?'🎉 Confirm & Place Order':'⚡ Pay & Place Order';
 }
-function _getSavingsApplied(){
-  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+/*
+ * Bill order (per LinkUp offers spec), applied in this exact sequence so
+ * nothing is ever double-discounted:
+ *   a. item total
+ *   b. minus restaurant weekend discount (today is a weekend day + restaurant set a %)
+ *   c. minus first-order discount (server-checked eligibility, % of what's left after b)
+ *   d. minus wallet + LinkUp Points redemption (existing system, unchanged cap logic —
+ *      now applied against the post-discount item total instead of the raw subtotal)
+ *   e. plus delivery fee — free within freeDeliveryKm, else the existing tiered fee
+ *   f. existing taxes/charges (none today; placeholder for parity with the spec)
+ * Total is always clamped at >=0.
+ */
+function computeBill(){
+  const itemSubtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const weekendDiscount=getWeekendDiscount(itemSubtotal,_cartRestaurantId);
+  const afterWeekend=itemSubtotal-weekendDiscount;
+  const firstOrderDiscount=getFirstOrderDiscount(afterWeekend,_checkoutFirstOrderEligible);
+  const itemTotal=Math.max(0,afterWeekend-firstOrderDiscount);
+
   const wOn=document.getElementById('applyWalletToggle')?.classList.contains('s-on');
   const pOn=document.getElementById('applyPointsToggle')?.classList.contains('s-on');
-  let wAmt=wOn?Math.min(walletBalance,total):0;
-  let pAmt=pOn?Math.min(luPoints,total):0;
-  const maxDiscount=Math.floor(total*0.9);
+  let wAmt=wOn?Math.min(walletBalance,itemTotal):0;
+  let pAmt=pOn?Math.min(luPoints,itemTotal):0;
+  const maxDiscount=Math.floor(itemTotal*0.9);
   if(wAmt+pAmt>maxDiscount){const r=maxDiscount/(wAmt+pAmt);wAmt=Math.round(wAmt*r);pAmt=maxDiscount-wAmt;}
-  return{wAmt,pAmt,total};
+
+  const tieredFee=getDeliveryFeeTiered(itemTotal);
+  const deliveryFee=_convenienceFeeAccepted?_convenienceFee:getDeliveryFee(itemTotal,_cartRestaurantId);
+  const deliverySaved=Math.max(0,tieredFee-deliveryFee);
+
+  const grandTotal=itemTotal+deliveryFee;
+  const finalTotal=Math.max(0,grandTotal-wAmt-pAmt);
+  const totalSaved=weekendDiscount+firstOrderDiscount+deliverySaved;
+
+  return{itemSubtotal,weekendDiscount,afterWeekend,firstOrderDiscount,itemTotal,
+    wAmt,pAmt,deliveryFee,tieredFee,deliverySaved,grandTotal,finalTotal,totalSaved,
+    total:itemTotal /* back-compat alias for any external readers */};
 }
-function _getDeliveryFee(sub){
-  if(sub>=200) return 0;
-  if(sub>=181) return 15;
-  if(sub>=100) return 20;
-  return 0; // <100: blocked, fee irrelevant
+// Back-compat shim — some older call sites still expect {wAmt,pAmt,total}
+function _getSavingsApplied(){ const b=computeBill(); return{wAmt:b.wAmt,pAmt:b.pAmt,total:b.itemTotal}; }
+function _getDeliveryFee(sub){ return getDeliveryFeeTiered(sub); }
+
+let _checkoutFirstOrderEligible=false;
+async function refreshFirstOrderEligibility(){
+  const phone=document.getElementById('cdPhone')?.value.trim()||'';
+  _checkoutFirstOrderEligible=/^\d{10}$/.test(phone)?await checkFirstOrderEligible(phone):false;
+  updateCheckoutTotal();
+  updateFirstOrderCheckoutBanner();
+}
+function updateFirstOrderCheckoutBanner(){
+  const el=document.getElementById('firstOrderCheckoutNote');
+  if(!el) return;
+  el.style.display=(_checkoutFirstOrderEligible&&_offers.firstOrderEnabled)?'flex':'none';
 }
 function updateCheckoutTotal(){
-  const{wAmt,pAmt,total}=_getSavingsApplied(); // total = cart subtotal
-  const delFee=_convenienceFeeAccepted?_convenienceFee:_getDeliveryFee(total);
-  const grandTotal=total+delFee;
-  const delDisplay=delFee===0
+  const b=computeBill();
+  const delDisplay=b.deliveryFee===0
     ?`<span style="color:var(--green);font-weight:700;">FREE</span>`
-    :`<span>₹${delFee}</span>`;
-  const baseRows=cart.map(c=>`<div class="order-summary-item"><span>${c.name} ×${c.qty}</span><span>₹${c.price*c.qty}</span></div>`).join('')
-    +`<div class="order-summary-item"><span>Delivery Fee</span>${delDisplay}</div>`;
+    :`<span>₹${b.deliveryFee}</span>`;
+  const baseRows=cart.map(c=>`<div class="order-summary-item"><span>${c.name} ×${c.qty}</span><span>₹${c.price*c.qty}</span></div>`).join('');
   let discountRows='';
-  if(wAmt>0) discountRows+=`<div class="discount-row"><span>🏦 Wallet Applied</span><span>−₹${wAmt}</span></div>`;
-  if(pAmt>0) discountRows+=`<div class="discount-row"><span>⭐ Points Applied</span><span>−₹${pAmt}</span></div>`;
-  document.getElementById('checkoutSummary').innerHTML=baseRows+discountRows;
-  document.getElementById('checkoutTotal').textContent=`₹${Math.max(0,grandTotal-wAmt-pAmt)}`;
+  if(b.weekendDiscount>0) discountRows+=`<div class="discount-row"><span><svg class="ic"><use href="#ic-calendar"></use></svg> Weekend Offer</span><span>−₹${b.weekendDiscount}</span></div>`;
+  if(b.firstOrderDiscount>0) discountRows+=`<div class="discount-row"><span><svg class="ic"><use href="#ic-gift"></use></svg> First Order Discount</span><span>−₹${b.firstOrderDiscount}</span></div>`;
+  const feeRow=`<div class="order-summary-item"><span>Delivery Fee</span>${delDisplay}</div>`;
+  if(b.wAmt>0) discountRows+=`<div class="discount-row"><span>🏦 Wallet Applied</span><span>−₹${b.wAmt}</span></div>`;
+  if(b.pAmt>0) discountRows+=`<div class="discount-row"><span>⭐ Points Applied</span><span>−₹${b.pAmt}</span></div>`;
+  document.getElementById('checkoutSummary').innerHTML=baseRows+discountRows+feeRow;
+  document.getElementById('checkoutTotal').textContent=`₹${b.finalTotal}`;
+  const savedEl=document.getElementById('checkoutSavedLine');
+  if(savedEl){
+    if(b.totalSaved>0){ savedEl.style.display='block'; savedEl.textContent=`🎉 You saved ₹${b.totalSaved} on this order`; }
+    else{ savedEl.style.display='none'; }
+  }
 }
 function toggleSavings(type){
   const id=type==='wallet'?'applyWalletToggle':'applyPointsToggle';
@@ -4825,10 +5033,10 @@ function placeOrder(){
   const cartSub=cart.reduce((s,i)=>s+i.price*i.qty,0);
   if(cartSub<100){showMinOrderPopup(cartSub);return;}
   if(cartSub<200&&!_convenienceFeeAccepted){showMinOrderPopup(cartSub);return;}
-  _currentDeliveryFee=_convenienceFeeAccepted?_convenienceFee:_getDeliveryFee(cartSub);
-  const total=cartSub+_currentDeliveryFee;
-
-  const {wAmt,pAmt}=_getSavingsApplied();
+  const bill=computeBill();
+  _currentDeliveryFee=bill.deliveryFee;
+  const total=bill.grandTotal; // item total (after weekend + first-order discounts) + delivery fee
+  const wAmt=bill.wAmt, pAmt=bill.pAmt;
   if(selectedPayment==='upi'){
     const upiId=document.getElementById('checkoutUpiId').value.trim();
     if(!upiId||!upiId.includes('@')){ errEl.textContent='⚠️ Enter a valid UPI ID (e.g. name@upi)'; errEl.style.display='block'; return; }
@@ -4962,23 +5170,41 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   const btn = document.getElementById('confirmOrderBtn');
   btn.textContent = 'Placing Order...'; btn.disabled = true;
 
+  // Recompute the detailed breakdown now (cart is still intact at this point) so the
+  // order doc records exactly what was charged — total/wAmt/pAmt (passed in as params)
+  // were already fixed from this same bill a moment ago in placeOrder().
+  const bill = computeBill();
+  let firstOrderDiscountFinal = bill.firstOrderDiscount;
+
   let orderId = 'LU-' + Date.now(); // fallback if Firestore unavailable
   const trackingToken = genToken(24);
 
   // ── Step 1: ONLY await the counter transaction (need sequential ID) ──
+  // Combined with the first-order marker check: counters/first_{phone} is created
+  // exactly once, the first time a phone number completes an order (regardless of
+  // whether the discount was enabled/applied that time — its mere existence means
+  // "not eligible" from then on). Reads happen before writes per Firestore's
+  // transaction rules, so this stays race-safe under concurrent submissions.
   if(window._fbReady && window._db){
     try{
       const counterRef = window._fbDoc(window._db, 'counters', 'orders');
+      const firstRef    = phone ? window._fbDoc(window._db, 'counters', 'first_'+phone) : null;
       const orderNum   = await window._fbTxn(window._db, async (txn) => {
         const snap    = await txn.get(counterRef);
+        const fSnap   = firstRef ? await txn.get(firstRef) : null;
         const current = snap.exists() ? (snap.data().lastOrderNumber || 1000) : 1000;
         const next    = current + 1;
         txn.set(counterRef, { lastOrderNumber: next });
+        if(firstRef){
+          if(fSnap.exists()){ firstOrderDiscountFinal = 0; }
+          else{ txn.set(firstRef, { phone, firstOrderId: `LU-${next}`, at: now }); }
+        }
         return next;
       });
       orderId = `LU-${orderNum}`;
-    }catch(e){ console.warn('Counter error, using timestamp ID:', e); }
+    }catch(e){ console.warn('Counter/first-order txn error, using timestamp ID:', e); }
   }
+  _firstOrderEligibleCache[phone]=false; // this phone has now ordered (or the attempt was made) — never eligible again on this device
 
   // ── Step 2: Build local order + update UI IMMEDIATELY ──
   const eta = 22 + Math.floor(Math.random()*10);
@@ -5028,6 +5254,8 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
   // Capture before cart is cleared — _cartRestaurantId would be wiped below
   const _ordRestaurantId = _cartRestaurantId || (_liveRestaurants[0]?.uid) || 'default';
   console.log('[LinkUp] cartRestaurantId:', _cartRestaurantId, '→ writing restaurantId:', _ordRestaurantId);
+  const _ordDistanceKm = getDeliveryDistanceKm(_cartRestaurantId);
+  refreshOfferUI(); // this order was already unshifted into orderHistory above — hide the first-order banner now
 
   // Show success immediately — user doesn't wait for Firestore writes
   cart=[]; updateCartUI();
@@ -5069,6 +5297,16 @@ async function confirmOrder(payMethod,total,wAmt=0,pAmt=0){
         payMethod:     payMethod,
         orderType:     'food',
         restaurantId:  _ordRestaurantId,
+        // Offer breakdown — itemTotal is the base cashback is credited against (post
+        // weekend + first-order discount, pre delivery fee, pre wallet/points).
+        itemSubtotal:      bill.itemSubtotal,
+        weekendDiscount:   bill.weekendDiscount,
+        firstOrderDiscount: firstOrderDiscountFinal,
+        itemTotal:         Math.max(0, bill.afterWeekend - firstOrderDiscountFinal),
+        deliveryDistanceKm: _ordDistanceKm,
+        savingsTotal:      bill.weekendDiscount + firstOrderDiscountFinal + bill.deliverySaved,
+        cashbackCredited:  false,
+        cashbackAmount:    0,
         status:        'placed',
         statusHistory: [{status:'placed', time: now}],
         createdAt:     now,
@@ -5294,14 +5532,15 @@ function _fmtTxnDate(d){
 function renderWalletTxns(){
   const el=document.getElementById('walletTxnList');
   if(!el) return;
-  const txns=walletTxns.filter(t=>t.type==='refund'||t.type==='spent');
+  const txns=walletTxns.filter(t=>t.type==='refund'||t.type==='spent'||t.type==='cashback');
   if(!txns.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px;">No refunds yet.</div>';return;}
   el.innerHTML=[...txns].reverse().map(t=>{
     const isR=t.type==='refund';
-    const icon=isR?'↩️':'🛒';
-    const bg=isR?'rgba(59,130,246,0.12)':'rgba(255,140,0,0.12)';
-    const cls=isR?'refund':'spent';
-    const sign=isR?'+':'−';
+    const isC=t.type==='cashback';
+    const icon=isC?'💰':(isR?'↩️':'🛒');
+    const bg=isC?'rgba(34,197,94,0.12)':(isR?'rgba(59,130,246,0.12)':'rgba(255,140,0,0.12)');
+    const cls=isC?'earned':(isR?'refund':'spent'); // cashback reuses the "earned" green credit styling
+    const sign=(isR||isC)?'+':'−';
     return `<div class="wallet-txn-item">
       <div class="wallet-txn-left">
         <div class="wallet-txn-icon" style="background:${bg};">${icon}</div>
@@ -6413,7 +6652,15 @@ function saveAddress() {
   const full  = document.getElementById('addrFull').value.trim();
   const type  = document.getElementById('addrType').value;
   if (!label || !full) { showToast('⚠️ Please fill in all address fields'); return; }
-  savedAddresses.push({ label, full, type, isDefault: savedAddresses.length === 0 });
+  const entry = { label, full, type, isDefault: savedAddresses.length === 0 };
+  // Capture map-pin coordinates when available — used for the free-delivery radius calc.
+  // Addresses saved without dropping a pin simply have no lat/lng, which safely falls
+  // back to the existing tiered delivery fee (see getDeliveryFee/getDeliveryDistanceKm).
+  if (typeof _addrMarker !== 'undefined' && _addrMarker) {
+    const pos = _addrMarker.getLatLng();
+    entry.lat = pos.lat; entry.lng = pos.lng;
+  }
+  savedAddresses.push(entry);
   localStorage.setItem('lu_addresses', JSON.stringify(savedAddresses));
   toggleAddrForm(false);
   renderAddresses();

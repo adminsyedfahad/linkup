@@ -18,7 +18,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, where, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, where, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 const cfg = {
   apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
@@ -36,7 +36,7 @@ window._fbSnap=onSnapshot; window._fbQuery=query;
 window._fbOrderBy=orderBy; window._fbCol=collection;
 window._fbDoc=doc; window._fbUpdate=updateDoc; window._fbArrUnion=arrayUnion;
 window._fbSetDoc=setDoc; window._fbGetDoc=getDoc; window._fbGetDocs=getDocs;
-window._fbWhere=where;
+window._fbWhere=where; window._fbTxn=runTransaction;
 window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
 </script>
 <style>
@@ -298,6 +298,8 @@ html.light-theme .css2{background:var(--bg);}
 .stg-row:last-child{border-bottom:none;}
 .stg-info .stg-lbl{font-size:13px;font-weight:600;}
 .stg-info .stg-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.wd-chk{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;user-select:none;}
+.wd-chk input{accent-color:var(--orange);width:14px;height:14px;cursor:pointer;}
 .sw{position:relative;width:44px;height:24px;flex-shrink:0;margin-left:12px;}
 .sw input{opacity:0;width:0;height:0;position:absolute;}
 .sw-sl{position:absolute;inset:0;background:rgba(255,255,255,.15);border-radius:24px;cursor:pointer;transition:.2s;}
@@ -506,6 +508,7 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
     <button class="mnb" id="mnr" onclick="showSec('reviews')">⭐ Reviews</button>
     <button class="mnb" id="mnri" onclick="showSec('riders')">👤 Riders</button>
     <button class="mnb" id="mnrest" onclick="showSec('restaurants')">🍽️ Restaurants</button>
+    <button class="mnb" id="mnoff" onclick="showSec('offers')">🎁 Offers</button>
     <button class="mnb" id="mnst" onclick="showSec('settings')">⚙️ Settings</button>
     <button class="mnb" id="mtbThemeBtn" onclick="toggleTheme()">☀️</button>
     <button class="mnb" onclick="doLogout()">⏻</button>
@@ -544,6 +547,9 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
       </div>
       <div class="ni" id="nrest" onclick="showSec('restaurants')">
         <span class="ico">🍽️</span> Restaurants
+      </div>
+      <div class="ni" id="noff" onclick="showSec('offers')">
+        <span class="ico">🎁</span> Offers
       </div>
       <div class="ni" id="nst" onclick="showSec('settings')">
         <span class="ico">⚙️</span> Settings
@@ -865,6 +871,87 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
       <div class="rdr-orders-block" id="rdrOrdersList"><p style="text-align:center;padding:20px;color:var(--muted);">Loading…</p></div>
     </div>
 
+    <!-- OFFERS -->
+    <div class="sec" id="sec-offers">
+      <div class="stg-block">
+        <h3>🎉 First Order Discount</h3>
+        <div class="stg-row">
+          <div class="stg-info">
+            <div class="stg-lbl">Enable First Order Discount</div>
+            <div class="stg-sub">New customers get a discount on their very first order</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="offFirstEnabled"><span class="sw-sl"></span></label>
+        </div>
+        <div class="ref-field" style="margin-top:12px;">
+          <label class="ref-lbl">Discount Percent (0–100)</label>
+          <input class="ref-input" id="offFirstPercent" type="number" min="0" max="100" step="1">
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Maximum Discount Amount (₹)</label>
+          <input class="ref-input" id="offFirstMax" type="number" min="0" step="1">
+        </div>
+      </div>
+
+      <div class="stg-block">
+        <h3>🛵 Free Delivery</h3>
+        <div class="ref-field">
+          <label class="ref-lbl">Free Delivery Radius (km)</label>
+          <input class="ref-input" id="offFreeKm" type="number" min="0" step="0.5">
+          <div class="stg-sub" style="margin-top:6px;">Orders delivered within this distance of the restaurant pay ₹0 delivery fee.</div>
+        </div>
+      </div>
+
+      <div class="stg-block">
+        <h3>💰 Cashback</h3>
+        <div class="ref-field">
+          <label class="ref-lbl">Cashback Percent (0–100)</label>
+          <input class="ref-input" id="offCashbackPercent" type="number" min="0" max="100" step="1">
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Maximum Cashback Per Order (₹)</label>
+          <input class="ref-input" id="offCashbackMax" type="number" min="0" step="1">
+        </div>
+        <div class="stg-sub">Credited to the customer's wallet automatically once an order is marked delivered.</div>
+      </div>
+
+      <div class="stg-block">
+        <h3>📅 Weekend Offers</h3>
+        <div class="stg-row">
+          <div class="stg-info">
+            <div class="stg-lbl">Enable Weekend Offers</div>
+            <div class="stg-sub">Master switch — restaurants set their own weekend discount %, this turns the whole feature on/off</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="offWeekendEnabled"><span class="sw-sl"></span></label>
+        </div>
+        <div class="ref-field" style="margin-top:12px;">
+          <label class="ref-lbl">Weekend Days</label>
+          <div id="offWeekendDays" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <label class="wd-chk"><input type="checkbox" value="0"> Sun</label>
+            <label class="wd-chk"><input type="checkbox" value="1"> Mon</label>
+            <label class="wd-chk"><input type="checkbox" value="2"> Tue</label>
+            <label class="wd-chk"><input type="checkbox" value="3"> Wed</label>
+            <label class="wd-chk"><input type="checkbox" value="4"> Thu</label>
+            <label class="wd-chk"><input type="checkbox" value="5"> Fri</label>
+            <label class="wd-chk"><input type="checkbox" value="6"> Sat</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="stg-block">
+        <h3>🎁 Buy 1 Get 1 (BOGO)</h3>
+        <div class="stg-row">
+          <div class="stg-info">
+            <div class="stg-lbl">Enable BOGO Offers</div>
+            <div class="stg-sub">Keep this OFF until restaurants have marked their BOGO items — no BOGO UI is shown to customers while off</div>
+          </div>
+          <label class="sw"><input type="checkbox" id="offBogoEnabled"><span class="sw-sl"></span></label>
+        </div>
+      </div>
+
+      <div id="offSaveMsg" style="display:none;margin-bottom:12px;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;"></div>
+      <button class="ref-btn" id="offSaveBtn" onclick="saveOffersSettings()" style="width:100%;">💾 Save Offer Settings</button>
+    </div>
+
     <!-- SETTINGS -->
     <div class="sec" id="sec-settings">
       <div class="stg-block">
@@ -1047,6 +1134,130 @@ let _currentRiderUid=null, _rdrFilter='today', _rdrLiveInterval=null, _rdrStatus
 const ADMIN_API_KEY='AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas';
 let _visitorTotal='—', _visitorToday='—', _visitorUnsub=null;
 const ADMIN='adminlinkup@gmail.com';
+
+// ── OFFERS (global settings — offers/globalSettings, public read / admin write) ──
+const OFFERS_DEFAULTS={
+  firstOrderEnabled:true, firstOrderPercent:50, firstOrderMaxDiscount:100,
+  freeDeliveryKm:5,
+  cashbackPercent:5, cashbackMaxPerOrder:50,
+  weekendOffersEnabled:true, weekendDays:[0,6], // 0=Sun, 6=Sat
+  bogoEnabled:false
+};
+let _offersSettings={...OFFERS_DEFAULTS};
+let _offersSettingsLoaded=false;
+let _cashbackProcessing=new Set();
+async function loadOffersSettingsCache(){
+  if(!window._db) return _offersSettings;
+  try{
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'offers','globalSettings'));
+    _offersSettings=snap.exists()?{...OFFERS_DEFAULTS,...snap.data()}:{...OFFERS_DEFAULTS};
+  }catch(e){ _offersSettings={...OFFERS_DEFAULTS}; }
+  _offersSettingsLoaded=true;
+  return _offersSettings;
+}
+async function loadOffersSettings(){
+  await loadOffersSettingsCache();
+  const s=_offersSettings;
+  document.getElementById('offFirstEnabled').checked=!!s.firstOrderEnabled;
+  document.getElementById('offFirstPercent').value=s.firstOrderPercent;
+  document.getElementById('offFirstMax').value=s.firstOrderMaxDiscount;
+  document.getElementById('offFreeKm').value=s.freeDeliveryKm;
+  document.getElementById('offCashbackPercent').value=s.cashbackPercent;
+  document.getElementById('offCashbackMax').value=s.cashbackMaxPerOrder;
+  document.getElementById('offWeekendEnabled').checked=!!s.weekendOffersEnabled;
+  document.getElementById('offBogoEnabled').checked=!!s.bogoEnabled;
+  const days=Array.isArray(s.weekendDays)?s.weekendDays.map(Number):[0,6];
+  document.querySelectorAll('#offWeekendDays input[type=checkbox]').forEach(cb=>{
+    cb.checked=days.includes(Number(cb.value));
+  });
+}
+async function saveOffersSettings(){
+  const msg=document.getElementById('offSaveMsg');
+  const btn=document.getElementById('offSaveBtn');
+  msg.style.display='none';
+  const firstPercent=Number(document.getElementById('offFirstPercent').value);
+  const firstMax=Number(document.getElementById('offFirstMax').value);
+  const freeKm=Number(document.getElementById('offFreeKm').value);
+  const cbPercent=Number(document.getElementById('offCashbackPercent').value);
+  const cbMax=Number(document.getElementById('offCashbackMax').value);
+  const weekendDays=[...document.querySelectorAll('#offWeekendDays input[type=checkbox]:checked')].map(cb=>Number(cb.value));
+  const errs=[];
+  if(!Number.isFinite(firstPercent)||firstPercent<0||firstPercent>100) errs.push('First order percent must be 0–100.');
+  if(!Number.isFinite(firstMax)||firstMax<0) errs.push('First order max discount must be ≥ 0.');
+  if(!Number.isFinite(freeKm)||freeKm<0) errs.push('Free delivery radius must be ≥ 0.');
+  if(!Number.isFinite(cbPercent)||cbPercent<0||cbPercent>100) errs.push('Cashback percent must be 0–100.');
+  if(!Number.isFinite(cbMax)||cbMax<0) errs.push('Cashback max must be ≥ 0.');
+  if(errs.length){
+    msg.style.display='block'; msg.style.background='rgba(239,68,68,.12)'; msg.style.color='#ef4444';
+    msg.textContent='⚠️ '+errs.join(' ');
+    return;
+  }
+  const data={
+    firstOrderEnabled: document.getElementById('offFirstEnabled').checked,
+    firstOrderPercent: firstPercent,
+    firstOrderMaxDiscount: firstMax,
+    freeDeliveryKm: freeKm,
+    cashbackPercent: cbPercent,
+    cashbackMaxPerOrder: cbMax,
+    weekendOffersEnabled: document.getElementById('offWeekendEnabled').checked,
+    weekendDays: weekendDays.length?weekendDays:[0,6],
+    bogoEnabled: document.getElementById('offBogoEnabled').checked,
+    updatedAt: new Date()
+  };
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    await window._fbSetDoc(window._fbDoc(window._db,'offers','globalSettings'),data,{merge:true});
+    _offersSettings={...OFFERS_DEFAULTS,...data};
+    msg.style.display='block'; msg.style.background='rgba(34,197,94,.12)'; msg.style.color='#22c55e';
+    msg.textContent='✅ Offer settings saved!';
+  }catch(e){
+    msg.style.display='block'; msg.style.background='rgba(239,68,68,.12)'; msg.style.color='#ef4444';
+    msg.textContent='❌ Save failed: '+e.message;
+  }
+  btn.disabled=false; btn.textContent='💾 Save Offer Settings';
+}
+
+// ── CASHBACK CREDITING ──────────────────────────
+// Runs on every orders snapshot (init + live). Idempotent via cashbackCredited
+// flag written inside the same transaction that credits the wallet, so an order
+// is credited exactly once no matter how many times 'delivered' is written or
+// how many times this scan runs.
+async function processCashbackCredits(){
+  if(!window._db) return;
+  const candidates=allOrders.filter(o=>o.status==='delivered' && o.cashbackCredited!==true && o.walletToken && !_cashbackProcessing.has(o._id));
+  if(!candidates.length) return;
+  if(!_offersSettingsLoaded) await loadOffersSettingsCache();
+  const s=_offersSettings;
+  const pct=Number(s.cashbackPercent)||0;
+  const maxAmt=Number(s.cashbackMaxPerOrder)||0;
+  for(const o of candidates){
+    _cashbackProcessing.add(o._id);
+    creditCashbackForOrder(o,pct,maxAmt).catch(()=>{}).finally(()=>_cashbackProcessing.delete(o._id));
+  }
+}
+async function creditCashbackForOrder(order,pct,maxAmt){
+  if(pct<=0) return;
+  const itemTotal = (order.itemTotal!=null) ? Number(order.itemTotal)
+    : Math.max(0,(Number(order.amount)||0)-(Number(order.deliveryFee)||0));
+  const amount=Math.min(Math.round(itemTotal*pct/100), maxAmt>0?maxAmt:Infinity);
+  if(amount<=0) return;
+  const orderRef=window._fbDoc(window._db,'orders',order._id);
+  const walletRef=window._fbDoc(window._db,'wallets',order.walletToken);
+  try{
+    await window._fbTxn(window._db, async (txn)=>{
+      const oSnap=await txn.get(orderRef);
+      if(!oSnap.exists()) return;
+      const od=oSnap.data();
+      if(od.status!=='delivered'||od.cashbackCredited===true) return; // already credited or not delivered — abort
+      const wSnap=await txn.get(walletRef);
+      const cur=wSnap.exists()?(wSnap.data().balance||0):0;
+      const ctxn={type:'cashback',amount,orderId:order._id,date:new Date(),note:'Cashback — order '+order._id};
+      const prevTxns=wSnap.exists()?(wSnap.data().transactions||[]):[];
+      txn.set(walletRef,{balance:cur+amount,transactions:[...prevTxns,ctxn]},{merge:true});
+      txn.update(orderRef,{cashbackCredited:true,cashbackAmount:amount});
+    });
+  }catch(e){ console.warn('[Cashback] credit failed for',order._id,e.message); }
+}
 let theme=localStorage.getItem('lu_theme')||'dark';
 let soundOn=localStorage.getItem('lu_adm_sound')!=='off';
 let activeTone=localStorage.getItem('lu_adm_tone')||'ding';
@@ -1202,6 +1413,7 @@ function showApp(email){
   const sc=document.getElementById('soundChk');if(sc) sc.checked=soundOn;
   const tb=document.getElementById('tone-'+activeTone);
   if(tb){document.querySelectorAll('.tone-btn').forEach(b=>b.classList.remove('active'));tb.classList.add('active');}
+  loadOffersSettingsCache();
   startListener();
   startRqListener();
   loadRiders();
@@ -1346,6 +1558,7 @@ function startListener(){
     document.getElementById('ldot').style.display='block';
     document.getElementById('llbl').style.display='block';
     renderStats(); afr();
+    processCashbackCredits();
   },err=>console.warn('Listener error:',err));
 }
 
@@ -1887,7 +2100,7 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',riders:'nri','rider-detail':'nri',restaurants:'nrest',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
@@ -1895,8 +2108,9 @@ function showSec(name){
   document.getElementById('mnr').classList.toggle('active',name==='reviews');
   document.getElementById('mnri').classList.toggle('active',name==='riders'||name==='rider-detail');
   document.getElementById('mnrest').classList.toggle('active',name==='restaurants');
+  document.getElementById('mnoff').classList.toggle('active',name==='offers');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
   if(name==='reviews'){ loadReviews(); }
@@ -1907,6 +2121,7 @@ function showSec(name){
     loadRiderStatuses();
     renderRidersManagement();
   }
+  if(name==='offers'){ loadOffersSettings(); }
 }
 
 // ── CUSTOMER REVIEWS ──────────────────────────
@@ -2971,6 +3186,23 @@ async function submitRefund(){
   </div>
 </div>
 
+<!-- BOGO ITEM MANAGER -->
+<div id="bogoOv" onclick="if(event.target===this)closeBogoManager()"
+  style="display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.55);">
+  <div style="position:absolute;right:0;top:0;bottom:0;width:380px;max-width:100%;
+    background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;padding:22px 20px;
+    display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div style="font-size:16px;font-weight:800;color:var(--text);" id="bogoTitle">BOGO Items</div>
+      <button onclick="closeBogoManager()"
+        style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;
+          color:var(--muted);cursor:pointer;font-size:14px;font-family:'Poppins',sans-serif;">✕</button>
+    </div>
+    <div id="bogoBody" style="flex:1;overflow-y:auto;"></div>
+    <button class="ref-btn" id="bogoSaveBtn" onclick="saveBogoManager()" style="margin-top:14px;">💾 Save</button>
+  </div>
+</div>
+
 <script>
 function openRestPanel(id){
   const r=allRestaurants.find(x=>x.uid===id||x._id===id);
@@ -3024,11 +3256,69 @@ function openRestPanel(id){
       </div>
     </div>
 
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;">
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;">
       <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;">Login Email</div>
       <div style="font-family:monospace;font-size:12px;background:rgba(0,0,0,.2);padding:8px 10px;border-radius:6px;word-break:break-all;">${r.email||'—'}</div>
-    </div>`;
+    </div>
+
+    <button class="ref-btn" style="background:var(--card);color:var(--text);border:1px solid var(--border);" onclick="openBogoManager('${uid}','${(r.name||'Restaurant').replace(/'/g,"\\'")}')">🎁 Manage BOGO Items</button>`;
   document.getElementById('restDetailPanel').style.display='block';
+}
+
+// ── BOGO ITEM MANAGER ───────────────────────────
+// bogo flag lives on each menu item at counters/menu_{uid}.categories[].items[].bogo
+// Admin and the restaurant owner (restaurant.html) can both toggle it; customers only
+// see it once offers/globalSettings.bogoEnabled is true (kept false for now).
+let _bogoUid=null, _bogoMenu=null;
+async function openBogoManager(uid,name){
+  _bogoUid=uid;
+  const ov=document.getElementById('bogoOv');
+  const body=document.getElementById('bogoBody');
+  document.getElementById('bogoTitle').textContent='🎁 BOGO Items — '+name;
+  body.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px;">Loading menu…</p>';
+  ov.classList.add('on');
+  try{
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'counters','menu_'+uid));
+    _bogoMenu=snap.exists()?snap.data():{type:'menu',uid,categories:[]};
+  }catch(e){ _bogoMenu={type:'menu',uid,categories:[]}; }
+  renderBogoManager();
+}
+function renderBogoManager(){
+  const body=document.getElementById('bogoBody');
+  const cats=_bogoMenu.categories||[];
+  if(!cats.length){ body.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px;">This restaurant has no menu items yet.</p>'; return; }
+  body.innerHTML=cats.map(cat=>`
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:800;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">${cat.name}</div>
+      ${(cat.items||[]).map(it=>`
+        <div class="stg-row">
+          <div class="stg-info">
+            <div class="stg-lbl">${it.name}</div>
+            <div class="stg-sub">₹${it.price}</div>
+          </div>
+          <label class="sw"><input type="checkbox" ${it.bogo?'checked':''} onchange="toggleBogoItem('${cat.id}','${it.id}',this.checked)"><span class="sw-sl"></span></label>
+        </div>`).join('')}
+    </div>`).join('');
+}
+function toggleBogoItem(catId,itemId,val){
+  const cat=(_bogoMenu.categories||[]).find(c=>c.id===catId);
+  const it=cat?.items?.find(i=>i.id===itemId);
+  if(it) it.bogo=val;
+}
+async function saveBogoManager(){
+  if(!_bogoUid||!_bogoMenu) return;
+  const btn=document.getElementById('bogoSaveBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    await window._fbSetDoc(window._fbDoc(window._db,'counters','menu_'+_bogoUid),{type:'menu',uid:_bogoUid,..._bogoMenu});
+    toast('✅ BOGO items saved!','#22c55e');
+    closeBogoManager();
+  }catch(e){ toast('❌ Save failed: '+e.message,'#ef4444'); }
+  btn.disabled=false; btn.textContent='💾 Save';
+}
+function closeBogoManager(){
+  document.getElementById('bogoOv').classList.remove('on');
+  _bogoUid=null; _bogoMenu=null;
 }
 function closeRestPanel(){
   document.getElementById('restDetailPanel').style.display='none';
