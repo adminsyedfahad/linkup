@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partner Policy — LinkUp</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23241B12'/%3E%3Cg transform='translate(50,50) scale(1.148) translate(-40,-43.5)'%3E%3Cpath d='M29 31 A11 11 0 0 1 51 31' fill='none' stroke='%23FDF6EA' stroke-width='5.5' stroke-linecap='round'/%3E%3Crect x='15' y='30' width='50' height='40' rx='7' fill='%23FF8C00'/%3E%3Cpath d='M34 42 L34 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cpath d='M30 42 L30 48 M38 42 L38 48' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3Cellipse cx='49' cy='47' rx='4.6' ry='5.6' fill='none' stroke='%23241B12' stroke-width='3.2'/%3E%3Cpath d='M49 53 L49 59' fill='none' stroke='%23241B12' stroke-width='3.6' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0b0b0f;--surface:#13131a;--card:#1a1a24;--border:rgba(255,255,255,.08);
+  --text:#f0f0f7;--muted:#8888a8;--orange:#ff8c00;
+}
+body{background:var(--bg);color:var(--text);font-family:'Poppins',sans-serif;font-size:15px;line-height:1.7;}
+a{color:var(--orange);text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:58px;gap:14px;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Jim Nightshade',cursive;font-size:28px;color:var(--orange);letter-spacing:.5px;display:inline-flex;align-items:center;gap:6px;}
+.ic{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.nav-logo .ic, footer .ic{color:var(--text);}
+.nav-tag{font-size:11px;color:var(--muted);padding:3px 9px;border:1px solid var(--border);border-radius:20px;}
+.nav-back{margin-left:auto;font-size:13px;padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text);font-family:'Poppins',sans-serif;cursor:pointer;transition:border-color .15s;}
+.nav-back:hover{border-color:var(--orange);color:var(--orange);}
+
+.hero{background:linear-gradient(135deg,rgba(255,140,0,.1),transparent);border-bottom:1px solid var(--border);padding:48px 24px 40px;text-align:center;}
+.hero-icon{width:44px;height:44px;color:var(--orange);margin:0 auto 14px;}
+.hero-title{font-family:'Righteous',sans-serif;font-size:30px;color:var(--orange);margin-bottom:8px;}
+.hero-sub{color:var(--muted);font-size:13px;}
+.hero-date{display:inline-block;margin-top:10px;font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 14px;color:var(--muted);}
+
+.wrap{max-width:780px;margin:0 auto;padding:40px 24px 80px;}
+.toc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:36px;}
+.toc-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--orange);margin-bottom:12px;}
+.toc ol{padding-left:18px;display:flex;flex-direction:column;gap:6px;}
+.toc li{font-size:13px;color:var(--muted);}
+.toc a{color:var(--muted);}
+.toc a:hover{color:var(--orange);}
+
+section{margin-bottom:36px;}
+.sec-num{display:inline-block;background:rgba(255,140,0,.12);color:var(--orange);font-size:11px;font-weight:700;border-radius:6px;padding:2px 9px;margin-bottom:8px;letter-spacing:.4px;}
+h2{font-size:19px;font-weight:700;margin-bottom:12px;color:var(--text);}
+p{color:var(--muted);margin-bottom:12px;font-size:14px;}
+ul{padding-left:20px;margin-bottom:12px;}
+li{color:var(--muted);font-size:14px;margin-bottom:6px;}
+strong{color:var(--text);}
+.highlight{background:var(--card);border-left:3px solid var(--orange);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0;}
+.highlight p{margin:0;font-size:13px;}
+
+.chip-row{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0;}
+.chip{padding:8px 14px;border-radius:30px;background:rgba(255,140,0,.12);color:var(--orange);font-size:12.5px;font-weight:700;border:1px solid rgba(255,140,0,.28);}
+
+footer{background:var(--surface);border-top:1px solid var(--border);padding:28px 24px;text-align:center;}
+footer p{font-size:12px;color:var(--muted);}
+.footer-links{display:flex;justify-content:center;gap:20px;margin-top:10px;flex-wrap:wrap;}
+.footer-links a{font-size:12px;color:var(--muted);}
+.footer-links a:hover{color:var(--orange);}
+</style>
+</head>
+<body>
+<svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="ic-logo" viewBox="13.5 16.5 53 54">
+      <path d="M29 31 A11 11 0 0 1 51 31" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
+      <rect x="15" y="30" width="50" height="40" rx="7" fill="#FF8C00"/>
+      <path d="M34 42 L34 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <path d="M30 42 L30 48 M38 42 L38 48" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+      <ellipse cx="49" cy="47" rx="4.6" ry="5.6" fill="none" stroke="#241B12" stroke-width="3.2"/>
+      <path d="M49 53 L49 59" fill="none" stroke="#241B12" stroke-width="3.6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ic-handshake" viewBox="0 0 24 24"><path d="M2 12l4-4 4 3 3-3 2 2-5 5-4-3-4 4Z"/><path d="M11 8l3-3 3 1 3 3-3 3-2-2"/></symbol>
+  </defs>
+</svg>
+
+<nav class="nav">
+  <span class="nav-logo"><svg class="ic" aria-hidden="true"><use href="#ic-logo"></use></svg>LinkUp</span>
+  <span class="nav-tag">Legal</span>
+  <button class="nav-back" onclick="history.back()">← Go Back</button>
+</nav>
+
+<div class="hero">
+  <svg class="hero-icon ic" aria-hidden="true"><use href="#ic-handshake"></use></svg>
+  <div class="hero-title">Partner Policy</div>
+  <div class="hero-sub">How restaurants and stores partner with LinkUp</div>
+  <span class="hero-date">Effective Date: 1 September 2026 &nbsp;·&nbsp; Last Updated: 15 September 2026</span>
+</div>
+
+<div class="wrap">
+
+  <div class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <ol>
+      <li><a href="#commission">Commission &amp; Fees</a></li>
+      <li><a href="#first-month">First Month Free</a></li>
+      <li><a href="#settlement">Weekly Settlement Cycle</a></li>
+      <li><a href="#responsibilities">Partner Responsibilities</a></li>
+      <li><a href="#ending">Ending the Partnership</a></li>
+      <li><a href="#contact">Contact Us</a></li>
+    </ol>
+  </div>
+
+  <section id="commission">
+    <span class="sec-num">01</span>
+    <h2>Commission &amp; Fees</h2>
+    <p>LinkUp charges partner restaurants and stores a flat <strong>20% commission</strong> on the value of items sold through orders placed via LinkUp.</p>
+    <div class="highlight"><p><strong>No upfront charges.</strong> There is no signup fee, no listing fee, and no monthly subscription to join LinkUp — you only pay commission on orders you actually receive.</p></div>
+    <p>The delivery fee shown to the customer is charged to the customer, not deducted from the partner's payout.</p>
+  </section>
+
+  <section id="first-month">
+    <span class="sec-num">02</span>
+    <h2>First Month Free</h2>
+    <p>New partners get their <strong>first month on LinkUp commission-free</strong>, starting from the date your store goes live and starts accepting orders. Standard commission applies from the following billing cycle onward.</p>
+  </section>
+
+  <section id="settlement">
+    <span class="sec-num">03</span>
+    <h2>Weekly Settlement Cycle</h2>
+    <p>Partner payouts are settled <strong>weekly</strong>. Each week's completed (delivered) orders are totalled, LinkUp's commission is deducted, and the net amount is paid out to the partner's registered bank account.</p>
+    <div class="chip-row">
+      <span class="chip">Weekly payouts</span>
+      <span class="chip">20% commission</span>
+      <span class="chip">₹0 to join</span>
+      <span class="chip">First month free</span>
+    </div>
+  </section>
+
+  <section id="responsibilities">
+    <span class="sec-num">04</span>
+    <h2>Partner Responsibilities</h2>
+    <p>To keep the experience consistent for customers, every LinkUp partner is responsible for:</p>
+    <ul>
+      <li><strong>Accurate menu &amp; prices:</strong> keeping items, descriptions and prices on LinkUp up to date and matching what's actually available in-store.</li>
+      <li><strong>Realistic prep time:</strong> giving an honest estimate of how long an order takes to prepare, and accepting orders only when able to fulfil them within that time.</li>
+      <li><strong>Hygiene:</strong> maintaining food safety and hygiene standards appropriate to a restaurant/store preparing food or packing groceries for delivery.</li>
+      <li><strong>Packaging:</strong> packing orders securely enough to survive a delivery trip without spilling, leaking or being damaged.</li>
+    </ul>
+    <p>LinkUp may pause or remove a partner that repeatedly falls short of these responsibilities, after reasonable notice.</p>
+  </section>
+
+  <section id="ending">
+    <span class="sec-num">05</span>
+    <h2>Ending the Partnership</h2>
+    <p>Either LinkUp or the partner may end the partnership at any time, for any reason, with reasonable written notice (email is sufficient). Orders already placed before the end date will still be fulfilled and settled under this policy.</p>
+  </section>
+
+  <section id="contact">
+    <span class="sec-num">06</span>
+    <h2>Contact Us</h2>
+    <p>Interested in partnering, or have a question about an existing partnership? Email <strong>adminlinkup@gmail.com</strong>.</p>
+  </section>
+
+</div>
+
+<footer>
+  <p style="font-family:'Jim Nightshade',cursive;font-size:22px;color:var(--orange);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px;"><svg class="ic" aria-hidden="true"><use href="#ic-logo"></use></svg>LinkUp</p>
+  <p>Fast food &amp; grocery delivery in Hyderabad, Telangana, India</p>
+  <div class="footer-links">
+    <a href="website.html">Home</a>
+    <a href="terms.html">Terms of Use</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="refunds.html">Refunds &amp; Cancellation</a>
+    <a href="offers.html">Offer Terms</a>
+  </div>
+  <p style="margin-top:14px;">© 2026 LinkUp. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
