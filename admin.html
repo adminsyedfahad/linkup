@@ -418,6 +418,48 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
 .rdr-shift-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(34,197,94,.14);color:#22c55e;border:1px solid rgba(34,197,94,.3);}
 @media(max-width:500px){.rdr-stats-grid{grid-template-columns:repeat(3,1fr);gap:6px;}.rdr-stat-num{font-size:16px;}}
 
+/* SUPPORT INBOX */
+.sup-wrap{display:flex;gap:16px;height:calc(100vh - 132px);min-height:360px;}
+.sup-list-col{width:320px;flex-shrink:0;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow-y:auto;}
+.sup-item{padding:13px 16px;border-bottom:1px solid rgba(34,34,53,.4);cursor:pointer;transition:background .12s;}
+.sup-item:last-child{border-bottom:none;}
+.sup-item:hover{background:rgba(255,140,0,.06);}
+.sup-item.active{background:var(--odim);box-shadow:inset 3px 0 0 var(--orange);}
+.sup-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;}
+.sup-item-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sup-unread-dot{width:9px;height:9px;border-radius:50%;background:var(--orange);flex-shrink:0;}
+.sup-item-order{font-size:11px;color:var(--orange);font-weight:600;margin-bottom:3px;}
+.sup-item-last{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sup-item-time{font-size:10px;color:var(--muted);margin-top:4px;}
+.sup-thread-col{flex:1;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+.sup-thread-header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sup-thread-back{display:none;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1;}
+.sup-thread-name{font-size:14px;font-weight:700;}
+.sup-thread-order{font-size:11px;color:var(--orange);font-weight:600;margin-top:2px;}
+.sup-thread-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
+.sup-msg{display:flex;flex-direction:column;max-width:70%;}
+.sup-msg.customer{align-self:flex-start;align-items:flex-start;}
+.sup-msg.admin{align-self:flex-end;align-items:flex-end;}
+.sup-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word;}
+.sup-msg.customer .sup-bubble{background:var(--bg);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.sup-msg.admin .sup-bubble{background:var(--orange);color:#000;font-weight:600;border-bottom-right-radius:4px;}
+.sup-msg-time{font-size:10px;color:var(--muted);margin-top:3px;}
+.sup-thread-input-row{display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--border);flex-shrink:0;}
+.sup-thread-input-row textarea{flex:1;resize:none;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;max-height:90px;min-height:40px;}
+.sup-thread-input-row textarea:focus{border-color:var(--orange);}
+.sup-thread-send{padding:0 18px;background:var(--orange);color:#000;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;flex-shrink:0;transition:opacity .15s;}
+.sup-thread-send:hover{opacity:.88;}
+.sup-thread-send:disabled{opacity:.5;cursor:not-allowed;}
+.sup-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:20px;}
+@media(max-width:768px){
+  .sup-wrap{height:calc(100vh - 108px);}
+  .sup-list-col{width:100%;}
+  .sup-thread-col{display:none;}
+  .sup-wrap.thread-open .sup-list-col{display:none;}
+  .sup-wrap.thread-open .sup-thread-col{display:flex;}
+  .sup-thread-back{display:block;}
+}
+
 /* CUSTOMER PROFILE PANEL */
 .cxp-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3100;}
 .cxp-ov.on{display:block;}
@@ -506,6 +548,7 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
     <button class="mnb" id="mns" onclick="showSec('search')">🔍 Search</button>
     <button class="mnb" id="mnw" onclick="showSec('wallet')">💰 Refunds</button>
     <button class="mnb" id="mnr" onclick="showSec('reviews')">⭐ Reviews</button>
+    <button class="mnb" id="mnsup" onclick="showSec('support')">💬 Support</button>
     <button class="mnb" id="mnri" onclick="showSec('riders')">👤 Riders</button>
     <button class="mnb" id="mnrest" onclick="showSec('restaurants')">🍽️ Restaurants</button>
     <button class="mnb" id="mnoff" onclick="showSec('offers')">🎁 Offers</button>
@@ -541,6 +584,10 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
       <div class="ni" id="nrr" onclick="showSec('rider-ratings')">
         <span class="ico">🛵</span> Rider Ratings
         <span class="ni-badge" id="nrrb">0</span>
+      </div>
+      <div class="ni" id="nsup" onclick="showSec('support')">
+        <span class="ico">💬</span> Support
+        <span class="ni-badge" id="nsupb">0</span>
       </div>
       <div class="ni" id="nri" onclick="showSec('riders')">
         <span class="ico">👤</span> Rider Mgmt
@@ -757,6 +804,34 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
       </div>
       <div id="rrSummary" style="margin-bottom:18px;"></div>
       <div id="rrList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
+    </div>
+
+    <!-- SUPPORT INBOX -->
+    <div class="sec" id="sec-support">
+      <div class="rev-header">
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;">💬 Support</h2>
+        <p style="margin:0;color:var(--muted);font-size:13px;">Real customer conversations — your replies appear in their app instantly</p>
+      </div>
+      <div class="sup-wrap" id="supWrap" style="margin-top:16px;">
+        <div class="sup-list-col" id="supList"></div>
+        <div class="sup-thread-col" id="supThreadCol">
+          <div class="sup-empty" id="supThreadEmpty">Select a conversation to view messages.</div>
+          <div id="supThreadActive" style="display:none;flex-direction:column;flex:1;min-height:0;">
+            <div class="sup-thread-header">
+              <button class="sup-thread-back" onclick="closeSupportThread()">‹</button>
+              <div>
+                <div class="sup-thread-name" id="supThreadName">—</div>
+                <div class="sup-thread-order" id="supThreadOrder"></div>
+              </div>
+            </div>
+            <div class="sup-thread-messages" id="supThreadMessages"></div>
+            <div class="sup-thread-input-row">
+              <textarea id="supReplyInput" rows="1" placeholder="Type a reply…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportReply();}"></textarea>
+              <button class="sup-thread-send" id="supSendBtn" onclick="sendSupportReply()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- RIDER MANAGEMENT -->
@@ -1420,6 +1495,7 @@ function showApp(email){
   loadVisitorStats();
   startRstatusListener();
   loadRestaurants();
+  if(!_supportUnsub) startSupportListener();
   if(!window._kaInterval) window._kaInterval=setInterval(()=>{localStorage.setItem('_adm_ka',Date.now());},50000);
 }
 
@@ -1455,8 +1531,9 @@ async function doLogout(){
   if(_rstatusUnsub){_rstatusUnsub();_rstatusUnsub=null;}
   if(_restUnsub){_restUnsub();_restUnsub=null;}
   if(_restRatingsUnsub){_restRatingsUnsub();_restRatingsUnsub=null;}
+  if(_supportUnsub){_supportUnsub();_supportUnsub=null;}
   try{await window._fbSignOut(window._auth);}catch(e){}
-  allOrders=[];allRiders=[];isInit=true;newCnt=0;allRestaurants=[];_restRatings=[];showLogin();
+  allOrders=[];allRiders=[];isInit=true;newCnt=0;allRestaurants=[];_restRatings=[];_supportConvos=[];_supportActiveId=null;showLogin();
 }
 
 function setupAuth(){
@@ -2100,17 +2177,18 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',support:'nsup',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
   document.getElementById('mnw').classList.toggle('active',name==='wallet');
   document.getElementById('mnr').classList.toggle('active',name==='reviews');
+  document.getElementById('mnsup').classList.toggle('active',name==='support');
   document.getElementById('mnri').classList.toggle('active',name==='riders'||name==='rider-detail');
   document.getElementById('mnrest').classList.toggle('active',name==='restaurants');
   document.getElementById('mnoff').classList.toggle('active',name==='offers');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',support:'Support',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
   if(name==='reviews'){ loadReviews(); }
@@ -2122,6 +2200,136 @@ function showSec(name){
     renderRidersManagement();
   }
   if(name==='offers'){ loadOffersSettings(); }
+  if(name==='support'){ if(!_supportUnsub) startSupportListener(); }
+}
+
+// ── SUPPORT INBOX ──────────────────────────────
+// Reads/writes supportChats/{walletToken} — doc ID is the customer's own
+// secret token (same "path is the secret" model as wallets/orderTracking).
+// Listing every conversation here requires isAdmin() in firestore.rules.
+let _supportUnsub=null, _supportConvos=[], _supportActiveId=null, _supSending=false;
+
+function escAdmin(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function _supBadgeUpdate(){
+  const unread=_supportConvos.filter(c=>c.unreadByAdmin).length;
+  const b=document.getElementById('nsupb');
+  if(b){ if(unread>0){b.textContent=unread;b.classList.add('on');}else{b.classList.remove('on');} }
+}
+
+function startSupportListener(){
+  if(!window._db) return;
+  if(_supportUnsub){_supportUnsub();_supportUnsub=null;}
+  _supportUnsub=window._fbSnap(window._fbCol(window._db,'supportChats'),snap=>{
+    _supportConvos=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(td(b.lastMessageAt||b.updatedAt)||0)-(td(a.lastMessageAt||a.updatedAt)||0));
+    _supBadgeUpdate();
+    renderSupportList();
+    if(_supportActiveId){
+      const active=_supportConvos.find(c=>c.id===_supportActiveId);
+      if(active) renderSupportThread(active);
+    }
+  },err=>{
+    console.error('[Support] listen failed:',err.code,err.message);
+    const el=document.getElementById('supList');
+    if(el) el.innerHTML=`<div style="color:#ef4444;text-align:center;padding:30px 16px;">
+      <div style="font-size:22px;margin-bottom:8px;">⚠️</div>
+      <div style="font-weight:700;margin-bottom:4px;">Could not load support conversations</div>
+      <div style="font-size:12px;opacity:.8;">${escAdmin(err.code)}: ${escAdmin(err.message)}</div>
+    </div>`;
+  });
+}
+
+function renderSupportList(){
+  const el=document.getElementById('supList');
+  if(!el) return;
+  if(!_supportConvos.length){
+    el.innerHTML='<div class="es"><div class="ei">💬</div>No support conversations yet.</div>';
+    return;
+  }
+  el.innerHTML=_supportConvos.map(c=>{
+    const unread=!!c.unreadByAdmin;
+    const active=c.id===_supportActiveId;
+    const lastPrefix=c.lastSender==='admin'?'You: ':'';
+    return `<div class="sup-item${active?' active':''}" onclick="openSupportConversation('${c.id}')">
+      <div class="sup-item-top">
+        <span class="sup-item-name">${escAdmin(c.customerName||'Customer')}</span>
+        ${unread?'<span class="sup-unread-dot"></span>':''}
+      </div>
+      <div class="sup-item-order">${c.orderId?('Order #'+escAdmin(c.orderId)):'General enquiry'}</div>
+      <div class="sup-item-last">${escAdmin(lastPrefix+(c.lastMessage||''))}</div>
+      <div class="sup-item-time">${fdt(c.lastMessageAt||c.updatedAt)}</div>
+    </div>`;
+  }).join('');
+}
+
+function fdt(ts){
+  const d=td(ts); if(!d) return '';
+  return d.toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+function openSupportConversation(id){
+  _supportActiveId=id;
+  document.getElementById('supWrap')?.classList.add('thread-open');
+  const c=_supportConvos.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('supThreadEmpty').style.display='none';
+  document.getElementById('supThreadActive').style.display='flex';
+  renderSupportThread(c);
+  renderSupportList();
+  if(c.unreadByAdmin){
+    window._fbUpdate(window._fbDoc(window._db,'supportChats',id),{unreadByAdmin:false}).catch(e=>console.warn('[Support] mark-read failed:',e));
+  }
+}
+
+function closeSupportThread(){
+  _supportActiveId=null;
+  document.getElementById('supWrap')?.classList.remove('thread-open');
+  document.getElementById('supThreadEmpty').style.display='flex';
+  document.getElementById('supThreadActive').style.display='none';
+  renderSupportList();
+}
+
+function renderSupportThread(c){
+  document.getElementById('supThreadName').textContent=c.customerName||'Customer';
+  document.getElementById('supThreadOrder').textContent=c.orderId?('Order #'+c.orderId):'General enquiry';
+  const msgs=(c.messages||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
+  const el=document.getElementById('supThreadMessages');
+  if(!el) return;
+  el.innerHTML=msgs.length ? msgs.map(m=>{
+    const isAdmin=m.sender==='admin';
+    return `<div class="sup-msg ${isAdmin?'admin':'customer'}">
+      <div class="sup-bubble">${escAdmin(m.text)}</div>
+      <div class="sup-msg-time">${fdt(m.at)}</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
+  el.scrollTop=el.scrollHeight;
+}
+
+async function sendSupportReply(){
+  if(!_supportActiveId||_supSending) return;
+  const inp=document.getElementById('supReplyInput');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  const btn=document.getElementById('supSendBtn');
+  _supSending=true; btn.disabled=true;
+  const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  const now=new Date();
+  try{
+    await window._fbUpdate(window._fbDoc(window._db,'supportChats',_supportActiveId),{
+      messages:window._fbArrUnion({id,sender:'admin',text:txt,at:now}),
+      lastMessage:txt,
+      lastMessageAt:now,
+      lastSender:'admin',
+      updatedAt:now
+    });
+    inp.value='';
+  }catch(e){
+    console.error('[Support] reply failed:',e.code,e.message);
+    toast('⚠️ Reply failed to send — check connection and try again.','#ef4444');
+  }finally{
+    _supSending=false; btn.disabled=false;
+  }
 }
 
 // ── CUSTOMER REVIEWS ──────────────────────────

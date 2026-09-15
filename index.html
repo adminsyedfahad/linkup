@@ -1824,8 +1824,19 @@ button,a,[onclick]{
 .chat-agent-name{font-size:14px;font-weight:700;color:#fff;}
 .chat-status{font-size:11px;color:rgba(255,255,255,0.7);margin-top:1px;display:flex;align-items:center;gap:4px;}
 .chat-online-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;}
-.chat-lang-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;cursor:pointer;font-family:'Poppins',sans-serif;}
+.chat-offline-banner{flex-shrink:0;background:rgba(239,68,68,0.1);border-bottom:1px solid rgba(239,68,68,0.25);color:#f87171;font-size:12px;font-weight:600;line-height:1.5;padding:10px 16px;}
 .chat-messages{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;}
+.chat-system-note{text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;padding:20px 10px;}
+.chat-loading{text-align:center;color:var(--muted);font-size:12.5px;padding:20px 10px;}
+.chat-sender-name{font-size:10.5px;font-weight:700;color:var(--orange);margin-bottom:3px;}
+#chatStatusFooter{flex-shrink:0;padding:0 16px;}
+.chat-status-line{font-size:11px;padding:8px 0;line-height:1.5;}
+.chat-status-line.sending{color:var(--muted);font-style:italic;}
+.chat-status-line.sent{color:var(--muted);}
+.chat-status-line.replied{color:#22c55e;font-weight:600;}
+.chat-status-line.offline{color:#f87171;}
+.chat-status-line.failed{color:#ef4444;font-weight:600;}
+.chat-retry-btn{background:none;border:none;color:#ef4444;font-weight:700;text-decoration:underline;cursor:pointer;font-family:'Poppins',sans-serif;font-size:11px;padding:0;}
 .chat-msg{display:flex;align-items:flex-end;gap:8px;}
 .chat-msg.bot{justify-content:flex-start;}
 .chat-msg.user{justify-content:flex-end;}
@@ -5394,6 +5405,7 @@ function renderOrders(){
       <div style="margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <button class="track-order-btn" style="flex:1;" onclick="openTracking('${o.id}',${o.eta||24},'${o.trackingToken||''}')">🗺️ Track</button>
         <button class="od-details-btn" onclick="openOrderDetail('${o.id}')">📋 Details</button>
+        <button class="od-details-btn" onclick="openSupportChat('${o.id}')">🎧 Support</button>
         ${rateBtn}
       </div>
     </div>`;
@@ -7059,355 +7071,188 @@ function closeIOSSheet() {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// SUPPORT CHAT BOT
+// SUPPORT CHAT — real messages, stored in Firestore
+//
+// Conversation doc: supportChats/{walletToken}
+//   { walletToken, customerName, customerPhone,
+//     orderId, messages:[{id,sender:'customer'|'admin',text,at}],
+//     lastMessage, lastMessageAt, lastSender, unreadByAdmin,
+//     createdAt, updatedAt }
+//
+// Doc ID IS the customer's secret walletToken — same "path is the secret"
+// model already used by wallets/{token} and orderTracking/{token}, so an
+// unauthenticated customer can safely read/write only their own
+// conversation. Listing all conversations (for the admin inbox) is
+// restricted to isAdmin() in firestore.rules. See firestore.rules for the
+// supportChats match block this relies on.
 // ══════════════════════════════════════════════════════════════════════
-let _chatLang = 'en';
-let _chatMode = 'bot'; // 'bot' | 'agent'
-let _chatAgentTimer = null;
-
-const _chatT = {
-  en:{
-    welcome:"👋 Hi! I'm your LinkUp Support assistant. How can I help you today?",
-    opts:['📦 Where is my order?','🧾 I want to see my bill breakdown','🔄 Replace or add to my order','❌ I want to cancel my order','💬 Other'],
-    otherOpts:['🧑‍💼 Chat with an Agent','💵 Refund','📍 Change my delivery address','💳 Update payment method'],
-    noOrder:"😕 You don't have any active orders right now. Place an order first!",
-    agentWait:"⏳ Connecting you to a live agent... please stay connected! An agent will join shortly.",
-    agentJoined:"Hi! I'm {name} from LinkUp Support 😊 How can I help you today?",
-    refundMsg:"For refunds, your request has been noted 📝. Refunds are processed within 3–5 business days to your original payment method. Reference: #REF{ref}",
-    paymentMsg:"To update your payment method, go to Profile → 💳 Payment Methods. You can add cards or UPI IDs there instantly!",
-    addrPrompt:"Sure! Since your order hasn't been delivered yet, you can change the address right here 👇",
-    addrSaved:"✅ Address updated! Your rider has been notified of the new delivery location.",
-    orderStatus:{out:"🛵 Your order is OUT FOR DELIVERY! Your rider {rider} is heading your way. Estimated arrival: {eta} min.",prep:"👨‍🍳 Your order is currently BEING PREPARED at the restaurant. Estimated pickup in {eta} min.",picked:"📦 Your order has been PICKED UP by rider {rider} and is on the way!",delivered:"✅ Your order was delivered. Enjoy your meal! 😋",none:"No active orders found. Place an order to track it."},
-    bill:"Here's your bill breakdown 🧾:",
-    cancelOut:"⚠️ Sorry, your order is very close to you (almost delivered!). Cancellation is not possible at this stage.",
-    cancelDispatched:"🛵 Your order has been dispatched. Cancellation may not be possible but we can try — please contact the rider directly.",
-    cancelPrep:"Your order is still being prepared at the restaurant. You can cancel, but please note:",
-    cancelReason:"Our restaurant partners work hard to prepare fresh meals. Cancelling wastes their effort and your food 🙏",
-    cancelOpts:['✅ Yes, cancel my order','❌ No, keep my order (good choice!)'],
-    cancelDone:"Your order has been cancelled. A refund (if applicable) will be processed in 3–5 business days.",
-    cancelKept:"Great choice! 🎉 Your fresh meal is on its way. Enjoy!",
-    replaceMsg:"🔄 Unfortunately, once an order is placed, items cannot be replaced or added. You can place a new separate order for additional items!",
-    typingBot:"LinkUp Bot is typing",
-    typingAgent:"is typing"
-  },
-  hi:{
-    welcome:"👋 नमस्ते! मैं LinkUp Support हूं। आज मैं आपकी कैसे मदद कर सकता हूं?",
-    opts:['📦 मेरा ऑर्डर कहाँ है?','🧾 बिल देखना है','🔄 ऑर्डर बदलना या जोड़ना है','❌ ऑर्डर कैंसिल करना है','💬 अन्य'],
-    otherOpts:['🧑‍💼 एजेंट से बात करें','💵 रिफंड','📍 पता बदलें','💳 पेमेंट अपडेट करें'],
-    noOrder:"😕 आपका कोई एक्टिव ऑर्डर नहीं है।",
-    agentWait:"⏳ एजेंट से कनेक्ट किया जा रहा है... कृपया प्रतीक्षा करें!",
-    agentJoined:"नमस्ते! मैं {name} हूं LinkUp Support से 😊 कैसे मदद करूं?",
-    refundMsg:"रिफंड के लिए आपका अनुरोध दर्ज किया गया है 📝 (3–5 कार्यदिवस) #REF{ref}",
-    paymentMsg:"पेमेंट अपडेट के लिए Profile → 💳 Payment Methods पर जाएं।",
-    addrPrompt:"बिल्कुल! ऑर्डर डिलीवर नहीं हुआ है, पता यहाँ बदलें 👇",
-    addrSaved:"✅ पता अपडेट हो गया! राइडर को नया पता भेज दिया गया।",
-    orderStatus:{out:"🛵 आपका ऑर्डर रास्ते में है! {rider} आपकी तरफ आ रहा है। ETA: {eta} मिनट।",prep:"👨‍🍳 आपका ऑर्डर रेस्टोरेंट में तैयार हो रहा है। {eta} मिनट।",picked:"📦 ऑर्डर पिक हो गया है!",delivered:"✅ ऑर्डर डिलीवर हो गया। खाने का आनंद लें! 😋",none:"कोई एक्टिव ऑर्डर नहीं मिला।"},
-    bill:"आपका बिल 🧾:",
-    cancelOut:"⚠️ आपका ऑर्डर लगभग पहुंच गया है, कैंसिल नहीं हो सकता।",
-    cancelDispatched:"🛵 ऑर्डर भेजा जा चुका है।",
-    cancelPrep:"ऑर्डर अभी तैयार हो रहा है, आप कैंसिल कर सकते हैं:",
-    cancelReason:"रेस्टोरेंट पार्टनर ने आपका खाना बनाना शुरू कर दिया है 🙏 कृपया विचार करें।",
-    cancelOpts:['✅ हाँ, कैंसिल करें','❌ नहीं, रखें (अच्छा विकल्प!)'],
-    cancelDone:"ऑर्डर कैंसिल हो गया। रिफंड 3–5 दिन में।",
-    cancelKept:"शानदार! 🎉 आपका खाना रास्ते में है।",
-    replaceMsg:"🔄 ऑर्डर में बदलाव नहीं हो सकता। नया ऑर्डर करें।",
-    typingBot:"LinkUp Bot टाइप कर रहा है",typingAgent:"टाइप कर रहा है"
-  },
-  ar:{
-    welcome:"👋 مرحبا! أنا مساعد LinkUp. كيف يمكنني مساعدتك؟",
-    opts:['📦 أين طلبي؟','🧾 تفاصيل الفاتورة','🔄 تعديل الطلب','❌ إلغاء الطلب','💬 أخرى'],
-    otherOpts:['🧑‍💼 التحدث مع وكيل','💵 استرداد','📍 تغيير العنوان','💳 تحديث الدفع'],
-    noOrder:"😕 لا توجد طلبات نشطة.",agentWait:"⏳ جارٍ التواصل مع وكيل...",
-    agentJoined:"مرحبا! أنا {name} من LinkUp 😊",refundMsg:"تم تسجيل طلب الاسترداد #REF{ref}",
-    paymentMsg:"لتحديث طريقة الدفع، اذهب إلى الملف الشخصي → 💳",
-    addrPrompt:"بالطبع! يمكنك تغيير العنوان هنا 👇",addrSaved:"✅ تم تحديث العنوان!",
-    orderStatus:{out:"🛵 طلبك في الطريق! {rider} قادم. الوقت المتوقع: {eta} دقيقة.",prep:"👨‍🍳 يتم تحضير طلبك.",picked:"📦 تم استلام الطلب!",delivered:"✅ تم التسليم. استمتع! 😋",none:"لا يوجد طلبات نشطة."},
-    bill:"تفاصيل الفاتورة 🧾:",cancelOut:"⚠️ الطلب قريب جداً، لا يمكن الإلغاء.",
-    cancelDispatched:"🛵 تم شحن الطلب.",cancelPrep:"يمكنك الإلغاء:",cancelReason:"المطعم يحضر طعامك 🙏",
-    cancelOpts:['✅ نعم، إلغاء','❌ لا، احتفظ به'],cancelDone:"تم الإلغاء.",cancelKept:"ممتاز! 🎉",
-    replaceMsg:"🔄 لا يمكن تعديل الطلب.",typingBot:"LinkUp Bot يكتب",typingAgent:"يكتب"
-  }
-};
-
-const _agentNames = ['Rajan Kumar','Priya Sharma','Arjun Reddy','Meena Patel'];
-let _currentAgent = _agentNames[Math.floor(Math.random()*_agentNames.length)];
-
-function ct(key) {
-  const keys = key.split('.');
-  let val = _chatT[_chatLang] || _chatT['en'];
-  for(const k of keys) { val = val?.[k]; if(val===undefined) break; }
-  if(val===undefined){ val = _chatT['en']; for(const k of keys) val = val?.[k]; }
-  return val || key;
+const SUPPORT_HOURS = { start: 9, end: 23 }; // 9:00 AM – 11:00 PM
+function isSupportOnline(){
+  const h = new Date().getHours();
+  return h >= SUPPORT_HOURS.start && h < SUPPORT_HOURS.end;
 }
 
-function openSupportChat() {
-  _chatMode = 'bot';
-  _currentAgent = _agentNames[Math.floor(Math.random()*_agentNames.length)];
+let _chatOrderId = null;
+let _chatConvRef = null;
+let _chatUnsub = null;
+let _chatConfirmed = [];  // messages currently confirmed in Firestore
+let _chatPending = [];    // sent locally, not yet confirmed (or failed)
+
+function openSupportChat(orderId) {
+  _chatOrderId = orderId || null;
   document.getElementById('chatOverlay').classList.add('open');
-  document.getElementById('chatAvatarEl').textContent = '🤖';
-  document.getElementById('chatAgentName').textContent = 'LinkUp Support';
-  document.getElementById('chatStatusText').textContent = 'Online — Typically replies instantly';
   document.body.style.overflow = 'hidden';
-  const msgs = document.getElementById('chatMessages');
-  msgs.innerHTML = '';
   closePsheet('help');
-  setTimeout(()=>{
-    addBotMsg(ct('welcome'));
-    setTimeout(()=> addBotOpts(ct('opts')), 600);
-  },400);
+  updateChatHeaderStatus();
+  _chatPending = [];
+  document.getElementById('chatMessages').innerHTML = '<div class="chat-loading">Loading conversation…</div>';
+  subscribeChatConversation();
 }
 
 function closeSupportChat() {
   document.getElementById('chatOverlay').classList.remove('open');
   document.body.style.overflow = '';
-  clearTimeout(_chatAgentTimer);
+  if(_chatUnsub){ _chatUnsub(); _chatUnsub = null; }
 }
 function handleChatOverlayClick(e) {
   if(e.target===document.getElementById('chatOverlay')) closeSupportChat();
 }
-function setChatLang(lang) {
-  _chatLang = lang;
-  document.getElementById('chatOverlay').dir = lang==='ar'?'rtl':'ltr';
+
+function updateChatHeaderStatus(){
+  const dot = document.querySelector('#chatOverlay .chat-online-dot');
+  const text = document.getElementById('chatStatusText');
+  const banner = document.getElementById('chatOfflineBanner');
+  const online = isSupportOnline();
+  if(dot) dot.style.background = online ? '#22c55e' : '#6b7280';
+  if(text) text.textContent = online ? 'Online' : 'Offline — back at 9:00 AM';
+  if(banner) banner.style.display = online ? 'none' : 'block';
 }
 
-function addBotMsg(text, delay=0) {
-  setTimeout(()=>{
-    const msgs = document.getElementById('chatMessages');
-    // Typing indicator
-    const typing = document.createElement('div');
-    typing.className='chat-msg bot'; typing.id='chatTyping';
-    typing.innerHTML=`<div class="chat-msg-avatar">🤖</div><div class="chat-typing"><span></span><span></span><span></span></div>`;
-    msgs.appendChild(typing); msgs.scrollTop=msgs.scrollHeight;
-    setTimeout(()=>{
-      typing.remove();
-      const d=document.createElement('div'); d.className='chat-msg bot';
-      d.innerHTML=`<div class="chat-msg-avatar">${_chatMode==='agent'?'🧑':'🤖'}</div><div><div class="chat-bubble">${text}</div><div class="chat-msg-time">${_now()}</div></div>`;
-      msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
-    },900);
-  },delay);
-}
-
-function addUserMsg(text) {
-  const msgs = document.getElementById('chatMessages');
-  const d=document.createElement('div'); d.className='chat-msg user';
-  d.innerHTML=`<div><div class="chat-bubble">${text}<span class="chat-tick">✓✓</span></div><div class="chat-msg-time">${_now()}</div></div>`;
-  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
-  // Simulate seen after 1.5s
-  setTimeout(()=>{ const ticks=d.querySelectorAll('.chat-tick'); ticks.forEach(t=>t.classList.add('seen')); },1500);
-}
-
-function addBotOpts(opts, delay=1200) {
-  setTimeout(()=>{
-    const msgs = document.getElementById('chatMessages');
-    const d=document.createElement('div'); d.className='chat-msg bot';
-    const btns = opts.map((o,i)=>`<button class="chat-opt-btn" onclick="handleChatOpt(${i},'${escChat(o)}')">${o}</button>`).join('');
-    d.innerHTML=`<div class="chat-msg-avatar">🤖</div><div class="chat-opts">${btns}</div>`;
-    msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
-  },delay);
-}
-
-function escChat(s){ return s.replace(/'/g,"\\'"); }
-function _now(){ return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
-
-function handleChatOpt(idx, label) {
-  // Remove all option buttons to keep chat clean
-  document.querySelectorAll('.chat-opt-btn').forEach(b=>b.disabled=true&&(b.style.opacity='0.5'));
-  addUserMsg(label);
-  const opts = ct('opts');
-  if(idx===0) chatWhereOrder();
-  else if(idx===1) chatBillBreakdown();
-  else if(idx===2) chatReplace();
-  else if(idx===3) chatCancelOrder();
-  else if(idx===4) chatOther();
-}
-
-function handleChatSubOpt(idx, label) {
-  document.querySelectorAll('.chat-opt-btn').forEach(b=>b.disabled=true&&(b.style.opacity='0.5'));
-  addUserMsg(label);
-  if(idx===0) chatAgent();
-  else if(idx===1) chatRefund();
-  else if(idx===2) chatChangeAddress();
-  else if(idx===3) chatUpdatePayment();
-}
-
-// 1. WHERE IS MY ORDER
-function chatWhereOrder() {
-  const lastOrder = orderHistory[0];
-  if(!lastOrder){ addBotMsg(ct('orderStatus.none'),300); setTimeout(()=>addBotOpts(ct('opts'),1400),300); return; }
-  let statusKey, rider='Rajan Kumar', eta=Math.max(3,Math.floor(Math.random()*18)+5);
-  if(lastOrder.status==='confirmed') statusKey='prep';
-  else if(lastOrder.status==='delivered') statusKey='delivered';
-  else statusKey='out';
-  let msg = ct(`orderStatus.${statusKey}`)
-    .replace('{rider}',rider).replace('{eta}',eta)
-    .replace('{name}',rider);
-  addBotMsg(msg, 300);
-  if(statusKey==='out'||statusKey==='picked'){
-    setTimeout(()=>addBotMsg(`📍 <strong>Live Map:</strong> Rider is approximately <strong>${eta} min</strong> away from your location. Order #${lastOrder.id.slice(-6)}.`,1500),300);
+function subscribeChatConversation(){
+  if(_chatUnsub){ _chatUnsub(); _chatUnsub = null; }
+  if(!window._fbReady || !window._db){
+    _chatConfirmed = [];
+    renderChatMessages();
+    return;
   }
-  setTimeout(()=>addBotOpts(ct('opts'),2600),300);
+  _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
+  _chatUnsub = window._fbSnap(_chatConvRef, snap => {
+    const data = snap.exists() ? snap.data() : null;
+    _chatConfirmed = (data && Array.isArray(data.messages)) ? data.messages : [];
+    _chatPending = _chatPending.filter(p => p.status==='failed' || !_chatConfirmed.some(m=>m.id===p.id));
+    renderChatMessages();
+  }, err => {
+    console.warn('[Chat] listen failed:', err);
+    renderChatMessages();
+  });
 }
 
-// 2. BILL BREAKDOWN
-function chatBillBreakdown() {
-  const lastOrder = orderHistory[0];
-  if(!lastOrder){ addBotMsg(ct('orderStatus.none'),300); setTimeout(()=>addBotOpts(ct('opts'),1400),300); return; }
-  const itemsHtml = lastOrder.items.map(i=>{
-    const parts = i.split(' ×');
-    const name = parts[0]; const qty = parseInt(parts[1])||1;
-    const price = ITEMS.find(it=>it.name===name)?.price||0;
-    return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px;"><span>${name} ×${qty}</span><span style="color:var(--orange);font-weight:700;">₹${price*qty}</span></div>`;
-  }).join('');
-  const subtotal = lastOrder.total;
-  const delivery = 0;
-  const tax = Math.round(subtotal*0.05);
-  const msg = `${ct('bill')}<br><div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;margin-top:8px;">${itemsHtml}<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Subtotal</span><span>₹${subtotal}</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Delivery</span><span style="color:#22c55e;">FREE</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>GST (5%)</span><span>₹${tax}</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-weight:700;border-top:1px solid rgba(255,255,255,0.15);margin-top:4px;"><span>Total Paid</span><span style="color:var(--orange);">₹${subtotal+tax}</span></div><div style="font-size:11px;color:#888;margin-top:4px;">Payment: ${lastOrder.payMethod||'COD'} · Order #${lastOrder.id.slice(-6)}</div></div>`;
-  addBotMsg(msg,300);
-  setTimeout(()=>addBotOpts(ct('opts'),1800),300);
+function _chatToMillis(at){
+  if(at && at.toDate) return at.toDate().getTime();
+  if(at instanceof Date) return at.getTime();
+  return new Date(at).getTime() || 0;
 }
-
-// 3. REPLACE / ADD
-function chatReplace() {
-  addBotMsg(ct('replaceMsg'),300);
-  setTimeout(()=>addBotOpts(ct('opts'),1600),300);
+function _chatMsgTime(at){
+  const ms = _chatToMillis(at);
+  return ms ? new Date(ms).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
 }
+function escChat(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// 4. CANCEL ORDER
-function chatCancelOrder() {
-  const lastOrder = orderHistory[0];
-  if(!lastOrder){ addBotMsg(ct('orderStatus.none'),300); setTimeout(()=>addBotOpts(ct('opts'),1400),300); return; }
-  if(lastOrder.status==='delivered'){
-    addBotMsg('✅ This order has already been delivered. Cancellation is not applicable.',300);
-    setTimeout(()=>addBotOpts(ct('opts'),1600),300); return;
-  }
-  let cancelStatus = lastOrder.status==='confirmed'?'prep':'out';
-  if(cancelStatus==='out'){
-    addBotMsg(ct('cancelOut'),300);
-    setTimeout(()=>addBotOpts(ct('opts'),1600),300);
+function renderChatMessages(){
+  const msgsEl = document.getElementById('chatMessages');
+  if(!msgsEl) return;
+  const all = [
+    ..._chatConfirmed.map(m=>({...m,_pending:false})),
+    ..._chatPending.map(m=>({...m,_pending:true}))
+  ].sort((a,b) => (a._pending?a._localAt:_chatToMillis(a.at)) - (b._pending?b._localAt:_chatToMillis(b.at)));
+
+  if(!all.length){
+    msgsEl.innerHTML = `<div class="chat-system-note">👋 Send a message below and a real person from LinkUp Support will get back to you.</div>`;
   } else {
-    addBotMsg(ct('cancelPrep'),300);
-    setTimeout(()=>addBotMsg(`⚠️ ${ct('cancelReason')}`,1200),300);
-    setTimeout(()=>{
-      const msgs=document.getElementById('chatMessages');
-      const d=document.createElement('div'); d.className='chat-msg bot';
-      const btns=ct('cancelOpts').map((o,i)=>`<button class="chat-opt-btn" style="${i===0?'border-color:#ef4444;color:#ef4444':''}" onclick="handleCancelDecision(${i},'${escChat(o)}')">${o}</button>`).join('');
-      d.innerHTML=`<div class="chat-msg-avatar">🤖</div><div class="chat-opts">${btns}</div>`;
-      msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
-    },2200);
+    msgsEl.innerHTML = all.map(m => {
+      const isCustomer = m.sender === 'customer';
+      return `<div class="chat-msg ${isCustomer?'user':'bot'}">
+        ${!isCustomer?`<div class="chat-msg-avatar">🎧</div>`:''}
+        <div>
+          ${!isCustomer?`<div class="chat-sender-name">LinkUp Support</div>`:''}
+          <div class="chat-bubble">${escChat(m.text)}</div>
+          <div class="chat-msg-time">${m._pending ? '' : _chatMsgTime(m.at)}</div>
+        </div>
+      </div>`;
+    }).join('');
   }
+  renderChatStatusFooter(all);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
 }
 
-function handleCancelDecision(idx, label) {
-  document.querySelectorAll('.chat-opt-btn').forEach(b=>b.disabled=true&&(b.style.opacity='0.5'));
-  addUserMsg(label);
-  if(idx===0){
-    const o=orderHistory[0]; if(o){ o.status='cancelled'; o.statusLabel='Cancelled ❌'; localStorage.setItem('lu_orders',JSON.stringify(orderHistory)); }
-    addBotMsg(ct('cancelDone'),500);
+function renderChatStatusFooter(all){
+  const foot = document.getElementById('chatStatusFooter');
+  if(!foot) return;
+  if(!all.length){ foot.innerHTML = ''; return; }
+  const last = all[all.length-1];
+  if(last._pending && last.status==='failed'){
+    foot.innerHTML = `<div class="chat-status-line failed">⚠️ Message failed to send. <button class="chat-retry-btn" onclick="retryChatMessage('${last.id}')">Retry</button> or <a href="mailto:${_ADMIN_EMAIL}">email us</a> instead.</div>`;
+  } else if(last._pending){
+    foot.innerHTML = `<div class="chat-status-line sending">Sending…</div>`;
+  } else if(last.sender==='customer'){
+    foot.innerHTML = `<div class="chat-status-line sent">Sent to LinkUp support — we usually reply within 2 hours. Support hours 9:00 AM to 11:00 PM.</div>`;
   } else {
-    addBotMsg(ct('cancelKept'),500);
+    foot.innerHTML = `<div class="chat-status-line replied">LinkUp Support replied.</div>`;
   }
-  setTimeout(()=>addBotOpts(ct('opts'),1800),500);
 }
 
-// 5. OTHER
-function chatOther() {
-  addBotMsg('Sure! What do you need help with?',300);
-  setTimeout(()=>addBotOpts(ct('otherOpts'),1200),300);
-}
-
-// AGENT
-function chatAgent() {
-  addBotMsg(ct('agentWait'),300);
-  document.getElementById('chatStatusText').textContent = 'Connecting to agent...';
-  _chatAgentTimer = setTimeout(()=>{
-    _chatMode='agent';
-    document.getElementById('chatAvatarEl').textContent = '🧑';
-    document.getElementById('chatAgentName').textContent = _currentAgent;
-    document.getElementById('chatStatusText').textContent = 'Online · LinkUp Support Agent';
-    const joinMsg = ct('agentJoined').replace('{name}',_currentAgent);
-    addBotMsg(joinMsg,0);
-  },3000);
-}
-
-// REFUND
-function chatRefund() {
-  const ref = Math.floor(100000+Math.random()*900000);
-  addBotMsg(ct('refundMsg').replace('{ref}',ref),300);
-  setTimeout(()=>addBotOpts(ct('opts'),1800),300);
-}
-
-// CHANGE ADDRESS
-function chatChangeAddress() {
-  addBotMsg(ct('addrPrompt'),300);
-  setTimeout(()=>{
-    const msgs=document.getElementById('chatMessages');
-    const d=document.createElement('div'); d.className='chat-msg bot';
-    d.innerHTML=`<div class="chat-msg-avatar">🤖</div><div class="chat-addr-form">
-      <div class="form-group"><label style="font-size:11px;color:var(--muted);">HOUSE / FLAT NO.</label><input type="text" id="chatAddrLine1" placeholder="e.g. Flat 301, Sai Residency"></div>
-      <div class="form-group"><label style="font-size:11px;color:var(--muted);">STREET & AREA</label><input type="text" id="chatAddrLine2" placeholder="e.g. Banjara Hills Road 12"></div>
-      <div class="form-group" style="margin-bottom:0;"><label style="font-size:11px;color:var(--muted);">CITY & PINCODE</label><input type="text" id="chatAddrCity" placeholder="e.g. City, Pincode"></div>
-      <button class="chat-confirm-btn" onclick="chatConfirmAddress()">✅ Confirm New Address</button>
-    </div></div>`;
-    msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
-  },1200);
-}
-
-function chatConfirmAddress() {
-  const l1=document.getElementById('chatAddrLine1')?.value.trim();
-  const l2=document.getElementById('chatAddrLine2')?.value.trim();
-  const city=document.getElementById('chatAddrCity')?.value.trim();
-  if(!l1||!city){ showToast('⚠️ Please fill in all address fields'); return; }
-  const full=`${l1}, ${l2?l2+', ':''}${city}`;
-  // Save to addresses
-  if(!savedAddresses.length) savedAddresses.push({label:'Home',full,type:'home',isDefault:true});
-  else { savedAddresses[0].full=full; savedAddresses[0].isDefault=true; }
-  localStorage.setItem('lu_addresses',JSON.stringify(savedAddresses));
-  // Remove the form
-  document.querySelectorAll('.chat-addr-form').forEach(f=>f.closest('.chat-msg')?.remove());
-  addUserMsg(`📍 New address: ${full}`);
-  addBotMsg(ct('addrSaved'),500);
-  setTimeout(()=>addBotOpts(ct('opts'),1800),500);
-}
-
-// UPDATE PAYMENT
-function chatUpdatePayment() {
-  addBotMsg(ct('paymentMsg'),300);
-  setTimeout(()=>{
-    addBotMsg('Tap below to open your Payment Settings 👇',1000);
-    setTimeout(()=>{
-      const msgs=document.getElementById('chatMessages');
-      const d=document.createElement('div'); d.className='chat-msg bot';
-      d.innerHTML=`<div class="chat-msg-avatar">🤖</div><div><button class="chat-opt-btn" style="background:rgba(255,140,0,0.12);" onclick="closeSupportChat();setTimeout(()=>openPsheet('payment'),300)">💳 Open Payment Methods →</button></div>`;
-      msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
-    },2000);
-  },300);
-  setTimeout(()=>addBotOpts(ct('opts'),3400),300);
-}
-
-// USER SENDS FREE TEXT
-function sendChatMessage() {
+async function sendChatMessage() {
   const inp = document.getElementById('chatInput');
   const txt = inp.value.trim();
   if(!txt) return;
   inp.value = '';
-  addUserMsg(txt);
-  if(_chatMode==='agent'){
-    // Simulate agent typing and reply
-    setTimeout(()=>{
-      const msgs=document.getElementById('chatMessages');
-      const typing=document.createElement('div'); typing.className='chat-msg bot'; typing.id='agentTyping';
-      typing.innerHTML=`<div class="chat-msg-avatar">🧑</div><div><div class="chat-typing"><span></span><span></span><span></span></div><div style="font-size:10px;color:var(--muted);margin-top:4px;">${_currentAgent} ${ct('typingAgent')}...</div></div>`;
-      msgs.appendChild(typing); msgs.scrollTop=msgs.scrollHeight;
-      setTimeout(()=>{
-        document.getElementById('agentTyping')?.remove();
-        const replies=["I'm looking into that for you right now! 😊","Thank you for the info, give me just a moment.","I completely understand. Let me check this immediately.","Got it! I'll resolve this for you right away.","Sure! Let me pull up your order details."];
-        addBotMsg(replies[Math.floor(Math.random()*replies.length)],0);
-      },1800);
-    },600);
-  } else {
-    addBotMsg("I'm not sure I understand. Please choose an option below:",400);
-    setTimeout(()=>addBotOpts(ct('opts'),1600),400);
+
+  const id = genToken(16);
+  const wasNewConversation = _chatConfirmed.length === 0 && _chatPending.length === 0;
+  _chatPending.push({ id, sender:'customer', text: txt, _localAt: Date.now(), status:'sending' });
+  renderChatMessages();
+
+  if(!window._fbReady || !window._db || !_chatConvRef){
+    const p = _chatPending.find(m=>m.id===id);
+    if(p) p.status = 'failed';
+    renderChatMessages();
+    return;
   }
+
+  const now = new Date();
+  const customerName = localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Customer';
+  const payload = {
+    walletToken,
+    customerName,
+    customerPhone: localStorage.getItem('lu_phone') || '',
+    messages: window._fbArrUnion({ id, sender:'customer', text: txt, at: now }),
+    lastMessage: txt,
+    lastMessageAt: now,
+    lastSender: 'customer',
+    unreadByAdmin: true,
+    updatedAt: now
+  };
+  if(_chatOrderId || wasNewConversation) payload.orderId = _chatOrderId || null;
+  if(wasNewConversation) payload.createdAt = now;
+
+  try{
+    await window._fbSetDoc(_chatConvRef, payload, { merge: true });
+    // onSnapshot picks up the confirmed message and drops it from _chatPending
+  }catch(e){
+    console.warn('[Chat] send failed:', e);
+    const p = _chatPending.find(m=>m.id===id);
+    if(p) p.status = 'failed';
+    renderChatMessages();
+  }
+}
+
+function retryChatMessage(id){
+  const msg = _chatPending.find(p=>p.id===id);
+  if(!msg) return;
+  _chatPending = _chatPending.filter(p=>p.id!==id);
+  const inp = document.getElementById('chatInput');
+  inp.value = msg.text;
+  sendChatMessage();
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -7886,19 +7731,19 @@ function reverseGeocode(lat, lng) {
     <!-- Header -->
     <div class="chat-header">
       <button class="chat-header-back" onclick="closeSupportChat()">‹</button>
-      <div class="chat-avatar" id="chatAvatarEl">🤖</div>
+      <div class="chat-avatar" id="chatAvatarEl">🎧</div>
       <div class="chat-header-info">
         <div class="chat-agent-name" id="chatAgentName">LinkUp Support</div>
-        <div class="chat-status"><span class="chat-online-dot"></span><span id="chatStatusText">Online — Typically replies instantly</span></div>
+        <div class="chat-status"><span class="chat-online-dot"></span><span id="chatStatusText">Online</span></div>
       </div>
-      <select id="chatLangSel" class="chat-lang-btn" onchange="setChatLang(this.value)" style="appearance:none;-webkit-appearance:none;">
-        <option value="en">🇺🇸 EN</option>
-        <option value="hi">🇮🇳 HI</option>
-        <option value="ar">🇸🇦 AR</option>
-      </select>
+    </div>
+    <!-- Offline notice — shown up front, before the customer types -->
+    <div class="chat-offline-banner" id="chatOfflineBanner" style="display:none;">
+      Our team is offline right now. Leave your message and we'll reply after 9:00 AM.
     </div>
     <!-- Messages -->
     <div class="chat-messages" id="chatMessages"></div>
+    <div id="chatStatusFooter"></div>
     <!-- Input -->
     <div class="chat-input-row">
       <input class="chat-input" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMessage()">
