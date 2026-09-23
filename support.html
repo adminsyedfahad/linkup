@@ -20,18 +20,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import{getFirestore,doc,getDoc,setDoc,updateDoc,onSnapshot,collection,query,where,getDocs,arrayUnion,writeBatch,runTransaction}
+import{getFirestore,doc,getDoc,setDoc,updateDoc,onSnapshot,collection,query,where,getDocs,arrayUnion,writeBatch,runTransaction,serverTimestamp,deleteField}
   from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import{getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}
   from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import{getStorage,ref,uploadBytesResumable,getDownloadURL}
+  from"https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
 const cfg={apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",authDomain:"food-app-linkup.firebaseapp.com",
   projectId:"food-app-linkup",storageBucket:"food-app-linkup.firebasestorage.app",
   messagingSenderId:"957073867036",appId:"1:957073867036:web:9ae4e4f2fd728d71777ad9"};
-const app=initializeApp(cfg,'support'),db=getFirestore(app),auth=getAuth(app);
-window._supDb=db; window._supAuth=auth;
+const app=initializeApp(cfg,'support'),db=getFirestore(app),auth=getAuth(app),storage=getStorage(app);
+window._supDb=db; window._supAuth=auth; window._supStorage=storage;
 window._supDoc=doc; window._supGetDoc=getDoc; window._supSetDoc=setDoc; window._supUpdate=updateDoc;
 window._supSnap=onSnapshot; window._supCol=collection; window._supQuery=query; window._supWhere=where;
 window._supGetDocs=getDocs; window._supArrUnion=arrayUnion; window._supBatch=writeBatch; window._supTxn=runTransaction;
+window._supServerTs=serverTimestamp; window._supDeleteField=deleteField;
+window._supStorageRef=ref; window._supUploadBytesResumable=uploadBytesResumable; window._supGetDownloadURL=getDownloadURL;
 window._supSignIn=signInWithEmailAndPassword; window._supSignOut=signOut; window._supOnAuth=onAuthStateChanged;
 window._supReady=true; window.dispatchEvent(new Event('supReady'));
 </script>
@@ -40,19 +44,21 @@ window._supReady=true; window.dispatchEvent(new Event('supReady'));
 html,body{height:100%;}
 body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
 :root{
+  color-scheme: dark;
   --orange:#ff8c00;--odim:rgba(255,140,0,0.12);
   --bg:#0b0b0f;--surface:#13131a;--card:#1a1a26;--border:#222235;--input-bg:#1e1e28;
   --text:#e8e8f0;--muted:#888899;
   --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--yellow:#f59e0b;
 }
 html.light-theme{
+  color-scheme: light;
   --bg:#FFF8ED;--surface:#FFFDF7;--card:#FFFFFF;--border:#F0E2C8;--input-bg:#FFF3E0;
   --text:#2B2118;--muted:#8A7D6D;--odim:rgba(255,140,0,.08);
 }
 
 /* ── LOGIN ─────────────────────────────────────────── */
-#spLogin{min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,.07) 0%,transparent 60%),var(--bg);
+#spLogin{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;
+  background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,.07) 0%,transparent 60%);
   padding:20px;}
 .lb{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px 30px;
   width:100%;max-width:380px;}
@@ -74,7 +80,7 @@ html.light-theme{
 .lerr.on{display:block;}
 
 /* ── APP SHELL ─────────────────────────────────────── */
-#spApp{display:none;height:100vh;overflow:hidden;flex-direction:column;}
+#spApp{display:none;height:100vh;overflow:hidden;flex-direction:column;position:relative;z-index:1;}
 #spApp.on{display:flex;}
 .sp-hdr{display:flex;align-items:center;gap:12px;padding:10px 18px;background:var(--surface);
   border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
@@ -144,7 +150,7 @@ html.light-theme{
 .sp-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:12.5px;}
 
 /* THREAD */
-.sp-thread-col{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.sp-thread-col{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:transparent;}
 .sp-thread-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:20px;}
 .sp-thread-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);
   border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
@@ -198,6 +204,22 @@ html.light-theme{
 .sp-send-btn{padding:0 18px;background:var(--orange);color:#000;border:none;border-radius:10px;font-weight:800;
   cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;flex-shrink:0;transition:opacity .15s;}
 .sp-send-btn:hover{opacity:.88;} .sp-send-btn:disabled{opacity:.5;cursor:not-allowed;}
+.sp-attach-btn{width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.sp-attach-btn:hover{border-color:var(--orange);color:var(--orange);}
+.sp-typing-indicator{display:flex;align-items:center;gap:7px;padding:6px 16px;font-size:11.5px;color:var(--muted);flex-shrink:0;}
+.sp-typing-dots{display:inline-flex;gap:3px;}
+.sp-typing-dots span{width:5px;height:5px;border-radius:50%;background:var(--orange);animation:spTypingPulse 1.2s infinite;}
+.sp-typing-dots span:nth-child(2){animation-delay:.2s;} .sp-typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes spTypingPulse{0%,60%,100%{opacity:.3;}30%{opacity:1;}}
+.sp-upload-progress{display:flex;align-items:center;gap:7px;padding:6px 16px;font-size:11.5px;color:var(--orange);flex-shrink:0;}
+.sp-spin{animation:spSpin 1s linear infinite;}
+@keyframes spSpin{to{transform:rotate(360deg);}}
+.sp-att-img{max-width:220px;max-height:220px;border-radius:10px;display:block;margin-top:4px;object-fit:cover;cursor:pointer;}
+.sp-att-video{max-width:240px;max-height:220px;border-radius:10px;display:block;margin-top:4px;}
+.sp-att-file{display:inline-flex;align-items:center;gap:7px;margin-top:4px;padding:9px 12px;background:rgba(0,0,0,.15);
+  border-radius:8px;font-size:11.5px;text-decoration:none;color:inherit;}
+.sp-msg.staff .sp-att-file{background:rgba(0,0,0,.2);}
 .sp-closed-note{padding:12px 16px;background:var(--card);border-top:1px solid var(--border);text-align:center;
   font-size:12px;color:var(--muted);flex-shrink:0;}
 .sp-closed-note button{margin-left:8px;background:none;border:none;color:var(--orange);font-weight:700;cursor:pointer;text-decoration:underline;font-family:'Poppins',sans-serif;font-size:12px;}
@@ -313,6 +335,37 @@ html.light-theme{
 </style>
 </head>
 <body>
+<!-- Subtle floating background, same pattern as the customer app -->
+<div id="lu-bg-food" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:0;">
+<style>
+.lu-fi{position:absolute;animation:luBgFloat var(--dur) ease-in-out infinite;animation-delay:var(--delay);opacity:var(--op);font-size:var(--sz);}
+@keyframes luBgFloat{0%{transform:translateY(0) rotate(0deg)}40%{transform:translateY(-10px) rotate(4deg)}70%{transform:translateY(5px) rotate(-3deg)}100%{transform:translateY(0) rotate(0deg)}}
+</style>
+<div class="lu-fi" style="top:2%;left:4%;--dur:4s;--delay:0s;--op:0.20;--sz:40px;">🍔</div>
+<div class="lu-fi" style="top:8%;right:6%;--dur:5s;--delay:0.4s;--op:0.18;--sz:40px;">🍕</div>
+<div class="lu-fi" style="top:14%;left:30%;--dur:4.5s;--delay:0.8s;--op:0.18;--sz:34px;">🍛</div>
+<div class="lu-fi" style="top:20%;right:2%;--dur:5.5s;--delay:1.2s;--op:0.16;--sz:34px;">🌮</div>
+<div class="lu-fi" style="top:26%;left:8%;--dur:4.2s;--delay:0.6s;--op:0.18;--sz:34px;">🍜</div>
+<div class="lu-fi" style="top:32%;right:14%;--dur:6s;--delay:1.6s;--op:0.16;--sz:34px;">🍣</div>
+<div class="lu-fi" style="top:38%;left:38%;--dur:4.8s;--delay:0.2s;--op:0.14;--sz:28px;">🥗</div>
+<div class="lu-fi" style="top:44%;left:2%;--dur:5.2s;--delay:1s;--op:0.18;--sz:34px;">🫓</div>
+<div class="lu-fi" style="top:50%;right:4%;--dur:4s;--delay:1.8s;--op:0.16;--sz:28px;">🥣</div>
+<div class="lu-fi" style="top:5%;left:55%;--dur:3.8s;--delay:1.1s;--op:0.16;--sz:40px;">🛒</div>
+<div class="lu-fi" style="top:56%;left:20%;--dur:5.8s;--delay:0.5s;--op:0.16;--sz:34px;">🥛</div>
+<div class="lu-fi" style="top:62%;right:18%;--dur:4.4s;--delay:1.4s;--op:0.14;--sz:28px;">🥤</div>
+<div class="lu-fi" style="top:68%;left:5%;--dur:5s;--delay:2s;--op:0.16;--sz:34px;">☕</div>
+<div class="lu-fi" style="top:73%;right:8%;--dur:4.6s;--delay:0.9s;--op:0.14;--sz:28px;">🍫</div>
+<div class="lu-fi" style="top:78%;left:40%;--dur:5.3s;--delay:0.3s;--op:0.14;--sz:28px;">🍉</div>
+<div class="lu-fi" style="top:83%;left:8%;--dur:4.1s;--delay:1.7s;--op:0.14;--sz:28px;">🍋</div>
+<div class="lu-fi" style="top:87%;right:25%;--dur:4.9s;--delay:0.7s;--op:0.14;--sz:28px;">🫐</div>
+<div class="lu-fi" style="top:91%;left:25%;--dur:5.1s;--delay:1.3s;--op:0.12;--sz:28px;">🍇</div>
+<div class="lu-fi" style="top:95%;right:5%;--dur:4.3s;--delay:0.2s;--op:0.12;--sz:28px;">🍌</div>
+<div class="lu-fi" style="top:17%;left:2%;--dur:5.6s;--delay:1.9s;--op:0.14;--sz:28px;">🥦</div>
+<div class="lu-fi" style="top:35%;right:30%;--dur:4.7s;--delay:0.5s;--op:0.14;--sz:28px;">🥕</div>
+<div class="lu-fi" style="top:60%;left:55%;--dur:5.4s;--delay:1.5s;--op:0.12;--sz:28px;">🥬</div>
+<div class="lu-fi" style="top:75%;right:40%;--dur:4s;--delay:2.2s;--op:0.12;--sz:28px;">🧅</div>
+<div class="lu-fi" style="top:48%;left:70%;--dur:5.7s;--delay:0.1s;--op:0.12;--sz:28px;">🍅</div>
+</div>
 
 <!-- Hidden brand-mark + icon sprite -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
@@ -356,6 +409,8 @@ html.light-theme{
     <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-8M2 20h20"/></symbol>
     <symbol id="ic-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
     <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 2"/></symbol>
+    <symbol id="ic-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6Z"/><path d="M15 2v5h5"/></symbol>
+    <symbol id="ic-attach" viewBox="0 0 24 24"><path d="M17 6.5 8.5 15a3 3 0 0 0 4.24 4.24l8.5-8.5a5 5 0 0 0-7.07-7.07l-8.5 8.5a7 7 0 0 0 9.9 9.9"/></symbol>
   </defs>
 </svg>
 
@@ -452,8 +507,12 @@ html.light-theme{
         <div id="spPaneMessages" style="display:flex;flex-direction:column;flex:1;min-height:0;">
           <div class="sp-thread-messages" id="spThreadMessages"></div>
           <div id="spEndChatFlow"></div>
+          <div class="sp-typing-indicator" id="spTypingIndicator" style="display:none;"><span class="sp-typing-dots"><span></span><span></span><span></span></span> Customer is typing…</div>
+          <div class="sp-upload-progress" id="spUploadProgress" style="display:none;"><svg class="ic-sm sp-spin"><use href="#ic-repeat"></use></svg> Uploading… <span class="sp-upload-pct">0%</span></div>
           <div class="sp-thread-input-row" id="spReplyRow">
-            <textarea id="spReplyInput" rows="1" placeholder="Type a reply…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSpReply();}"></textarea>
+            <input type="file" id="spAttachInput" style="display:none;" onchange="handleAttachmentPicked(this)" accept="image/*,video/*,.pdf,.txt,.doc,.docx">
+            <button class="sp-attach-btn" id="spAttachBtn" onclick="pickAttachment()" title="Attach a file"><svg class="ic-sm"><use href="#ic-attach"></use></svg></button>
+            <textarea id="spReplyInput" rows="1" placeholder="Type a reply…" oninput="handleReplyTyping()" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSpReply();}"></textarea>
             <button class="sp-send-btn" id="spSendBtn" onclick="sendSpReply()"><svg class="ic-sm"><use href="#ic-send"></use></svg></button>
           </div>
         </div>
@@ -539,6 +598,8 @@ function isWithinSupportHours(){ const h=new Date().getHours(); return h>=SUPPOR
 
 let spProfile=null; // {uid, name, email, isAdmin:bool}
 let _spConvos=[], _spUnsub=null, _spActiveId=null, _spFilter='all', _spTab='messages', _spSending=false;
+let _allAgents=[], _agentsUnsub=null, _claimInFlight=false;
+let _heartbeatInterval=null, _selfHealInterval=null, _staleCheckInFlight=false;
 
 function spEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function spToMillis(at){
@@ -582,12 +643,15 @@ function spUpdateHoursPill(){
 }
 setInterval(spUpdateHoursPill,60000);
 
-// A conversation counts as "new/unassigned" (subject to hard-hide routing)
-// when nobody has claimed it yet but the customer has actually written in.
+// A conversation counts as "unclaimed" (queued, waiting for the routing
+// algorithm to assign it) when nobody's been assigned yet but the customer
+// has actually written in. Assignment is now fully automatic (round-robin
+// claim transaction) — agents never manually claim a chat, so queued chats
+// are hidden from their list entirely (nothing for a human to do with one).
 function isUnclaimedChat(c){ return !c.assignedAgentUid && (c.messages||[]).length>0; }
 function isVisibleToMe(c){
   if(spProfile?.isAdmin) return true;
-  if(isUnclaimedChat(c)) return spProfile?.currentStatus==='Available';
+  if(isUnclaimedChat(c)) return false;
   return true;
 }
 
@@ -596,12 +660,15 @@ function spUpdateTitleAndWaiting(){
   const unread=visible.filter(c=>c.unreadByAdmin).length;
   _baseTitle=unread>0?`(${unread}) LinkUp Support`:'LinkUp Support';
   if(!_titleFlashInterval) document.title=_baseTitle;
-  const waiting=visible.filter(c=>c.lastSender==='customer').length;
+  const queued=_spConvos.filter(isUnclaimedChat).length;
   const wp=document.getElementById('spWaitingPill');
   const wt=document.getElementById('spWaitingTxt');
-  if(waiting>0){ wp.style.display='inline-flex'; if(wt) wt.textContent=`${waiting} waiting`; }
+  if(queued>0){ wp.style.display='inline-flex'; if(wt) wt.textContent=`${queued} queued`; }
   else wp.style.display='none';
   spCheckNewChats(visible);
+  watchCustomerEndRequests(_spConvos);
+  maybeClaimNextChat();
+  updateQueuePositions();
 }
 
 // ── AUTH ─────────────────────────────────────────────
@@ -625,17 +692,26 @@ async function spDoLogin(){
   }
 }
 async function spDoLogout(){
+  await releaseMyChats();
   await closeCurrentAuxLog();
   spCleanup();
   try{ await window._supSignOut(window._supAuth); }catch(e){}
 }
 window.addEventListener('pagehide', ()=>{
-  // Best-effort only — catches a normal tab close, not a crash.
+  // Best-effort only — catches a normal tab close, not a crash. The 45s
+  // peer-heartbeat check is the backstop for anything this misses.
   if(spProfile && spProfile.currentLogId){
     const now=new Date();
     try{
       window._supUpdate(window._supDoc(window._supDb,'agentStatusLog',spProfile.currentLogId),
         {endAt:now, durationMs: now.getTime()-spProfile.statusSinceMs});
+    }catch(e){}
+  }
+  if(spProfile && !spProfile.isAdmin){
+    try{
+      _spConvos.filter(c=>c.assignedAgentUid===spProfile.uid && !c.endChatLockBy).forEach(c=>{
+        window._supUpdate(window._supDoc(window._supDb,'supportChats',c.id),{assignedAgentUid:null,assignedAgentName:null});
+      });
     }catch(e){}
   }
 });
@@ -656,18 +732,27 @@ async function spShowApp(){
   if(auxWrap) auxWrap.style.display=spProfile.isAdmin?'none':'block';
   const statsBtn=document.getElementById('spStatsBtn');
   if(statsBtn) statsBtn.style.display=spProfile.isAdmin?'none':'flex';
+  const attachBtn=document.getElementById('spAttachBtn');
+  if(attachBtn) attachBtn.style.display=ATTACHMENTS_ENABLED?'flex':'none';
   spUpdateHoursPill();
   startSpListener();
+  startAgentsListener();
   if(!spProfile.isAdmin){
     await initAuxState();
     loadNotifSettings();
+    await selfHealOpenChatCount();
+    startHeartbeat();
   }
   armAudioUnlock();
 }
 function spCleanup(){
   if(_spUnsub){_spUnsub();_spUnsub=null;}
+  if(_agentsUnsub){_agentsUnsub();_agentsUnsub=null;}
   if(_auxTickTimer){clearInterval(_auxTickTimer);_auxTickTimer=null;}
-  _spConvos=[]; _spActiveId=null; spProfile=null; _spKnownIds=null;
+  if(_heartbeatInterval){clearInterval(_heartbeatInterval);_heartbeatInterval=null;}
+  if(_selfHealInterval){clearInterval(_selfHealInterval);_selfHealInterval=null;}
+  if(_typingUnsub){_typingUnsub();_typingUnsub=null;}
+  _spConvos=[]; _spActiveId=null; spProfile=null; _spKnownIds=null; _allAgents=[];
   document.title='LinkUp Support';
   document.getElementById('spAuxMenu')?.classList.remove('on');
 }
@@ -730,6 +815,192 @@ function startSpListener(){
   });
 }
 
+// ── ROUTING: round-robin claim, 2-chat cap, reassignment ─
+// Requires supportAgents `list` to be readable by isSupportAgent() too (not
+// just isAdmin()) — every Available agent's client needs to see every OTHER
+// Available agent's openChatCount to compute the same ranking independently.
+function startAgentsListener(){
+  if(_agentsUnsub){_agentsUnsub();_agentsUnsub=null;}
+  _agentsUnsub=window._supSnap(window._supCol(window._supDb,'supportAgents'), snap=>{
+    _allAgents=snap.docs.map(d=>({uid:d.id,...d.data()}));
+    maybeClaimNextChat();
+    checkStaleAgents();
+  }, err=>{ console.error('[Support] agents listen failed:',err.code,err.message); });
+}
+
+function tiebreakHash(uid){
+  let h=0;
+  for(let i=0;i<uid.length;i++){ h=(h*31+uid.charCodeAt(i))|0; }
+  return h;
+}
+
+// "Available" in Firestore isn't enough on its own — an agent doc can be
+// stuck Available with no live tab behind it (crashed before ever writing a
+// heartbeat, or an older account from before this feature existed). Such a
+// phantom would otherwise still win ranking ties (openChatCount 0) forever
+// and silently block the whole queue, since nothing else ever demotes their
+// status. Require a heartbeat inside the last 45s to count as truly online.
+function isAgentOnline(a){
+  if(a.active===false || a.currentStatus!=='Available') return false;
+  const seen=spToMillis(a.lastSeenAt);
+  return seen>0 && (Date.now()-seen)<45000;
+}
+
+const GREETING_TEXT="Thank you for contacting LinkUp support. How may I assist you today?";
+
+// Deterministic: every Available agent's client computes the identical
+// ranking off the same shared data, so under normal conditions only the
+// "winner" ever attempts a claim — the transaction is the safety net for
+// the rare case two clients compute different winners off stale reads.
+async function maybeClaimNextChat(){
+  if(!spProfile || spProfile.isAdmin || _claimInFlight) return;
+  if(spProfile.currentStatus!=='Available') return;
+  const available=_allAgents.filter(isAgentOnline);
+  if(!available.length) return;
+  const sorted=available.slice().sort((a,b)=>{
+    const ac=a.openChatCount||0, bc=b.openChatCount||0;
+    if(ac!==bc) return ac-bc;
+    return tiebreakHash(a.uid)-tiebreakHash(b.uid);
+  });
+  if(sorted[0].uid!==spProfile.uid) return; // not my turn
+  const myRecord=_allAgents.find(a=>a.uid===spProfile.uid);
+  if((myRecord?.openChatCount||0)>=2) return;
+  const queued=_spConvos.filter(isUnclaimedChat).sort((a,b)=>spToMillis(a.createdAt)-spToMillis(b.createdAt));
+  if(!queued.length) return;
+  const target=queued[0];
+  _claimInFlight=true;
+  try{
+    await window._supTxn(window._supDb, async(txn)=>{
+      const chatRef=window._supDoc(window._supDb,'supportChats',target.id);
+      const agentRef=window._supDoc(window._supDb,'supportAgents',spProfile.uid);
+      const chatSnap=await txn.get(chatRef);
+      const agentSnap=await txn.get(agentRef);
+      if(!chatSnap.exists()) return;
+      if(chatSnap.data().assignedAgentUid) return; // someone else already claimed it
+      const curCount=(agentSnap.data()||{}).openChatCount||0;
+      if(curCount>=2) return;
+      const now=new Date();
+      const greetId='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+      const existingFirstReply=chatSnap.data().firstReplyAt;
+      txn.update(chatRef,{
+        assignedAgentUid:spProfile.uid, assignedAgentName:spProfile.name,
+        firstReplyAt: existingFirstReply||now,
+        messages:window._supArrUnion({id:greetId,sender:'staff',text:GREETING_TEXT,at:now,byUid:spProfile.uid,byName:spProfile.name,byRole:'support'}),
+        lastMessage:GREETING_TEXT, lastMessageAt:now, lastSender:'staff', updatedAt:now
+      });
+      txn.update(agentRef,{openChatCount:curCount+1});
+    });
+  }catch(e){ console.error('[Support] claim failed:',e.code,e.message); }
+  finally{ _claimInFlight=false; }
+}
+
+// Customers only ever have Firestore get() on their own doc, never list(),
+// so they can't count queue depth themselves. The single top-ranked
+// Available agent (same deterministic ranking as the claim algorithm above)
+// writes a 1-indexed queuePosition onto each queued chat as a cheap side
+// effect — no rules change needed, staff already has unrestricted write
+// access to supportChats.
+let _queuePosInFlight=false;
+async function updateQueuePositions(){
+  if(!spProfile || spProfile.isAdmin || _queuePosInFlight) return;
+  const available=_allAgents.filter(isAgentOnline);
+  if(!available.length) return;
+  const sorted=available.slice().sort((a,b)=>{
+    const ac=a.openChatCount||0, bc=b.openChatCount||0;
+    if(ac!==bc) return ac-bc;
+    return tiebreakHash(a.uid)-tiebreakHash(b.uid);
+  });
+  if(sorted[0].uid!==spProfile.uid) return; // only the top-ranked agent writes positions
+  const queued=_spConvos.filter(isUnclaimedChat).sort((a,b)=>spToMillis(a.createdAt)-spToMillis(b.createdAt));
+  const stale=queued.filter((c,i)=>c.queuePosition!==i+1);
+  if(!stale.length) return;
+  _queuePosInFlight=true;
+  try{
+    await Promise.all(stale.map(c=>{
+      const pos=queued.indexOf(c)+1;
+      return window._supUpdate(window._supDoc(window._supDb,'supportChats',c.id),{queuePosition:pos}).catch(()=>{});
+    }));
+  } finally{ _queuePosInFlight=false; }
+}
+
+// Releases every chat currently assigned to me WITHOUT ending it (keeps full
+// history) — used when I step away from Available or disconnect. Not the
+// same as End Chat.
+async function releaseMyChats(){
+  if(!spProfile || spProfile.isAdmin) return;
+  const mine=_spConvos.filter(c=>c.assignedAgentUid===spProfile.uid && !c.endChatLockBy);
+  if(!mine.length){
+    try{ await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{openChatCount:0}); }catch(e){}
+    return;
+  }
+  try{
+    const batch=window._supBatch(window._supDb);
+    mine.forEach(c=>{
+      batch.update(window._supDoc(window._supDb,'supportChats',c.id),{assignedAgentUid:null,assignedAgentName:null,updatedAt:new Date()});
+    });
+    batch.update(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{openChatCount:0});
+    await batch.commit();
+  }catch(e){ console.warn('[Support] release chats failed:',e); }
+}
+
+// Detects a peer Available agent who's gone quiet (crash/force-quit — the
+// pagehide handler catches normal tab close) and frees their active chats.
+// Cannot fix the vanished agent's own openChatCount (the self-write rule
+// only lets that agent write their own doc) — they self-heal it on reconnect.
+async function checkStaleAgents(){
+  if(!spProfile || spProfile.isAdmin || spProfile.currentStatus!=='Available' || _staleCheckInFlight) return;
+  _staleCheckInFlight=true;
+  try{
+    const now=Date.now();
+    for(const a of _allAgents){
+      if(a.uid===spProfile.uid || a.active===false || a.currentStatus!=='Available') continue;
+      const lastSeen=spToMillis(a.lastSeenAt);
+      if(lastSeen && now-lastSeen<45000) continue; // missing lastSeen is treated as maximally stale, not skipped
+      const theirs=_spConvos.filter(c=>c.assignedAgentUid===a.uid && !c.endChatLockBy && (c.messages||[]).length>0);
+      for(const c of theirs){
+        try{
+          await window._supTxn(window._supDb, async(txn)=>{
+            const ref=window._supDoc(window._supDb,'supportChats',c.id);
+            const snap=await txn.get(ref);
+            if(!snap.exists() || snap.data().assignedAgentUid!==a.uid) return; // already handled
+            txn.update(ref,{assignedAgentUid:null,assignedAgentName:null,updatedAt:new Date()});
+          });
+        }catch(e){}
+      }
+    }
+  } finally { _staleCheckInFlight=false; }
+}
+
+function startHeartbeat(){
+  if(_heartbeatInterval) clearInterval(_heartbeatInterval);
+  const beat=()=>{
+    if(spProfile && !spProfile.isAdmin && spProfile.currentStatus==='Available'){
+      window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{lastSeenAt:window._supServerTs()}).catch(()=>{});
+    }
+  };
+  beat();
+  _heartbeatInterval=setInterval(beat,20000);
+  if(_selfHealInterval) clearInterval(_selfHealInterval);
+  _selfHealInterval=setInterval(()=>{ if(spProfile?.currentStatus==='Available') selfHealOpenChatCount(); },300000);
+}
+
+// openChatCount is a client-maintained counter, not a live query — it can
+// drift (missed pagehide, the heartbeat gap, flaky networks). Recompute the
+// truth and self-correct.
+async function selfHealOpenChatCount(){
+  if(!spProfile || spProfile.isAdmin) return;
+  try{
+    const q=window._supQuery(window._supCol(window._supDb,'supportChats'), window._supWhere('assignedAgentUid','==',spProfile.uid));
+    const snap=await window._supGetDocs(q);
+    const trueCount=snap.docs.filter(d=>(d.data().messages||[]).length>0).length;
+    const agentSnap=await window._supGetDoc(window._supDoc(window._supDb,'supportAgents',spProfile.uid));
+    const stored=(agentSnap.exists()?agentSnap.data().openChatCount:0)||0;
+    if(stored!==trueCount){
+      await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{openChatCount:trueCount});
+    }
+  }catch(e){ console.warn('[Support] self-heal openChatCount failed:',e.code,e.message); }
+}
+
 function setSpFilter(f){
   _spFilter=f;
   document.querySelectorAll('.sp-filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
@@ -762,7 +1033,7 @@ function renderSpList(){
     const unread=!!c.unreadByAdmin;
     const active=c.id===_spActiveId;
     const mine=c.assignedAgentUid===spProfile?.uid;
-    const badge=!c.assignedAgentUid?'<span class="sp-item-status new">new</span>'
+    const badge=!c.assignedAgentUid?'<span class="sp-item-status new">queued</span>'
       :mine?'<span class="sp-item-status mine">yours</span>'
       :`<span class="sp-item-status other">${spEsc(c.assignedAgentName||'agent')}</span>`;
     const prefix=c.lastSender==='customer'?'':'You: ';
@@ -795,11 +1066,14 @@ function openSpConversation(id){
   renderSpThread(c);
   renderSpList();
   loadSpCustomerOrders(id);
+  watchTyping(id);
   if(c.unreadByAdmin){
     window._supUpdate(window._supDoc(window._supDb,'supportChats',id),{unreadByAdmin:false}).catch(e=>console.warn('[Support] mark-read failed:',e));
   }
 }
 function closeSpThread(){
+  clearMyTyping();
+  if(_typingUnsub){_typingUnsub();_typingUnsub=null;}
   _spActiveId=null;
   _ecState=null;
   const ecEl=document.getElementById('spEndChatFlow'); if(ecEl) ecEl.innerHTML='';
@@ -828,13 +1102,26 @@ function renderSpThread(c){
     const byLabel=isStaff ? (m.byUid===spProfile?.uid?'You':(m.byName||'LinkUp Support')) : '';
     return `<div class="sp-msg ${isStaff?'staff':'customer'}">
       ${isStaff?`<div class="sp-msg-by">${spEsc(byLabel)}</div>`:''}
-      <div class="sp-bubble">${spEsc(m.text)}</div>
+      ${m.text?`<div class="sp-bubble">${spEsc(m.text)}</div>`:''}
+      ${m.attachment?renderAttachmentHtml(m.attachment):''}
       <div class="sp-msg-time">${spTime(m.at)}</div>
     </div>`;
   }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
   el.scrollTop=el.scrollHeight;
 
   renderSpNotes(c);
+}
+
+function renderAttachmentHtml(att){
+  if(!att||!att.url) return '';
+  const type=att.type||'';
+  if(type.startsWith('image/')){
+    return `<a href="${att.url}" target="_blank" rel="noopener" class="sp-att-img-link"><img src="${att.url}" alt="${spEsc(att.name||'attachment')}" class="sp-att-img"></a>`;
+  }
+  if(type.startsWith('video/')){
+    return `<video src="${att.url}" controls class="sp-att-video"></video>`;
+  }
+  return `<a href="${att.url}" target="_blank" rel="noopener" class="sp-att-file"><svg class="ic-sm"><use href="#ic-file"></use></svg>${spEsc(att.name||'file')}</a>`;
 }
 
 function renderSpNotes(c){
@@ -855,11 +1142,20 @@ async function sendSpReply(){
   const inp=document.getElementById('spReplyInput');
   const txt=inp.value.trim();
   if(!txt) return;
+  const c=_spConvos.find(x=>x.id===_spActiveId);
+  // Split-brain guard: with automatic round-robin assignment, a non-admin
+  // agent should only ever be replying to their own chat. If it moved (a
+  // heartbeat false-positive reassigning a merely-backgrounded tab, etc.),
+  // stop rather than silently reply into a chat that's no longer theirs.
+  if(!spProfile.isAdmin && c && c.assignedAgentUid && c.assignedAgentUid!==spProfile.uid){
+    spToast('⚠️ This chat was reassigned to another agent.','#ef4444');
+    closeSpThread();
+    return;
+  }
   const btn=document.getElementById('spSendBtn');
   _spSending=true; btn.disabled=true;
   const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   const now=new Date();
-  const c=_spConvos.find(x=>x.id===_spActiveId);
   const byRole=spProfile.isAdmin?'admin':'support';
   const payload={
     messages:window._supArrUnion({id,sender:'staff',text:txt,at:now,byUid:spProfile.uid,byName:spProfile.name,byRole}),
@@ -868,16 +1164,95 @@ async function sendSpReply(){
     lastSender:'staff',
     updatedAt:now
   };
-  if(!c?.assignedAgentUid){ payload.assignedAgentUid=spProfile.uid; payload.assignedAgentName=spProfile.name; }
+  // Non-admin agents only ever get a chat via the automatic claim transaction
+  // (already assigned by the time they can see it) — this fallback is for
+  // admin's own override reply on a still-queued chat.
+  if(spProfile.isAdmin && !c?.assignedAgentUid){ payload.assignedAgentUid=spProfile.uid; payload.assignedAgentName='Admin'; }
   if(!c?.firstReplyAt){ payload.firstReplyAt=now; }
   try{
     await window._supUpdate(window._supDoc(window._supDb,'supportChats',_spActiveId), payload);
     inp.value='';
+    clearMyTyping();
   }catch(e){
     console.error('[Support] reply failed:',e.code,e.message);
     spToast('⚠️ Reply failed to send — check connection and try again.','#ef4444');
   }finally{
     _spSending=false; btn.disabled=false;
+  }
+}
+
+// ── TYPING INDICATORS ─────────────────────────────────
+let _typingUnsub=null, _myTypingTimeout=null;
+function watchTyping(chatId){
+  if(_typingUnsub){_typingUnsub();_typingUnsub=null;}
+  if(!chatId) return;
+  _typingUnsub=window._supSnap(window._supDoc(window._supDb,'typingIndicators',chatId), snap=>{
+    const d=snap.exists()?snap.data():{};
+    const el=document.getElementById('spTypingIndicator');
+    if(!el) return;
+    const isTyping=d.customerTyping && (Date.now()-spToMillis(d.customerTypingAt))<5000;
+    el.style.display=isTyping?'flex':'none';
+  }, ()=>{});
+}
+function handleReplyTyping(){
+  if(!_spActiveId) return;
+  window._supSetDoc(window._supDoc(window._supDb,'typingIndicators',_spActiveId),
+    {agentTyping:true, agentTypingAt:new Date(), agentName:spProfile?.name||'Agent'}, {merge:true}).catch(()=>{});
+  clearTimeout(_myTypingTimeout);
+  _myTypingTimeout=setTimeout(clearMyTyping,3000);
+}
+function clearMyTyping(){
+  clearTimeout(_myTypingTimeout);
+  if(!_spActiveId) return;
+  window._supUpdate(window._supDoc(window._supDb,'typingIndicators',_spActiveId),{agentTyping:false}).catch(()=>{});
+}
+
+// ── ATTACHMENTS ────────────────────────────────────────
+// Off while on the Firebase Spark (free) plan — no Storage bucket available.
+// Flip to true once Storage is enabled and its rules are published; all the
+// upload code below is already wired up and needs no other changes.
+const ATTACHMENTS_ENABLED=false;
+const ATTACH_MAX_IMAGE=10*1024*1024, ATTACH_MAX_VIDEO=25*1024*1024;
+const ATTACH_TYPE_RE=/^image\/|^video\/|^application\/pdf$|^text\/plain$|^application\/msword$|^application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document$/;
+function pickAttachment(){ if(!ATTACHMENTS_ENABLED) return; document.getElementById('spAttachInput')?.click(); }
+async function handleAttachmentPicked(input){
+  const file=input.files?.[0];
+  input.value='';
+  if(!ATTACHMENTS_ENABLED||!file||!_spActiveId) return;
+  if(!ATTACH_TYPE_RE.test(file.type)){ spToast('⚠️ That file type isn\'t supported.','#ef4444'); return; }
+  const isVideo=file.type.startsWith('video/');
+  const max=isVideo?ATTACH_MAX_VIDEO:ATTACH_MAX_IMAGE;
+  if(file.size>max){ spToast(`⚠️ File too large — max ${isVideo?'25MB for video':'10MB'}.`,'#ef4444'); return; }
+  await uploadAndSendAttachment(file);
+}
+async function uploadAndSendAttachment(file){
+  if(!ATTACHMENTS_ENABLED) return;
+  const chatId=_spActiveId;
+  const msgId='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  const path=`supportChatAttachments/${chatId}/${msgId}_${file.name}`;
+  const progEl=document.getElementById('spUploadProgress');
+  if(progEl){ progEl.style.display='flex'; progEl.querySelector('.sp-upload-pct').textContent='0%'; }
+  try{
+    const storRef=window._supStorageRef(window._supStorage, path);
+    const task=window._supUploadBytesResumable(storRef, file);
+    await new Promise((resolve,reject)=>{
+      task.on('state_changed', snap=>{
+        const pct=Math.round((snap.bytesTransferred/snap.totalBytes)*100);
+        if(progEl) progEl.querySelector('.sp-upload-pct').textContent=pct+'%';
+      }, reject, resolve);
+    });
+    const url=await window._supGetDownloadURL(storRef);
+    const now=new Date();
+    await window._supUpdate(window._supDoc(window._supDb,'supportChats',chatId),{
+      messages:window._supArrUnion({id:msgId,sender:'staff',text:'',at:now,byUid:spProfile.uid,byName:spProfile.name,byRole:spProfile.isAdmin?'admin':'support',
+        attachment:{url,type:file.type,name:file.name,size:file.size}}),
+      lastMessage:'📎 '+file.name, lastMessageAt:now, lastSender:'staff', updatedAt:now
+    });
+  }catch(e){
+    console.error('[Support] upload failed:',e);
+    spToast('⚠️ Upload failed. Tap the attach button to retry.','#ef4444');
+  }finally{
+    if(progEl) progEl.style.display='none';
   }
 }
 
@@ -996,7 +1371,9 @@ async function resumeAuxState(newState){
       await window._supUpdate(window._supDoc(window._supDb,'agentStatusLog',spProfile.currentLogId),
         {endAt:new Date(spProfile.staleSinceMs), durationMs:0});
     }
+    if(newState!=='Available') await releaseMyChats();
     await beginAuxState(newState, null);
+    if(newState==='Available'){ await selfHealOpenChatCount(); startHeartbeat(); }
     renderSpList(); spUpdateTitleAndWaiting();
   }catch(e){
     console.error('[Support] resume AUX failed:',e.code,e.message);
@@ -1008,7 +1385,9 @@ async function setAgentAuxState(newState){
   document.getElementById('spAuxMenu').classList.remove('on');
   if(spProfile.currentStatus===newState) return;
   try{
+    if(newState!=='Available') await releaseMyChats();
     await beginAuxState(newState, spProfile.currentLogId);
+    if(newState==='Available') await selfHealOpenChatCount();
     renderSpList(); spUpdateTitleAndWaiting();
   }catch(e){
     console.error('[Support] AUX change failed:',e.code,e.message);
@@ -1071,12 +1450,12 @@ function playChime(kind){
 }
 function testChime(){ playChime('message'); }
 
-let _spKnownIds=null, _spPrevLastMsg=null;
+let _spKnownIds=null, _spPrevLastMsg=null, _spPrevAssignee=null;
 function spCheckNewChats(visible){
   if(spProfile && !spProfile.isAdmin){
-    if(_spKnownIds){
-      for(const c of visible){
-        if(!_spKnownIds.has(c.id) && isUnclaimedChat(c) && spProfile.currentStatus==='Available'){
+    if(_spPrevAssignee){
+      for(const c of _spConvos){ // full list, not just visible — a chat just routed to me needs to be caught even before its first render
+        if(c.assignedAgentUid===spProfile.uid && _spPrevAssignee.get(c.id)!==spProfile.uid){
           playChime('routed'); flashNewChatBadge();
         }
       }
@@ -1091,6 +1470,7 @@ function spCheckNewChats(visible){
     }
   }
   _spPrevLastMsg=new Map(visible.map(c=>[c.id, spToMillis(c.lastMessageAt)]));
+  _spPrevAssignee=new Map(_spConvos.map(c=>[c.id, c.assignedAgentUid||null]));
   _spKnownIds=new Set(visible.map(c=>c.id));
 }
 let _titleFlashInterval=null, _titleFlashUntil=0, _baseTitle='LinkUp Support';
@@ -1157,17 +1537,27 @@ function renderEndChatFlow(c){
     </div>
   </div>`;
 }
-async function submitEndChat(){
-  const c=_spConvos.find(x=>x.id===_spActiveId);
-  if(!c||!_ecState) return;
-  const orderId=document.getElementById('ecOrderId').value.trim();
-  const issue=document.getElementById('ecIssue').value.trim();
-  const actionTaken=document.getElementById('ecAction').value.trim();
-  const err=document.getElementById('ecErr');
-  if(!issue||!actionTaken){ err.classList.add('on'); return; }
-  err.classList.remove('on');
-  const btn=document.getElementById('ecSubmitBtn');
-  btn.disabled=true; btn.textContent='Ending…';
+// Every path that can end a chat — this manual form, or any staff client
+// noticing customerEndRequested — acquires this lock FIRST. Prevents the
+// routing/heartbeat reassignment system from racing an end-chat pipeline
+// and creating two tickets for one conversation.
+async function acquireEndChatLock(chatId){
+  try{
+    return await window._supTxn(window._supDb, async(txn)=>{
+      const ref=window._supDoc(window._supDb,'supportChats',chatId);
+      const snap=await txn.get(ref);
+      if(!snap.exists()) return false;
+      const data=snap.data();
+      if(data.endChatLockBy) return false; // already being processed
+      if(!(data.messages||[]).length) return false; // already ended
+      txn.update(ref,{endChatLockBy:spProfile.uid, endChatLockAt:new Date(), customerEndRequested:false});
+      return true;
+    });
+  }catch(e){ console.error('[Support] end-chat lock failed:',e.code,e.message); return false; }
+}
+async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}){
+  const c=_spConvos.find(x=>x.id===chatId);
+  if(!c) return null;
   try{
     const counterRef=window._supDoc(window._supDb,'counters','tickets');
     const ticketNum=await window._supTxn(window._supDb, async(txn)=>{
@@ -1182,27 +1572,72 @@ async function submitEndChat(){
     const now=new Date();
     const startAt=c.createdAt||now;
     const agentName=spProfile.isAdmin?'Admin':spProfile.name;
+    const orderId=orderIdOverride!==undefined?orderIdOverride:(c.orderId||null);
+    const wasMine=c.assignedAgentUid===spProfile.uid && !spProfile.isAdmin;
     const batch=window._supBatch(window._supDb);
     batch.set(window._supDoc(window._supDb,'tickets',ticketId),{
       ticketId, chatId:c.id, customerName:c.customerName||'Customer', customerPhone:c.customerPhone||'',
-      agentUid:spProfile.uid, agentName, orderId:orderId||null, issue, resolved:!!_ecState.resolved, actionTaken,
+      agentUid:spProfile.uid, agentName, orderId, issue, resolved:!!resolved, actionTaken,
       startAt, firstReplyAt:c.firstReplyAt||null, endAt:now, durationMs: now.getTime()-spToMillis(startAt),
       transcript:c.messages||[], internalNotes:c.internalNotes||[], createdAt:now
     });
-    batch.set(window._supDoc(window._supDb,'ticketSurveys',surveyToken),{ticketId, rating:null, ratedAt:null, createdAt:now});
+    batch.set(window._supDoc(window._supDb,'ticketSurveys',surveyToken),{ticketId, rating:null, comment:null, ratedAt:null, createdAt:now});
     batch.update(window._supDoc(window._supDb,'supportChats',c.id),{
       messages:[], internalNotes:[], assignedAgentUid:null, assignedAgentName:null, firstReplyAt:null,
       lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
+      endChatLockBy:null, endChatLockAt:null, customerEndRequested:false, triageSource:null,
       pendingSurvey:{ticketId, surveyToken, endedAt:now}, updatedAt:now
     });
     await batch.commit();
+    if(wasMine){
+      const myCount=(_allAgents.find(a=>a.uid===spProfile.uid)?.openChatCount)||0;
+      window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{openChatCount:Math.max(0,myCount-1)}).catch(()=>{});
+    }
+    return ticketId;
+  }catch(e){
+    console.error('[Support] finishEndChat failed:',e.code,e.message);
+    window._supUpdate(window._supDoc(window._supDb,'supportChats',chatId),{endChatLockBy:null,endChatLockAt:null}).catch(()=>{});
+    return null;
+  }
+}
+async function submitEndChat(){
+  const c=_spConvos.find(x=>x.id===_spActiveId);
+  if(!c||!_ecState) return;
+  const orderId=document.getElementById('ecOrderId').value.trim();
+  const issue=document.getElementById('ecIssue').value.trim();
+  const actionTaken=document.getElementById('ecAction').value.trim();
+  const err=document.getElementById('ecErr');
+  if(!issue||!actionTaken){ err.classList.add('on'); return; }
+  err.classList.remove('on');
+  const btn=document.getElementById('ecSubmitBtn');
+  btn.disabled=true; btn.textContent='Ending…';
+  const locked=await acquireEndChatLock(c.id);
+  if(!locked){
+    spToast('⚠️ This chat is already being closed.','#f59e0b');
+    btn.disabled=false; btn.textContent='Submit & End Chat';
+    return;
+  }
+  const ticketId=await finishEndChat(c.id,{resolved:_ecState.resolved, issue, actionTaken, orderIdOverride:orderId||null});
+  if(ticketId){
     _ecState=null;
     spToast(`✅ Chat ended — ${ticketId} created.`,'#22c55e');
     closeSpThread();
-  }catch(e){
-    console.error('[Support] end chat failed:',e.code,e.message);
+  }else{
     spToast('⚠️ Could not end chat — check connection and try again.','#ef4444');
     btn.disabled=false; btn.textContent='Submit & End Chat';
+  }
+}
+
+// Any live staff client (not just the assigned agent — avoids a single
+// point of failure) races to process a customer-initiated end-chat. The
+// lock above makes this race-safe regardless of who picks it up.
+async function watchCustomerEndRequests(list){
+  if(!spProfile) return;
+  for(const c of list){
+    if(c.customerEndRequested && !c.endChatLockBy){
+      const locked=await acquireEndChatLock(c.id);
+      if(locked) await finishEndChat(c.id,{resolved:true, issue:'(ended by customer)', actionTaken:'(customer ended the chat)'});
+    }
   }
 }
 

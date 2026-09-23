@@ -451,6 +451,12 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
 .tix-msg.customer .tix-bubble{background:var(--card);border:1px solid var(--border);}
 .tix-msg.staff .tix-bubble{background:var(--orange);color:#000;font-weight:600;}
 .tix-note{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:8px;}
+.adm-att-img{max-width:180px;max-height:180px;border-radius:10px;display:block;object-fit:cover;}
+.adm-att-video{max-width:200px;max-height:200px;border-radius:10px;display:block;}
+.adm-att-file{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--orange);font-size:11.5px;font-weight:600;text-decoration:none;}
+.adm-att-file svg{width:14px;height:14px;flex-shrink:0;}
+.tix-msg.staff .adm-att-file,.sup-msg.admin .adm-att-file{color:#000;background:rgba(0,0,0,.12);border-color:transparent;}
+.tix-survey-comment{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;font-style:italic;}
 .rdm-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
 .rdm-filter-btn{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:'Poppins',sans-serif;transition:all .15s;}
 .rdm-filter-btn.active{border-color:var(--orange);background:rgba(255,140,0,.1);color:var(--orange);}
@@ -578,6 +584,7 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
     <symbol id="ic-headset" viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="2.5" y="13" width="5" height="7" rx="2"/><rect x="16.5" y="13" width="5" height="7" rx="2"/><path d="M19 20v.5a3 3 0 0 1-3 3h-3"/></symbol>
     <symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9Z"/><path d="M10 6.5v2M10 11v2M10 15.5v2"/></symbol>
     <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></symbol>
+    <symbol id="ic-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6Z"/><path d="M15 2v5h5"/></symbol>
     <symbol id="ic-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
     <symbol id="ic-close" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></symbol>
     <symbol id="ic-coffee" viewBox="0 0 24 24"><path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1-1 1-1 2M12 3c0 1-1 1-1 2"/></symbol>
@@ -2673,6 +2680,13 @@ function toggleSupportNotes(){
   panel.style.display=panel.style.display==='none'?'block':'none';
 }
 
+function renderAdminAttachmentHtml(att){
+  if(!att||!att.url) return '';
+  const type=att.type||'';
+  if(type.startsWith('image/')) return `<a href="${att.url}" target="_blank" rel="noopener"><img src="${att.url}" alt="${escAdmin(att.name||'attachment')}" class="adm-att-img"></a>`;
+  if(type.startsWith('video/')) return `<video src="${att.url}" controls class="adm-att-video"></video>`;
+  return `<a href="${att.url}" target="_blank" rel="noopener" class="adm-att-file"><svg class="ic" style="width:14px;height:14px;"><use href="#ic-file"></use></svg>${escAdmin(att.name||'file')}</a>`;
+}
 function renderSupportThread(c){
   document.getElementById('supThreadName').textContent=c.customerName||'Customer';
   document.getElementById('supThreadOrder').textContent=c.orderId?('Order #'+c.orderId):'General enquiry';
@@ -2688,7 +2702,8 @@ function renderSupportThread(c){
     const byLabel=staff?(m.byName||(m.sender==='admin'?'Admin':'LinkUp Support')):'';
     return `<div class="sup-msg ${staff?'admin':'customer'}">
       ${staff?`<div style="font-size:10px;color:var(--muted);margin-bottom:2px;text-align:right;">${escAdmin(byLabel)}</div>`:''}
-      <div class="sup-bubble">${escAdmin(m.text)}</div>
+      ${m.text?`<div class="sup-bubble">${escAdmin(m.text)}</div>`:''}
+      ${m.attachment?renderAdminAttachmentHtml(m.attachment):''}
       <div class="sup-msg-time">${fdt(m.at)}</div>
     </div>`;
   }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
@@ -2980,6 +2995,10 @@ function ratingForTicket(ticketId){
   const s=_surveys.find(x=>x.ticketId===ticketId && x.rating!=null);
   return s?s.rating:null;
 }
+function commentForTicket(ticketId){
+  const s=_surveys.find(x=>x.ticketId===ticketId && x.rating!=null);
+  return s&&s.comment?s.comment:null;
+}
 function getFilteredTickets(){
   const agentF=document.getElementById('tixFilterAgent')?.value||'all';
   const dateF=document.getElementById('tixFilterDate')?.value||'all';
@@ -3035,6 +3054,7 @@ function openTicketDetail(id){
   if(!t) return;
   document.getElementById('tixDetailTitle').textContent=t.ticketId;
   const rating=ratingForTicket(t.ticketId);
+  const comment=commentForTicket(t.ticketId);
   const msgs=(t.transcript||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
   const notes=(t.internalNotes||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
   document.getElementById('tixDetailBody').innerHTML=`
@@ -3044,7 +3064,7 @@ function openTicketDetail(id){
       <div class="spm-tile"><div class="spm-tile-lbl">Order</div><div class="spm-tile-val" style="font-size:13px;">${t.orderId?escAdmin(t.orderId):'—'}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Duration</div><div class="spm-tile-val" style="font-size:13px;">${fmtDuration(t.durationMs)}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Resolved</div><div class="spm-tile-val" style="font-size:13px;">${t.resolved?'Yes':'No'}</div></div>
-      <div class="spm-tile"><div class="spm-tile-lbl">Rating</div><div class="spm-tile-val" style="font-size:13px;">${starsHtml(rating)}</div></div>
+      <div class="spm-tile"><div class="spm-tile-lbl">Rating</div><div class="spm-tile-val" style="font-size:13px;">${starsHtml(rating)}</div>${comment?`<div class="tix-survey-comment">“${escAdmin(comment)}”</div>`:''}</div>
     </div>
     <div class="spm-sec-h">Issue</div>
     <div style="font-size:12.5px;line-height:1.6;margin-bottom:12px;">${escAdmin(t.issue||'—')}</div>
@@ -3053,7 +3073,7 @@ function openTicketDetail(id){
     <div class="spm-sec-h">Transcript</div>
     <div class="tix-transcript">${msgs.length?msgs.map(m=>{
       const staff=m.sender!=='customer';
-      return `<div class="tix-msg ${staff?'staff':'customer'}"><div class="tix-bubble">${escAdmin(m.text)}</div></div>`;
+      return `<div class="tix-msg ${staff?'staff':'customer'}">${m.text?`<div class="tix-bubble">${escAdmin(m.text)}</div>`:''}${m.attachment?renderAdminAttachmentHtml(m.attachment):''}</div>`;
     }).join(''):'<div style="color:var(--muted);font-size:12px;text-align:center;">No messages.</div>'}</div>
     ${notes.length?`<div class="spm-sec-h">Internal Notes</div>${notes.map(n=>`<div class="tix-note"><strong>${escAdmin(n.byName||'Agent')}:</strong> ${escAdmin(n.text)}</div>`).join('')}`:''}
   `;
