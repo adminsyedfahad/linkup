@@ -1889,6 +1889,20 @@ button,a,[onclick]{
 .chat-addr-form{background:var(--card);border:1px solid rgba(255,140,0,0.25);border-radius:14px;padding:14px;margin-top:6px;}
 .chat-addr-form .form-group{margin-bottom:10px;}
 .chat-addr-form input{width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;outline:none;font-family:'Poppins',sans-serif;}
+/* Post-chat CSAT survey card */
+.chat-survey-card{background:var(--card);border:1px solid rgba(255,140,0,0.25);border-radius:14px;padding:18px 16px;margin:0 14px 14px;text-align:center;}
+.chat-survey-title{font-size:13.5px;font-weight:700;margin-bottom:14px;line-height:1.5;}
+.chat-survey-stars{display:flex;justify-content:center;gap:6px;margin-bottom:6px;}
+.chat-survey-star{width:32px;height:32px;cursor:pointer;fill:none;stroke:var(--muted);stroke-width:1.7;transition:transform .1s;}
+.chat-survey-star:hover{transform:scale(1.12);}
+.chat-survey-star.picked{fill:var(--orange);stroke:var(--orange);}
+.chat-survey-submit{margin-top:14px;width:100%;padding:11px;border-radius:10px;border:none;background:var(--orange);color:#000;
+  font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;cursor:pointer;opacity:.4;pointer-events:none;transition:opacity .15s;}
+.chat-survey-submit.ready{opacity:1;pointer-events:auto;}
+.chat-survey-thanks{padding:26px 16px;text-align:center;}
+.chat-survey-thanks svg{width:40px;height:40px;color:#22c55e;margin-bottom:10px;}
+.chat-survey-thanks-title{font-size:14px;font-weight:700;margin-bottom:5px;}
+.chat-survey-thanks-sub{font-size:12px;color:var(--muted);}
 .chat-addr-form input:focus{border-color:var(--orange);}
 .chat-confirm-btn{width:100%;padding:11px;background:var(--orange);color:#000;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;margin-top:4px;}
 
@@ -1985,6 +1999,7 @@ button,a,[onclick]{
     <symbol id="ic-handshake" viewBox="0 0 24 24"><circle cx="8" cy="8.5" r="3.2"/><path d="M2.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9.5" r="2.6"/><path d="M12.8 20a5 5 0 0 1 8.7-3.4"/></symbol>
     <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2 4 6.2 4c2.4 0 3.9 1.4 5.8 3.8C13.9 5.4 15.4 4 17.8 4 22 4 23.5 8.4 22 11.9c-2.5 4.5-10 9.1-10 9.1Z"/></symbol>
     <symbol id="ic-heart-filled" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2 4 6.2 4c2.4 0 3.9 1.4 5.8 3.8C13.9 5.4 15.4 4 17.8 4 22 4 23.5 8.4 22 11.9c-2.5 4.5-10 9.1-10 9.1Z"/></symbol>
+    <symbol id="ic-headset" viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="2.5" y="13" width="5" height="7" rx="2"/><rect x="16.5" y="13" width="5" height="7" rx="2"/><path d="M19 20v.5a3 3 0 0 1-3 3h-3"/></symbol>
     <symbol id="ic-logo" viewBox="13.5 16.5 53 54">
       <path d="M29 31 A11 11 0 0 1 51 31" fill="none" stroke="currentColor" stroke-width="5.5" stroke-linecap="round"/>
       <rect x="15" y="30" width="50" height="40" rx="7" fill="#FF8C00"/>
@@ -7106,6 +7121,11 @@ function openSupportChat(orderId) {
   updateChatHeaderStatus();
   _chatPending = [];
   document.getElementById('chatMessages').innerHTML = '<div class="chat-loading">Loading conversation…</div>';
+  const inputRow = document.getElementById('chatInputRow');
+  if(inputRow) inputRow.style.display = 'flex';
+  const surveyWrap = document.getElementById('chatSurveyWrap');
+  if(surveyWrap) surveyWrap.innerHTML = ''; // don't carry a stale "Thank you!" into a fresh open
+  _chatSurveyToken = null;
   subscribeChatConversation();
 }
 
@@ -7141,6 +7161,7 @@ function subscribeChatConversation(){
     _chatConfirmed = (data && Array.isArray(data.messages)) ? data.messages : [];
     _chatPending = _chatPending.filter(p => p.status==='failed' || !_chatConfirmed.some(m=>m.id===p.id));
     renderChatMessages();
+    handlePendingSurvey(data && data.pendingSurvey);
   }, err => {
     console.warn('[Chat] listen failed:', err);
     renderChatMessages();
@@ -7167,12 +7188,16 @@ function renderChatMessages(){
   ].sort((a,b) => (a._pending?a._localAt:_chatToMillis(a.at)) - (b._pending?b._localAt:_chatToMillis(b.at)));
 
   if(!all.length){
-    msgsEl.innerHTML = `<div class="chat-system-note">👋 Send a message below and a real person from LinkUp Support will get back to you.</div>`;
+    // Suppress the "start a conversation" prompt while a post-chat survey is
+    // showing (messages were just reset by the agent ending the chat) — it
+    // reads oddly stacked above "Thanks for chatting with LinkUp."
+    const surveyShowing = !!document.getElementById('chatSurveyWrap')?.innerHTML;
+    msgsEl.innerHTML = surveyShowing ? '' : `<div class="chat-system-note">👋 Send a message below and a real person from LinkUp Support will get back to you.</div>`;
   } else {
     msgsEl.innerHTML = all.map(m => {
       const isCustomer = m.sender === 'customer';
       return `<div class="chat-msg ${isCustomer?'user':'bot'}">
-        ${!isCustomer?`<div class="chat-msg-avatar">🎧</div>`:''}
+        ${!isCustomer?`<div class="chat-msg-avatar"><svg class="ic" style="width:14px;height:14px;color:#fff;"><use href="#ic-headset"></use></svg></div>`:''}
         <div>
           ${!isCustomer?`<div class="chat-sender-name">LinkUp Support</div>`:''}
           <div class="chat-bubble">${escChat(m.text)}</div>
@@ -7253,6 +7278,76 @@ function retryChatMessage(id){
   const inp = document.getElementById('chatInput');
   inp.value = msg.text;
   sendChatMessage();
+}
+
+// ── POST-CHAT SURVEY (CSAT) ───────────────────────────
+// Agent ends the chat -> supportChats/{walletToken}.pendingSurvey = {ticketId, surveyToken, endedAt}.
+// We read ticketSurveys/{surveyToken} (public get:true, holds only {ticketId,rating,ratedAt,createdAt} —
+// no chatId/agentUid/agentName, so the customer never learns the agent's identity from this doc either)
+// to see if it's already been answered, so reopening the chat later doesn't re-prompt.
+let _chatSurveyToken = null, _chatSurveyRating = 0;
+async function handlePendingSurvey(pendingSurvey){
+  const wrap = document.getElementById('chatSurveyWrap');
+  const inputRow = document.getElementById('chatInputRow');
+  if(!wrap) return;
+  if(!pendingSurvey || !pendingSurvey.surveyToken){
+    wrap.innerHTML = '';
+    _chatSurveyToken = null;
+    if(inputRow) inputRow.style.display = 'flex';
+    renderChatMessages();
+    return;
+  }
+  if(_chatSurveyToken === pendingSurvey.surveyToken && wrap.innerHTML) return; // already rendered, don't lose tap state
+  if(!window._fbReady || !window._db) return;
+  try{
+    const snap = await window._fbGetDoc(window._fbDoc(window._db, 'ticketSurveys', pendingSurvey.surveyToken));
+    if(snap.exists() && snap.data().rating != null){
+      wrap.innerHTML = '';
+      if(inputRow) inputRow.style.display = 'flex';
+      renderChatMessages();
+      return;
+    }
+  }catch(e){ console.warn('[Chat] survey check failed:', e); return; }
+  _chatSurveyToken = pendingSurvey.surveyToken;
+  _chatSurveyRating = 0;
+  if(inputRow) inputRow.style.display = 'none';
+  wrap.innerHTML = `<div class="chat-survey-card" id="chatSurveyCard">
+    <div class="chat-survey-title">Thanks for chatting with LinkUp.<br>How did we do?</div>
+    <div class="chat-survey-stars" id="chatSurveyStars">
+      ${[1,2,3,4,5].map(n=>`<svg class="chat-survey-star" data-n="${n}" onclick="pickSurveyStar(${n})"><use href="#ic-star"></use></svg>`).join('')}
+    </div>
+    <button class="chat-survey-submit" id="chatSurveySubmitBtn" onclick="submitChatSurvey()">Submit</button>
+  </div>`;
+  renderChatMessages(); // re-evaluate the empty-state prompt now that the survey card exists
+  const msgsEl = document.getElementById('chatMessages');
+  if(msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+function pickSurveyStar(n){
+  _chatSurveyRating = n;
+  document.querySelectorAll('#chatSurveyStars .chat-survey-star').forEach(s=>{
+    s.classList.toggle('picked', parseInt(s.dataset.n,10) <= n);
+  });
+  document.getElementById('chatSurveySubmitBtn')?.classList.add('ready');
+}
+async function submitChatSurvey(){
+  if(!_chatSurveyRating || !_chatSurveyToken) return;
+  const btn = document.getElementById('chatSurveySubmitBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Submitting…'; }
+  try{
+    await window._fbUpdate(window._fbDoc(window._db, 'ticketSurveys', _chatSurveyToken), {
+      rating: _chatSurveyRating, ratedAt: new Date()
+    });
+    const wrap = document.getElementById('chatSurveyWrap');
+    if(wrap) wrap.innerHTML = `<div class="chat-survey-thanks">
+      <svg class="ic"><use href="#ic-heart-filled"></use></svg>
+      <div class="chat-survey-thanks-title">Thank you!</div>
+      <div class="chat-survey-thanks-sub">We appreciate your feedback.</div>
+    </div>`;
+    setTimeout(closeSupportChat, 1800);
+  }catch(e){
+    console.warn('[Chat] survey submit failed:', e);
+    if(btn){ btn.disabled = false; btn.textContent = 'Submit'; }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -7731,7 +7826,7 @@ function reverseGeocode(lat, lng) {
     <!-- Header -->
     <div class="chat-header">
       <button class="chat-header-back" onclick="closeSupportChat()">‹</button>
-      <div class="chat-avatar" id="chatAvatarEl">🎧</div>
+      <div class="chat-avatar" id="chatAvatarEl"><svg class="ic" style="width:18px;height:18px;color:#fff;"><use href="#ic-headset"></use></svg></div>
       <div class="chat-header-info">
         <div class="chat-agent-name" id="chatAgentName">LinkUp Support</div>
         <div class="chat-status"><span class="chat-online-dot"></span><span id="chatStatusText">Online</span></div>
@@ -7743,9 +7838,10 @@ function reverseGeocode(lat, lng) {
     </div>
     <!-- Messages -->
     <div class="chat-messages" id="chatMessages"></div>
+    <div id="chatSurveyWrap"></div>
     <div id="chatStatusFooter"></div>
     <!-- Input -->
-    <div class="chat-input-row">
+    <div class="chat-input-row" id="chatInputRow">
       <input class="chat-input" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMessage()">
       <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
     </div>

@@ -18,7 +18,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, where, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, where, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs, runTransaction, writeBatch } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 const cfg = {
   apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
@@ -36,7 +36,7 @@ window._fbSnap=onSnapshot; window._fbQuery=query;
 window._fbOrderBy=orderBy; window._fbCol=collection;
 window._fbDoc=doc; window._fbUpdate=updateDoc; window._fbArrUnion=arrayUnion;
 window._fbSetDoc=setDoc; window._fbGetDoc=getDoc; window._fbGetDocs=getDocs;
-window._fbWhere=where; window._fbTxn=runTransaction;
+window._fbWhere=where; window._fbTxn=runTransaction; window._fbBatch=writeBatch;
 window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
 </script>
 <style>
@@ -248,7 +248,8 @@ html.light-theme .qbdg{background:rgba(0,0,0,.05);}
   .fr{gap:6px;}
   .rg{grid-template-columns:1fr;}
 }
-.mtb{display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;align-items:center;gap:8px;}
+.mtb{display:none;background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;align-items:center;gap:8px;
+  overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;flex-shrink:0;}
 .mtb-logo{font-family:'Jim Nightshade',cursive;font-size:24px;color:var(--orange);}
 .mtb-logo-row{display:flex;align-items:center;gap:6px;flex:1;}
 .mnb{padding:6px 11px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;}
@@ -387,6 +388,69 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
 .rdm-badge.available{background:rgba(34,197,94,.14);color:#22c55e;}
 .rdm-badge.onbreak{background:rgba(245,158,11,.14);color:#f59e0b;}
 .rdm-badge.finished{background:rgba(100,116,139,.14);color:#94a3b8;}
+.rdm-badge.aux-Available{background:rgba(34,197,94,.14);color:#22c55e;}
+.rdm-badge.aux-Break{background:rgba(245,158,11,.14);color:#f59e0b;}
+.rdm-badge.aux-Training{background:rgba(59,130,246,.14);color:#3b82f6;}
+.rdm-badge.aux-Unavailable{background:rgba(239,68,68,.12);color:#ef4444;}
+.rdm-badge svg{width:11px;height:11px;vertical-align:-1.5px;margin-right:3px;}
+.br{background:rgba(239,68,68,.14);color:#ef4444;}
+
+/* ── SUPPORT: shared modal + end-chat/disposition (mirrors support.html) ── */
+.adm-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;align-items:center;justify-content:center;padding:20px;}
+.adm-modal-bg.on{display:flex;}
+.adm-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:620px;
+  max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+.adm-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.adm-modal-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;}
+.adm-modal-close{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.adm-modal-body{padding:16px 18px 20px;overflow-y:auto;flex:1;min-height:0;}
+.adm-range{display:flex;gap:8px;margin-bottom:16px;}
+.adm-range button{flex:1;padding:8px;border-radius:9px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);
+  font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.adm-range button.active{border-color:var(--orange);background:var(--odim);color:var(--orange);}
+.spm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
+.spm-tile{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.spm-tile-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.spm-tile-val{font-size:18px;font-weight:800;}
+.spm-sec-h{font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 10px;}
+.spm-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11.5px;}
+.spm-bar-lbl{width:82px;flex-shrink:0;color:var(--muted);}
+.spm-bar-track{flex:1;height:8px;background:var(--bg);border-radius:6px;overflow:hidden;}
+.spm-bar-fill{height:100%;background:var(--orange);border-radius:6px;}
+.spm-bar-pct{width:38px;flex-shrink:0;text-align:right;font-weight:700;}
+
+.sp-ec-card{background:var(--card);border:1px solid rgba(255,140,0,.25);border-radius:14px;padding:14px 16px;margin:12px 16px;flex-shrink:0;}
+.sp-ec-title{font-size:13px;font-weight:700;margin-bottom:10px;}
+.sp-ec-yn{display:flex;gap:10px;}
+.sp-ec-yn button{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);
+  font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;}
+.sp-ec-yn button.yes:hover{border-color:#22c55e;color:#22c55e;}
+.sp-ec-yn button.no:hover{border-color:#ef4444;color:#ef4444;}
+.sp-ec-field{margin-bottom:10px;}
+.sp-ec-field label{display:block;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
+.sp-ec-field input,.sp-ec-field textarea{width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:12.5px;outline:none;resize:vertical;}
+.sp-ec-resolved-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:11.5px;font-weight:700;margin-bottom:10px;}
+.sp-ec-resolved-pill.yes{background:rgba(34,197,94,.14);color:#22c55e;}
+.sp-ec-resolved-pill.no{background:rgba(239,68,68,.12);color:#ef4444;}
+.sp-ec-actions{display:flex;gap:8px;margin-top:4px;}
+.sp-ec-actions button{flex:1;padding:10px;border-radius:9px;border:none;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:800;cursor:pointer;}
+.sp-ec-submit{background:var(--orange);color:#000;}
+.sp-ec-cancel{background:var(--border);color:var(--text);}
+.sp-ec-err{font-size:11px;color:#ef4444;margin-top:-4px;margin-bottom:8px;display:none;}
+.sp-ec-err.on{display:block;}
+.tix-row{cursor:pointer;}
+.tix-row:hover{background:rgba(255,140,0,.06);}
+.tix-stars{color:var(--orange);white-space:nowrap;}
+.tix-transcript{max-height:340px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;}
+.tix-msg{display:flex;flex-direction:column;max-width:78%;margin-bottom:8px;}
+.tix-msg.customer{align-self:flex-start;}
+.tix-msg.staff{align-self:flex-end;margin-left:auto;}
+.tix-bubble{padding:8px 12px;border-radius:12px;font-size:12.5px;line-height:1.5;}
+.tix-msg.customer .tix-bubble{background:var(--card);border:1px solid var(--border);}
+.tix-msg.staff .tix-bubble{background:var(--orange);color:#000;font-weight:600;}
+.tix-note{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:8px;}
 .rdm-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
 .rdm-filter-btn{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:'Poppins',sans-serif;transition:all .15s;}
 .rdm-filter-btn.active{border-color:var(--orange);background:rgba(255,140,0,.1);color:var(--orange);}
@@ -510,6 +574,22 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
       <rect x="11" y="47" width="30" height="22" rx="6" fill="currentColor"/>
       <rect x="47" y="47" width="22" height="22" rx="6" fill="currentColor"/>
     </symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 2.5 20 6v6c0 5-3.5 8.5-8 9.5-4.5-1-8-4.5-8-9.5V6l8-3.5Z"/></symbol>
+    <symbol id="ic-headset" viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="2.5" y="13" width="5" height="7" rx="2"/><rect x="16.5" y="13" width="5" height="7" rx="2"/><path d="M19 20v.5a3 3 0 0 1-3 3h-3"/></symbol>
+    <symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9Z"/><path d="M10 6.5v2M10 11v2M10 15.5v2"/></symbol>
+    <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="ic-close" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></symbol>
+    <symbol id="ic-coffee" viewBox="0 0 24 24"><path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1-1 1-1 2M12 3c0 1-1 1-1 2"/></symbol>
+    <symbol id="ic-book" viewBox="0 0 24 24"><path d="M12 6c-1.5-1.5-4-2-7-2v14c3 0 5.5.5 7 2 1.5-1.5 4-2 7-2V4c-3 0-5.5.5-7 2Z"/><path d="M12 6v14"/></symbol>
+    <symbol id="ic-status-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M5.5 5.5l13 13"/></symbol>
+    <symbol id="ic-status-on" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M7.8 12.5l2.6 2.6 5.8-6.2"/></symbol>
+    <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.6 1.6 7-6.2-3.9-6.2 3.9 1.6-7-5.4-4.6 7.1-.6Z"/></symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-8M2 20h20"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20.3 20.3l-5-5"/></symbol>
+    <symbol id="ic-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="ic-send" viewBox="0 0 24 24"><path d="M3 11.5 20.5 3 15 20.5l-4-7.5-8-1.5Z"/><path d="M11 13.5 20.5 3"/></symbol>
+    <symbol id="ic-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0"/><circle cx="17" cy="8.5" r="2.6"/><path d="M14.5 20a5 5 0 0 1 8-3.4"/></symbol>
   </defs>
 </svg>
 
@@ -548,7 +628,9 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
     <button class="mnb" id="mns" onclick="showSec('search')">🔍 Search</button>
     <button class="mnb" id="mnw" onclick="showSec('wallet')">💰 Refunds</button>
     <button class="mnb" id="mnr" onclick="showSec('reviews')">⭐ Reviews</button>
-    <button class="mnb" id="mnsup" onclick="showSec('support')">💬 Support</button>
+    <button class="mnb" id="mnsup" onclick="showSec('support')"><svg class="ic"><use href="#ic-shield"></use></svg> Support</button>
+    <button class="mnb" id="mnag" onclick="showSec('agents')"><svg class="ic"><use href="#ic-headset"></use></svg> Agents</button>
+    <button class="mnb" id="mntix" onclick="showSec('tickets')"><svg class="ic"><use href="#ic-ticket"></use></svg> Tickets</button>
     <button class="mnb" id="mnri" onclick="showSec('riders')">👤 Riders</button>
     <button class="mnb" id="mnrest" onclick="showSec('restaurants')">🍽️ Restaurants</button>
     <button class="mnb" id="mnoff" onclick="showSec('offers')">🎁 Offers</button>
@@ -586,8 +668,14 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
         <span class="ni-badge" id="nrrb">0</span>
       </div>
       <div class="ni" id="nsup" onclick="showSec('support')">
-        <span class="ico">💬</span> Support
+        <span class="ico"><svg class="ic"><use href="#ic-shield"></use></svg></span> Support Monitor
         <span class="ni-badge" id="nsupb">0</span>
+      </div>
+      <div class="ni" id="nag" onclick="showSec('agents')">
+        <span class="ico"><svg class="ic"><use href="#ic-headset"></use></svg></span> Support Agents
+      </div>
+      <div class="ni" id="ntix" onclick="showSec('tickets')">
+        <span class="ico"><svg class="ic"><use href="#ic-ticket"></use></svg></span> Tickets
       </div>
       <div class="ni" id="nri" onclick="showSec('riders')">
         <span class="ico">👤</span> Rider Mgmt
@@ -806,13 +894,38 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
       <div id="rrList" style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;overflow:hidden;"></div>
     </div>
 
-    <!-- SUPPORT INBOX -->
+    <!-- SUPPORT MONITOR -->
     <div class="sec" id="sec-support">
       <div class="rev-header">
-        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;">💬 Support</h2>
-        <p style="margin:0;color:var(--muted);font-size:13px;">Real customer conversations — your replies appear in their app instantly</p>
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:8px;"><svg class="ic"><use href="#ic-shield"></use></svg> Support Monitor</h2>
+        <p style="margin:0;color:var(--muted);font-size:13px;">Oversight of every support conversation — separate from the agents' own tool at support.html</p>
       </div>
-      <div class="sup-wrap" id="supWrap" style="margin-top:16px;">
+
+      <div class="sg" style="margin-top:16px;">
+        <div class="sc hl"><div class="sc-lbl">Waiting For Reply</div><div class="sc-val" id="supStatWaiting">0</div></div>
+        <div class="sc"><div class="sc-lbl">Active Conversations</div><div class="sc-val" id="supStatOpen">0</div></div>
+        <div class="sc"><div class="sc-lbl">Replies Today</div><div class="sc-val" id="supStatRepliesToday">0</div></div>
+        <div class="sc"><div class="sc-lbl">Agents Available Now</div><div class="sc-val" id="supStatAgents">0</div></div>
+      </div>
+
+      <div class="ref-block">
+        <h3 style="display:flex;align-items:center;gap:7px;"><svg class="ic"><use href="#ic-users"></use></svg> Agent Activity — Live</h3>
+        <div class="tw"><table class="ot" id="supAgentTable">
+          <thead><tr><th>Agent</th><th>Status</th><th>Timer</th><th>Replies Today</th><th>Conversations Handled</th><th>Avg First Reply</th></tr></thead>
+          <tbody id="supAgentTbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);">No agents yet.</td></tr></tbody>
+        </table></div>
+      </div>
+
+      <div class="fr">
+        <select class="fsel" id="supFilterAgent" onchange="renderSupportList()">
+          <option value="all">All agents</option>
+          <option value="unassigned">Unassigned</option>
+        </select>
+        <input class="si" id="supSearch" placeholder="Search customer, order ID, message…" style="max-width:240px;padding:7px 11px;font-size:12px;" oninput="renderSupportList()">
+        <span class="fcnt" id="supFilterCount"></span>
+      </div>
+
+      <div class="sup-wrap" id="supWrap">
         <div class="sup-list-col" id="supList"></div>
         <div class="sup-thread-col" id="supThreadCol">
           <div class="sup-empty" id="supThreadEmpty">Select a conversation to view messages.</div>
@@ -823,13 +936,116 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
                 <div class="sup-thread-name" id="supThreadName">—</div>
                 <div class="sup-thread-order" id="supThreadOrder"></div>
               </div>
+              <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="bs bv" id="supNotesToggleBtn" onclick="toggleSupportNotes()"><svg class="ic"><use href="#ic-lock"></use></svg> Notes<span id="supNotesCountTxt"></span></button>
+                <button class="bs br" id="supEndChatBtn" onclick="openAdminEndChatFlow()"><svg class="ic"><use href="#ic-headset"></use></svg> End Chat</button>
+              </div>
+            </div>
+            <div id="supNotesPanel" style="display:none;background:rgba(245,158,11,.07);border-bottom:1px solid rgba(245,158,11,.25);padding:12px 16px;max-height:160px;overflow-y:auto;">
+              <div style="font-size:11px;color:#f59e0b;display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:700;"><svg class="ic"><use href="#ic-lock"></use></svg> Internal only — the customer never sees this</div>
+              <div id="supNotesList" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <textarea id="supNoteInput" rows="1" placeholder="Add an internal note…" style="flex:1;resize:none;padding:8px 11px;background:var(--card);border:1px solid rgba(245,158,11,.3);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:12px;outline:none;min-height:36px;"></textarea>
+                <button class="bs bv" onclick="addSupportNote()">Add</button>
+              </div>
             </div>
             <div class="sup-thread-messages" id="supThreadMessages"></div>
+            <div id="supEndChatFlow"></div>
             <div class="sup-thread-input-row">
-              <textarea id="supReplyInput" rows="1" placeholder="Type a reply…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportReply();}"></textarea>
-              <button class="sup-thread-send" id="supSendBtn" onclick="sendSupportReply()">Send</button>
+              <textarea id="supReplyInput" rows="1" placeholder="Reply as admin…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSupportReply();}"></textarea>
+              <button class="sup-thread-send" id="supSendBtn" onclick="sendSupportReply()"><svg class="ic"><use href="#ic-send"></use></svg></button>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPPORT AGENTS -->
+    <div class="sec" id="sec-agents">
+      <div class="ref-block">
+        <h3 style="display:flex;align-items:center;gap:7px;"><svg class="ic"><use href="#ic-users"></use></svg> Add Support Agent</h3>
+        <div class="ref-field">
+          <label class="ref-lbl">Agent Name</label>
+          <input class="ref-input" id="newAgentName" placeholder="Full name" autocomplete="off">
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Login Email</label>
+          <input class="ref-input" id="newAgentEmail" placeholder="agent@example.com" autocomplete="off">
+        </div>
+        <div class="ref-field">
+          <label class="ref-lbl">Temporary Password</label>
+          <input class="ref-input" id="newAgentPass" type="text" placeholder="Min 6 characters" autocomplete="off">
+        </div>
+        <button class="ref-btn" id="addAgentBtn" onclick="addSupportAgent()">Create Agent Account</button>
+        <div id="addAgentMsg" style="display:none;margin-top:12px;font-size:12.5px;line-height:1.6;"></div>
+      </div>
+      <div class="ref-block">
+        <h3 style="display:flex;align-items:center;gap:7px;"><svg class="ic"><use href="#ic-headset"></use></svg> Support Team</h3>
+        <div id="agentMgmtList"><p style="color:var(--muted);text-align:center;padding:20px 0;">No agents yet. Add one above.</p></div>
+      </div>
+    </div>
+
+    <!-- TICKETS -->
+    <div class="sec" id="sec-tickets">
+      <div class="rev-header">
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:8px;"><svg class="ic"><use href="#ic-ticket"></use></svg> Tickets</h2>
+        <p style="margin:0;color:var(--muted);font-size:13px;">Every ended support chat — disposition, transcript and rating.</p>
+      </div>
+      <div class="fr">
+        <select class="fsel" id="tixFilterAgent" onchange="renderTicketsList()"><option value="all">All agents</option></select>
+        <select class="fsel" id="tixFilterDate" onchange="renderTicketsList()">
+          <option value="all">All time</option>
+          <option value="today">Today</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select>
+        <select class="fsel" id="tixFilterResolved" onchange="renderTicketsList()">
+          <option value="all">Resolved &amp; Unresolved</option>
+          <option value="yes">Resolved only</option>
+          <option value="no">Unresolved only</option>
+        </select>
+        <select class="fsel" id="tixFilterRating" onchange="renderTicketsList()">
+          <option value="all">Any rating</option>
+          <option value="5">5 stars</option>
+          <option value="4">4 stars</option>
+          <option value="3">3 stars</option>
+          <option value="2">2 stars</option>
+          <option value="1">1 star</option>
+          <option value="none">Not rated</option>
+        </select>
+        <input class="si" id="tixSearch" placeholder="Search ticket ID, order ID, customer…" style="max-width:240px;padding:7px 11px;font-size:12px;" oninput="renderTicketsList()">
+        <span class="fcnt" id="tixFilterCount"></span>
+      </div>
+      <div class="tw"><table class="ot" id="tixTable">
+        <thead><tr><th>Ticket</th><th>Customer</th><th>Agent</th><th>Order</th><th>Issue</th><th>Resolved</th><th>Duration</th><th>Rating</th><th>Ended</th></tr></thead>
+        <tbody id="tixTbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);">No tickets yet.</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- TICKET DETAIL MODAL -->
+    <div class="adm-modal-bg" id="tixDetailBg" onclick="if(event.target===this)closeTicketDetail()">
+      <div class="adm-modal" style="max-width:640px;" onclick="event.stopPropagation()">
+        <div class="adm-modal-hdr">
+          <div class="adm-modal-title"><svg class="ic"><use href="#ic-ticket"></use></svg> <span id="tixDetailTitle">Ticket</span></div>
+          <button class="adm-modal-close" onclick="closeTicketDetail()"><svg class="ic"><use href="#ic-close"></use></svg></button>
+        </div>
+        <div class="adm-modal-body" id="tixDetailBody"></div>
+      </div>
+    </div>
+
+    <!-- PER-AGENT REPORT MODAL -->
+    <div class="adm-modal-bg" id="agentReportBg" onclick="if(event.target===this)closeAgentReport()">
+      <div class="adm-modal" onclick="event.stopPropagation()">
+        <div class="adm-modal-hdr">
+          <div class="adm-modal-title"><svg class="ic"><use href="#ic-chart"></use></svg> <span id="agentReportTitle">Agent Report</span></div>
+          <button class="adm-modal-close" onclick="closeAgentReport()"><svg class="ic"><use href="#ic-close"></use></svg></button>
+        </div>
+        <div class="adm-modal-body">
+          <div class="adm-range">
+            <button class="active" data-r="week" onclick="agentReportSetRange('week')">This Week</button>
+            <button data-r="month" onclick="agentReportSetRange('month')">This Month</button>
+          </div>
+          <div id="agentReportBody"><div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div></div>
         </div>
       </div>
     </div>
@@ -1496,6 +1712,7 @@ function showApp(email){
   startRstatusListener();
   loadRestaurants();
   if(!_supportUnsub) startSupportListener();
+  if(!_supportAgentsUnsub) startSupportAgentsListener();
   if(!window._kaInterval) window._kaInterval=setInterval(()=>{localStorage.setItem('_adm_ka',Date.now());},50000);
 }
 
@@ -1532,8 +1749,9 @@ async function doLogout(){
   if(_restUnsub){_restUnsub();_restUnsub=null;}
   if(_restRatingsUnsub){_restRatingsUnsub();_restRatingsUnsub=null;}
   if(_supportUnsub){_supportUnsub();_supportUnsub=null;}
+  if(_supportAgentsUnsub){_supportAgentsUnsub();_supportAgentsUnsub=null;}
   try{await window._fbSignOut(window._auth);}catch(e){}
-  allOrders=[];allRiders=[];isInit=true;newCnt=0;allRestaurants=[];_restRatings=[];_supportConvos=[];_supportActiveId=null;showLogin();
+  allOrders=[];allRiders=[];isInit=true;newCnt=0;allRestaurants=[];_restRatings=[];_supportConvos=[];_supportActiveId=null;_supportAgents=[];showLogin();
 }
 
 function setupAuth(){
@@ -2177,18 +2395,20 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',support:'nsup',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',support:'nsup',agents:'nag',tickets:'ntix',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
   document.getElementById('mnw').classList.toggle('active',name==='wallet');
   document.getElementById('mnr').classList.toggle('active',name==='reviews');
   document.getElementById('mnsup').classList.toggle('active',name==='support');
+  document.getElementById('mnag').classList.toggle('active',name==='agents');
+  document.getElementById('mntix').classList.toggle('active',name==='tickets');
   document.getElementById('mnri').classList.toggle('active',name==='riders'||name==='rider-detail');
   document.getElementById('mnrest').classList.toggle('active',name==='restaurants');
   document.getElementById('mnoff').classList.toggle('active',name==='offers');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',support:'Support',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',support:'Support Monitor',agents:'Support Agents',tickets:'Tickets',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
   if(name==='reviews'){ loadReviews(); }
@@ -2200,19 +2420,32 @@ function showSec(name){
     renderRidersManagement();
   }
   if(name==='offers'){ loadOffersSettings(); }
-  if(name==='support'){ if(!_supportUnsub) startSupportListener(); }
+  if(name==='support'){ if(!_supportUnsub) startSupportListener(); if(!_supportAgentsUnsub) startSupportAgentsListener(); }
+  if(name==='agents'){ if(!_supportAgentsUnsub) startSupportAgentsListener(); }
+  if(name==='tickets'){ if(!_ticketsUnsub) startTicketsListener(); if(!_surveysUnsub) startSurveysListener(); if(!_supportAgentsUnsub) startSupportAgentsListener(); }
 }
 
-// ── SUPPORT INBOX ──────────────────────────────
+// ── SUPPORT MONITOR ─────────────────────────────
 // Reads/writes supportChats/{walletToken} — doc ID is the customer's own
 // secret token (same "path is the secret" model as wallets/orderTracking).
-// Listing every conversation here requires isAdmin() in firestore.rules.
+// Listing every conversation here requires isAdmin() (or isSupportAgent(),
+// for support.html) in firestore.rules.
 let _supportUnsub=null, _supportConvos=[], _supportActiveId=null, _supSending=false;
+let _supportAgentsUnsub=null, _supportAgents=[];
+let _ticketsUnsub=null, _tickets=[];
+let _surveysUnsub=null, _surveys=[];
+let _agentTimerInterval=null;
 
 function escAdmin(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function genToken(len=24){
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const buf=new Uint8Array(len);
+  crypto.getRandomValues(buf);
+  return Array.from(buf,b=>chars[b%chars.length]).join('');
+}
 
 function _supBadgeUpdate(){
-  const unread=_supportConvos.filter(c=>c.unreadByAdmin).length;
+  const unread=_supportConvos.filter(c=>c.unreadByAdmin && (c.messages||[]).length>0).length;
   const b=document.getElementById('nsupb');
   if(b){ if(unread>0){b.textContent=unread;b.classList.add('on');}else{b.classList.remove('on');} }
 }
@@ -2224,6 +2457,8 @@ function startSupportListener(){
     _supportConvos=snap.docs.map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(td(b.lastMessageAt||b.updatedAt)||0)-(td(a.lastMessageAt||a.updatedAt)||0));
     _supBadgeUpdate();
+    renderSupportStats();
+    renderSupportAgentTable();
     renderSupportList();
     if(_supportActiveId){
       const active=_supportConvos.find(c=>c.id===_supportActiveId);
@@ -2233,48 +2468,189 @@ function startSupportListener(){
     console.error('[Support] listen failed:',err.code,err.message);
     const el=document.getElementById('supList');
     if(el) el.innerHTML=`<div style="color:#ef4444;text-align:center;padding:30px 16px;">
-      <div style="font-size:22px;margin-bottom:8px;">⚠️</div>
       <div style="font-weight:700;margin-bottom:4px;">Could not load support conversations</div>
       <div style="font-size:12px;opacity:.8;">${escAdmin(err.code)}: ${escAdmin(err.message)}</div>
     </div>`;
   });
 }
 
-function renderSupportList(){
-  const el=document.getElementById('supList');
-  if(!el) return;
-  if(!_supportConvos.length){
-    el.innerHTML='<div class="es"><div class="ei">💬</div>No support conversations yet.</div>';
-    return;
-  }
-  el.innerHTML=_supportConvos.map(c=>{
-    const unread=!!c.unreadByAdmin;
-    const active=c.id===_supportActiveId;
-    const lastPrefix=c.lastSender==='admin'?'You: ':'';
-    return `<div class="sup-item${active?' active':''}" onclick="openSupportConversation('${c.id}')">
-      <div class="sup-item-top">
-        <span class="sup-item-name">${escAdmin(c.customerName||'Customer')}</span>
-        ${unread?'<span class="sup-unread-dot"></span>':''}
-      </div>
-      <div class="sup-item-order">${c.orderId?('Order #'+escAdmin(c.orderId)):'General enquiry'}</div>
-      <div class="sup-item-last">${escAdmin(lastPrefix+(c.lastMessage||''))}</div>
-      <div class="sup-item-time">${fdt(c.lastMessageAt||c.updatedAt)}</div>
-    </div>`;
-  }).join('');
+const AUX_ICONS_ADM={Available:'ic-status-on',Break:'ic-coffee',Training:'ic-book',Unavailable:'ic-status-off'};
+function startSupportAgentsListener(){
+  if(!window._db) return;
+  if(_supportAgentsUnsub){_supportAgentsUnsub();_supportAgentsUnsub=null;}
+  _supportAgentsUnsub=window._fbSnap(window._fbCol(window._db,'supportAgents'),snap=>{
+    _supportAgents=snap.docs.map(d=>({uid:d.id,...d.data()}))
+      .sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    renderSupportAgentFilterOptions();
+    renderTicketsAgentFilterOptions();
+    renderSupportAgentTable();
+    renderSupportAgentsList();
+    renderSupportStats();
+    startAgentTimerTicker();
+  },err=>{
+    console.error('[SupportAgents] listen failed:',err.code,err.message);
+  });
+}
+function startTicketsListener(){
+  if(!window._db) return;
+  if(_ticketsUnsub){_ticketsUnsub();_ticketsUnsub=null;}
+  _ticketsUnsub=window._fbSnap(window._fbCol(window._db,'tickets'),snap=>{
+    _tickets=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(td(b.endAt)||0)-(td(a.endAt)||0));
+    renderTicketsList();
+    renderSupportAgentTable();
+  },err=>{ console.error('[Tickets] listen failed:',err.code,err.message); });
+}
+function startSurveysListener(){
+  if(!window._db) return;
+  if(_surveysUnsub){_surveysUnsub();_surveysUnsub=null;}
+  _surveysUnsub=window._fbSnap(window._fbCol(window._db,'ticketSurveys'),snap=>{
+    _surveys=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderTicketsList();
+  },err=>{ console.error('[TicketSurveys] listen failed:',err.code,err.message); });
 }
 
 function fdt(ts){
   const d=td(ts); if(!d) return '';
   return d.toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 }
+function isStaffMsg(m){ return m.sender!=='customer'; }
+function isTodayTs(ts){ const d=td(ts); return d && d>=sod(new Date()); }
+function fmtDuration(ms){
+  if(ms==null||isNaN(ms)) return '—';
+  const mins=Math.round(ms/60000);
+  if(mins<60) return mins+'m';
+  const h=Math.floor(mins/60), m=mins%60;
+  return h+'h '+m+'m';
+}
+function fmtTimer(ms){
+  if(ms==null||ms<0||isNaN(ms)) ms=0;
+  const s=Math.floor(ms/1000);
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  const pad=n=>String(n).padStart(2,'0');
+  return h>0?`${h}:${pad(m)}:${pad(sec)}`:`${pad(m)}:${pad(sec)}`;
+}
+
+// ── STATS ────────────────────────────────────────
+function renderSupportStats(){
+  const waiting=_supportConvos.filter(c=>c.lastSender==='customer' && (c.messages||[]).length>0).length;
+  const active=_supportConvos.filter(c=>(c.messages||[]).length>0).length;
+  let repliesToday=0;
+  _supportConvos.forEach(c=>(c.messages||[]).forEach(m=>{ if(isStaffMsg(m) && isTodayTs(m.at)) repliesToday++; }));
+  const availableNow=_supportAgents.filter(a=>a.active!==false && a.currentStatus==='Available').length;
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('supStatWaiting',waiting);
+  set('supStatOpen',active);
+  set('supStatRepliesToday',repliesToday);
+  set('supStatAgents',availableNow);
+}
+
+// ── PER-AGENT ACTIVITY (live table — chats-handled/first-reply come from
+// tickets, never from supportChats, since a conversation doc gets reset on
+// End Chat and would otherwise always read ~1) ──────────────────────────
+function computeAgentActivity(){
+  return _supportAgents.map(a=>{
+    let repliesToday=0;
+    _supportConvos.forEach(c=>(c.messages||[]).forEach(m=>{ if(isStaffMsg(m) && m.byUid===a.uid && isTodayTs(m.at)) repliesToday++; }));
+    const agentTickets=_tickets.filter(t=>t.agentUid===a.uid);
+    const withFirstReply=agentTickets.filter(t=>t.firstReplyAt);
+    const avgMs=withFirstReply.length
+      ? withFirstReply.reduce((s,t)=>s+((td(t.firstReplyAt)||0)-(td(t.startAt)||0)),0)/withFirstReply.length
+      : null;
+    return { agent:a, repliesToday, conversationsHandled:agentTickets.length, avgFirstReplyMs:avgMs };
+  });
+}
+function renderSupportAgentTable(){
+  const tbody=document.getElementById('supAgentTbody');
+  if(!tbody) return;
+  if(!_supportAgents.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);">No agents yet. Add one in Support Agents.</td></tr>';
+    return;
+  }
+  const rows=computeAgentActivity();
+  tbody.innerHTML=rows.map(r=>{
+    const st=r.agent.currentStatus||'Unavailable';
+    const sd=td(r.agent.statusSince);
+    return `<tr>
+    <td><span class="cname">${escAdmin(r.agent.name)}</span>${r.agent.active===false?' <span class="delayed-badge">inactive</span>':''}</td>
+    <td><span class="rdm-badge aux-${st}"><svg><use href="#${AUX_ICONS_ADM[st]||'ic-status-off'}"></use></svg>${st}</span></td>
+    <td><span id="agtimer-${r.agent.uid}" style="font-variant-numeric:tabular-nums;">${sd?fmtTimer(Date.now()-sd.getTime()):'—'}</span></td>
+    <td>${r.repliesToday}</td>
+    <td>${r.conversationsHandled}</td>
+    <td>${fmtDuration(r.avgFirstReplyMs)}</td>
+  </tr>`;
+  }).join('');
+}
+function startAgentTimerTicker(){
+  if(_agentTimerInterval) clearInterval(_agentTimerInterval);
+  _agentTimerInterval=setInterval(()=>{
+    _supportAgents.forEach(a=>{
+      const el=document.getElementById('agtimer-'+a.uid);
+      const sd=td(a.statusSince);
+      if(el && sd) el.textContent=fmtTimer(Date.now()-sd.getTime());
+    });
+  },1000);
+}
+function renderSupportAgentFilterOptions(){
+  const sel=document.getElementById('supFilterAgent');
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="all">All agents</option><option value="unassigned">Unassigned</option>'+
+    _supportAgents.map(a=>`<option value="${a.uid}">${escAdmin(a.name)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+
+// ── FILTERS + LIST ───────────────────────────────
+function getFilteredSupportConvos(){
+  const agentF=document.getElementById('supFilterAgent')?.value||'all';
+  const q=(document.getElementById('supSearch')?.value||'').trim().toLowerCase();
+  return _supportConvos.filter(c=>{
+    if((c.messages||[]).length===0) return false;
+    if(agentF==='unassigned' && c.assignedAgentUid) return false;
+    if(agentF!=='all' && agentF!=='unassigned' && c.assignedAgentUid!==agentF) return false;
+    if(q && !((c.customerName||'').toLowerCase().includes(q) || (c.orderId||'').toLowerCase().includes(q) || (c.lastMessage||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+
+function renderSupportList(){
+  const el=document.getElementById('supList');
+  if(!el) return;
+  const list=getFilteredSupportConvos();
+  const cntEl=document.getElementById('supFilterCount');
+  if(cntEl) cntEl.textContent=`${list.length} of ${_supportConvos.filter(c=>(c.messages||[]).length>0).length}`;
+  if(!list.length){
+    el.innerHTML='<div class="es">No conversations match.</div>';
+    return;
+  }
+  el.innerHTML=list.map(c=>{
+    const unread=!!c.unreadByAdmin;
+    const active=c.id===_supportActiveId;
+    const lastPrefix=c.lastSender==='customer'?'':'Staff: ';
+    const badge=c.assignedAgentName ? escAdmin(c.assignedAgentName) : 'new';
+    const badgeColor=c.assignedAgentName ? '#22c55e' : '#ef4444';
+    return `<div class="sup-item${active?' active':''}" onclick="openSupportConversation('${c.id}')">
+      <div class="sup-item-top">
+        <span class="sup-item-name">${escAdmin(c.customerName||'Customer')}</span>
+        ${unread?'<span class="sup-unread-dot"></span>':''}
+      </div>
+      <div class="sup-item-order">${c.orderId?('Order #'+escAdmin(c.orderId)):'General enquiry'} · <span style="color:${badgeColor};text-transform:uppercase;font-size:9.5px;font-weight:700;">${badge}</span></div>
+      <div class="sup-item-last">${escAdmin(lastPrefix+(c.lastMessage||''))}</div>
+      <div class="sup-item-time">${fdt(c.lastMessageAt||c.updatedAt)}</div>
+    </div>`;
+  }).join('');
+}
 
 function openSupportConversation(id){
   _supportActiveId=id;
+  _admEcState=null;
+  const ecEl=document.getElementById('supEndChatFlow'); if(ecEl) ecEl.innerHTML='';
   document.getElementById('supWrap')?.classList.add('thread-open');
   const c=_supportConvos.find(x=>x.id===id);
   if(!c) return;
   document.getElementById('supThreadEmpty').style.display='none';
   document.getElementById('supThreadActive').style.display='flex';
+  document.getElementById('supNotesPanel').style.display='none';
   renderSupportThread(c);
   renderSupportList();
   if(c.unreadByAdmin){
@@ -2284,26 +2660,165 @@ function openSupportConversation(id){
 
 function closeSupportThread(){
   _supportActiveId=null;
+  _admEcState=null;
+  const ecEl=document.getElementById('supEndChatFlow'); if(ecEl) ecEl.innerHTML='';
   document.getElementById('supWrap')?.classList.remove('thread-open');
   document.getElementById('supThreadEmpty').style.display='flex';
   document.getElementById('supThreadActive').style.display='none';
   renderSupportList();
 }
 
+function toggleSupportNotes(){
+  const panel=document.getElementById('supNotesPanel');
+  panel.style.display=panel.style.display==='none'?'block':'none';
+}
+
 function renderSupportThread(c){
   document.getElementById('supThreadName').textContent=c.customerName||'Customer';
   document.getElementById('supThreadOrder').textContent=c.orderId?('Order #'+c.orderId):'General enquiry';
+  const notesCount=(c.internalNotes||[]).length;
+  const cnt=document.getElementById('supNotesCountTxt');
+  if(cnt) cnt.textContent=notesCount?` (${notesCount})`:'';
+
   const msgs=(c.messages||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
   const el=document.getElementById('supThreadMessages');
   if(!el) return;
   el.innerHTML=msgs.length ? msgs.map(m=>{
-    const isAdmin=m.sender==='admin';
-    return `<div class="sup-msg ${isAdmin?'admin':'customer'}">
+    const staff=isStaffMsg(m);
+    const byLabel=staff?(m.byName||(m.sender==='admin'?'Admin':'LinkUp Support')):'';
+    return `<div class="sup-msg ${staff?'admin':'customer'}">
+      ${staff?`<div style="font-size:10px;color:var(--muted);margin-bottom:2px;text-align:right;">${escAdmin(byLabel)}</div>`:''}
       <div class="sup-bubble">${escAdmin(m.text)}</div>
       <div class="sup-msg-time">${fdt(m.at)}</div>
     </div>`;
   }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
   el.scrollTop=el.scrollHeight;
+
+  renderSupportNotes(c);
+}
+
+function renderSupportNotes(c){
+  const el=document.getElementById('supNotesList');
+  if(!el) return;
+  const notes=(c.internalNotes||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
+  el.innerHTML=notes.length ? notes.map(n=>`<div class="tix-note">
+      <div style="font-size:10.5px;font-weight:700;color:#f59e0b;margin-bottom:2px;">${escAdmin(n.byName||'Agent')}</div>
+      <div style="font-size:12px;line-height:1.5;">${escAdmin(n.text)}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;">${fdt(n.at)}</div>
+    </div>`).join('') : '<div style="font-size:11.5px;color:var(--muted);">No internal notes yet.</div>';
+}
+
+async function addSupportNote(){
+  if(!_supportActiveId) return;
+  const inp=document.getElementById('supNoteInput');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  const id='n'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  const now=new Date();
+  try{
+    await window._fbUpdate(window._fbDoc(window._db,'supportChats',_supportActiveId),{
+      internalNotes:window._fbArrUnion({id,byUid:window._auth?.currentUser?.uid||'admin',byName:'Admin',text:txt,at:now}),
+      updatedAt:now
+    });
+    inp.value='';
+  }catch(e){
+    console.error('[Support] note failed:',e.code,e.message);
+    toast('⚠️ Could not save note.','#ef4444');
+  }
+}
+
+// ── END CHAT + DISPOSITION (admin can also formally close a chat) ──
+let _admEcState=null;
+function openAdminEndChatFlow(){
+  const c=_supportConvos.find(x=>x.id===_supportActiveId);
+  if(!c) return;
+  _admEcState={step:'confirm'};
+  renderAdminEndChatFlow(c);
+}
+function cancelAdminEndChatFlow(){
+  _admEcState=null;
+  const el=document.getElementById('supEndChatFlow'); if(el) el.innerHTML='';
+}
+function admEcPickResolved(val){
+  _admEcState={step:'form', resolved:val};
+  const c=_supportConvos.find(x=>x.id===_supportActiveId);
+  renderAdminEndChatFlow(c);
+}
+function renderAdminEndChatFlow(c){
+  const el=document.getElementById('supEndChatFlow');
+  if(!el) return;
+  if(!_admEcState){ el.innerHTML=''; return; }
+  if(_admEcState.step==='confirm'){
+    el.innerHTML=`<div class="sp-ec-card">
+      <div class="sp-ec-title">Was the customer's issue resolved?</div>
+      <div class="sp-ec-yn">
+        <button class="yes" onclick="admEcPickResolved(true)">Yes</button>
+        <button class="no" onclick="admEcPickResolved(false)">No</button>
+      </div>
+      <div class="sp-ec-actions" style="margin-top:10px;"><button class="sp-ec-cancel" onclick="cancelAdminEndChatFlow()">Cancel</button></div>
+    </div>`;
+    return;
+  }
+  el.innerHTML=`<div class="sp-ec-card">
+    <div class="sp-ec-title">End Chat — Disposition</div>
+    <span class="sp-ec-resolved-pill ${_admEcState.resolved?'yes':'no'}"><svg class="ic"><use href="#${_admEcState.resolved?'ic-check':'ic-close'}"></use></svg>${_admEcState.resolved?'Resolved':'Not resolved'}</span>
+    <div class="sp-ec-field"><label>Order ID</label><input id="admEcOrderId" value="${escAdmin(c.orderId||'')}" placeholder="e.g. LU-1042"></div>
+    <div class="sp-ec-field"><label>Issue *</label><textarea id="admEcIssue" rows="2" placeholder="What was the customer's issue?"></textarea></div>
+    <div class="sp-ec-field"><label>Action Taken *</label><textarea id="admEcAction" rows="2" placeholder="What did you do to resolve/handle it?"></textarea></div>
+    <div class="sp-ec-err" id="admEcErr">Issue and Action taken are required.</div>
+    <div class="sp-ec-actions">
+      <button class="sp-ec-cancel" onclick="cancelAdminEndChatFlow()">Cancel</button>
+      <button class="sp-ec-submit" id="admEcSubmitBtn" onclick="submitAdminEndChat()">Submit &amp; End Chat</button>
+    </div>
+  </div>`;
+}
+async function submitAdminEndChat(){
+  const c=_supportConvos.find(x=>x.id===_supportActiveId);
+  if(!c||!_admEcState) return;
+  const orderId=document.getElementById('admEcOrderId').value.trim();
+  const issue=document.getElementById('admEcIssue').value.trim();
+  const actionTaken=document.getElementById('admEcAction').value.trim();
+  const err=document.getElementById('admEcErr');
+  if(!issue||!actionTaken){ err.classList.add('on'); return; }
+  err.classList.remove('on');
+  const btn=document.getElementById('admEcSubmitBtn');
+  btn.disabled=true; btn.textContent='Ending…';
+  try{
+    const counterRef=window._fbDoc(window._db,'counters','tickets');
+    const ticketNum=await window._fbTxn(window._db, async(txn)=>{
+      const snap=await txn.get(counterRef);
+      const current=snap.exists()?(snap.data().lastTicketNumber||1000):1000;
+      const next=current+1;
+      txn.set(counterRef,{lastTicketNumber:next});
+      return next;
+    });
+    const ticketId=`TK-${ticketNum}`;
+    const surveyToken=genToken(24);
+    const now=new Date();
+    const startAt=c.createdAt||now;
+    const adminUid=window._auth?.currentUser?.uid||'admin';
+    const batch=window._fbBatch(window._db);
+    batch.set(window._fbDoc(window._db,'tickets',ticketId),{
+      ticketId, chatId:c.id, customerName:c.customerName||'Customer', customerPhone:c.customerPhone||'',
+      agentUid:adminUid, agentName:'Admin', orderId:orderId||null, issue, resolved:!!_admEcState.resolved, actionTaken,
+      startAt, firstReplyAt:c.firstReplyAt||null, endAt:now, durationMs: now.getTime()-((td(startAt)||now).getTime()),
+      transcript:c.messages||[], internalNotes:c.internalNotes||[], createdAt:now
+    });
+    batch.set(window._fbDoc(window._db,'ticketSurveys',surveyToken),{ticketId, rating:null, ratedAt:null, createdAt:now});
+    batch.update(window._fbDoc(window._db,'supportChats',c.id),{
+      messages:[], internalNotes:[], assignedAgentUid:null, assignedAgentName:null, firstReplyAt:null,
+      lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
+      pendingSurvey:{ticketId, surveyToken, endedAt:now}, updatedAt:now
+    });
+    await batch.commit();
+    _admEcState=null;
+    toast(`✅ Chat ended — ${ticketId} created.`,'#22c55e');
+    closeSupportThread();
+  }catch(e){
+    console.error('[Support] end chat failed:',e.code,e.message);
+    toast('⚠️ Could not end chat — check connection and try again.','#ef4444');
+    btn.disabled=false; btn.textContent='Submit & End Chat';
+  }
 }
 
 async function sendSupportReply(){
@@ -2315,20 +2830,308 @@ async function sendSupportReply(){
   _supSending=true; btn.disabled=true;
   const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   const now=new Date();
+  const c=_supportConvos.find(x=>x.id===_supportActiveId);
+  const adminUid=window._auth?.currentUser?.uid||'admin';
+  const payload={
+    messages:window._fbArrUnion({id,sender:'staff',text:txt,at:now,byUid:adminUid,byName:'Admin',byRole:'admin'}),
+    lastMessage:txt,
+    lastMessageAt:now,
+    lastSender:'staff',
+    updatedAt:now
+  };
+  if(!c?.assignedAgentUid){ payload.assignedAgentUid=adminUid; payload.assignedAgentName='Admin'; }
+  if(!c?.firstReplyAt){ payload.firstReplyAt=now; }
   try{
-    await window._fbUpdate(window._fbDoc(window._db,'supportChats',_supportActiveId),{
-      messages:window._fbArrUnion({id,sender:'admin',text:txt,at:now}),
-      lastMessage:txt,
-      lastMessageAt:now,
-      lastSender:'admin',
-      updatedAt:now
-    });
+    await window._fbUpdate(window._fbDoc(window._db,'supportChats',_supportActiveId), payload);
     inp.value='';
   }catch(e){
     console.error('[Support] reply failed:',e.code,e.message);
     toast('⚠️ Reply failed to send — check connection and try again.','#ef4444');
   }finally{
     _supSending=false; btn.disabled=false;
+  }
+}
+
+// ── SUPPORT AGENTS MANAGEMENT ────────────────────
+// Mirrors addRider() exactly: create the Firebase Auth account via the
+// Identity Toolkit REST API (so the admin's own SDK session is never
+// swapped to the new agent), then write supportAgents/{uid} via the
+// Firestore REST API using a captured admin ID token.
+async function addSupportAgent(){
+  const name=document.getElementById('newAgentName').value.trim();
+  const email=document.getElementById('newAgentEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('newAgentPass').value;
+  const btn=document.getElementById('addAgentBtn');
+  const msg=document.getElementById('addAgentMsg');
+  msg.style.display='none';
+  if(!name){toast('⚠️ Enter agent name.','#f59e0b');return;}
+  if(!email||!email.includes('@')){toast('⚠️ Enter a valid email.','#f59e0b');return;}
+  if(!pass||pass.length<6){toast('⚠️ Password must be at least 6 characters.','#f59e0b');return;}
+  if(!window._db||!window._auth?.currentUser){toast('Not connected — please refresh.','#ef4444');return;}
+  btn.disabled=true; btn.textContent='Creating…';
+  try{
+    const adminToken=await window._auth.currentUser.getIdToken();
+    const authResp=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${ADMIN_API_KEY}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass,returnSecureToken:true})
+    });
+    const authData=await authResp.json();
+    if(authData.error) throw new Error(authData.error.message||JSON.stringify(authData.error));
+    const uid=authData.localId;
+
+    const fsResp=await fetch(
+      `https://firestore.googleapis.com/v1/projects/food-app-linkup/databases/(default)/documents/supportAgents/${uid}`,
+      {
+        method:'PATCH',
+        headers:{'Authorization':'Bearer '+adminToken,'Content-Type':'application/json'},
+        body:JSON.stringify({fields:{
+          name:      {stringValue:name},
+          email:     {stringValue:email},
+          active:    {booleanValue:true},
+          createdAt: {timestampValue:new Date().toISOString()},
+          _pass:     {stringValue:pass},
+          role:      {stringValue:'support'}
+        }})
+      }
+    );
+    const fsData=await fsResp.json();
+    if(fsData.error) throw new Error('Firestore: '+fsData.error.message);
+
+    document.getElementById('newAgentName').value='';
+    document.getElementById('newAgentEmail').value='';
+    document.getElementById('newAgentPass').value='';
+    msg.style.display='block'; msg.style.color='var(--green)';
+    msg.innerHTML=`✅ <strong>${escAdmin(name)}</strong> created! Share these login details:<br>
+      <span style="font-family:monospace;font-size:12px;background:var(--bg);padding:5px 10px;border-radius:6px;display:inline-block;margin-top:6px;">
+        ${escAdmin(email)} — support.html
+      </span>`;
+    toast(`✅ Agent ${name} created!`,'#22c55e');
+  }catch(e){
+    msg.style.display='block'; msg.style.color='#ef4444';
+    msg.textContent='❌ '+(e.message||'Failed to create agent');
+    toast('❌ '+(e.message||'Failed'),'#ef4444');
+  }finally{ btn.disabled=false; btn.textContent='Create Agent Account'; }
+}
+
+function renderSupportAgentsList(){
+  const el=document.getElementById('agentMgmtList');
+  if(!el) return;
+  if(!_supportAgents.length){
+    el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px 0;">No agents yet. Add one above.</p>';
+    return;
+  }
+  el.innerHTML=_supportAgents.map(a=>{
+    const st=a.currentStatus||'Unavailable';
+    return `<div class="rdm-card">
+    <div class="rdm-avatar">${(a.name||'?').charAt(0).toUpperCase()}</div>
+    <div class="rdm-info">
+      <div class="rdm-name">${escAdmin(a.name)}</div>
+      <div class="rdm-phone">${escAdmin(a.email)}</div>
+      <span class="rdm-badge ${a.active===false?'inactive':'active'}">${a.active===false?'Inactive':'Active'}</span>
+      ${a.currentStatus?` <span class="rdm-badge aux-${st}"><svg><use href="#${AUX_ICONS_ADM[st]||'ic-status-off'}"></use></svg>${st}</span>`:''}
+    </div>
+    <button class="rdm-toggle" style="background:rgba(255,140,0,.14);color:var(--orange);" onclick="openAgentReport('${a.uid}','${escAdmin(a.name).replace(/'/g,"\\'")}')">Report</button>
+    <button class="rdm-toggle ${a.active===false?'activate':'deactivate'}" onclick="toggleSupportAgentActive('${a.uid}',${a.active!==false})">${a.active===false?'Activate':'Deactivate'}</button>
+    <button class="rdm-toggle deactivate" onclick="removeSupportAgent('${a.uid}','${escAdmin(a.name).replace(/'/g,"\\'")}')">Remove</button>
+  </div>`;
+  }).join('');
+}
+
+async function toggleSupportAgentActive(uid,currentActive){
+  if(!window._db){toast('Not connected.','#ef4444');return;}
+  try{
+    await window._fbUpdate(window._fbDoc(window._db,'supportAgents',uid),{active:!currentActive});
+    toast(currentActive?'Agent deactivated.':'✅ Agent activated!',currentActive?'#f59e0b':'#22c55e');
+  }catch(e){ toast('❌ '+e.message,'#ef4444'); }
+}
+
+async function removeSupportAgent(uid,agentName){
+  if(!confirm(`Are you sure you want to remove ${agentName||'this agent'}?\n\nThey will be removed from the app and can no longer log in. This cannot be undone.`)) return;
+  if(!window._db||!window._auth?.currentUser){toast('Not connected.','#ef4444');return;}
+  try{
+    const adminToken=await window._auth.currentUser.getIdToken();
+    const fsResp=await fetch(
+      `https://firestore.googleapis.com/v1/projects/food-app-linkup/databases/(default)/documents/supportAgents/${uid}`,
+      {method:'DELETE', headers:{'Authorization':'Bearer '+adminToken}}
+    );
+    if(!fsResp.ok && fsResp.status!==404){
+      const err=await fsResp.json().catch(()=>({}));
+      throw new Error('Firestore delete: '+(err.error?.message||fsResp.status));
+    }
+    console.info(`[removeSupportAgent] Firestore doc deleted for ${uid}. Auth account can be cleaned up in Firebase Console → Authentication if needed.`);
+    toast(`🗑 ${agentName||'Agent'} removed.`,'#ef4444');
+  }catch(e){
+    console.error('[removeSupportAgent]',e);
+    toast('❌ '+e.message,'#ef4444');
+  }
+}
+
+// ── TICKETS ───────────────────────────────────────
+function renderTicketsAgentFilterOptions(){
+  const sel=document.getElementById('tixFilterAgent');
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="all">All agents</option>'+
+    _supportAgents.map(a=>`<option value="${a.uid}">${escAdmin(a.name)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+function ratingForTicket(ticketId){
+  const s=_surveys.find(x=>x.ticketId===ticketId && x.rating!=null);
+  return s?s.rating:null;
+}
+function getFilteredTickets(){
+  const agentF=document.getElementById('tixFilterAgent')?.value||'all';
+  const dateF=document.getElementById('tixFilterDate')?.value||'all';
+  const resF=document.getElementById('tixFilterResolved')?.value||'all';
+  const ratF=document.getElementById('tixFilterRating')?.value||'all';
+  const q=(document.getElementById('tixSearch')?.value||'').trim().toLowerCase();
+  const now=new Date();
+  return _tickets.filter(t=>{
+    if(agentF!=='all' && t.agentUid!==agentF) return false;
+    if(resF==='yes' && !t.resolved) return false;
+    if(resF==='no' && t.resolved) return false;
+    if(dateF!=='all'){
+      const d=td(t.endAt); if(!d) return false;
+      if(dateF==='today' && d<sod(now)) return false;
+      if(dateF==='7d' && d<new Date(now.getTime()-7*86400000)) return false;
+      if(dateF==='30d' && d<new Date(now.getTime()-30*86400000)) return false;
+    }
+    const rating=ratingForTicket(t.ticketId);
+    if(ratF==='none' && rating!=null) return false;
+    if(ratF!=='all' && ratF!=='none' && rating!==parseInt(ratF,10)) return false;
+    if(q && !((t.ticketId||'').toLowerCase().includes(q)||(t.orderId||'').toLowerCase().includes(q)||(t.customerName||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+function starsHtml(n){
+  if(n==null) return '<span style="color:var(--muted);">—</span>';
+  return `<span class="tix-stars">${'★'.repeat(n)}${'☆'.repeat(5-n)}</span>`;
+}
+function renderTicketsList(){
+  const tbody=document.getElementById('tixTbody');
+  if(!tbody) return;
+  const list=getFilteredTickets();
+  const cnt=document.getElementById('tixFilterCount');
+  if(cnt) cnt.textContent=`${list.length} of ${_tickets.length}`;
+  if(!list.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);">No tickets match.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=list.map(t=>`<tr class="tix-row" onclick="openTicketDetail('${t.id}')">
+    <td>${escAdmin(t.ticketId)}</td>
+    <td>${escAdmin(t.customerName||'Customer')}</td>
+    <td>${escAdmin(t.agentName||'—')}</td>
+    <td>${t.orderId?escAdmin(t.orderId):'—'}</td>
+    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escAdmin(t.issue||'')}</td>
+    <td>${t.resolved?'<span style="color:#22c55e;font-weight:700;">Yes</span>':'<span style="color:#ef4444;font-weight:700;">No</span>'}</td>
+    <td>${fmtDuration(t.durationMs)}</td>
+    <td>${starsHtml(ratingForTicket(t.ticketId))}</td>
+    <td>${fdt(t.endAt)}</td>
+  </tr>`).join('');
+}
+function openTicketDetail(id){
+  const t=_tickets.find(x=>x.id===id);
+  if(!t) return;
+  document.getElementById('tixDetailTitle').textContent=t.ticketId;
+  const rating=ratingForTicket(t.ticketId);
+  const msgs=(t.transcript||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
+  const notes=(t.internalNotes||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
+  document.getElementById('tixDetailBody').innerHTML=`
+    <div class="spm-grid">
+      <div class="spm-tile"><div class="spm-tile-lbl">Customer</div><div class="spm-tile-val" style="font-size:13px;">${escAdmin(t.customerName||'—')}</div></div>
+      <div class="spm-tile"><div class="spm-tile-lbl">Agent</div><div class="spm-tile-val" style="font-size:13px;">${escAdmin(t.agentName||'—')}</div></div>
+      <div class="spm-tile"><div class="spm-tile-lbl">Order</div><div class="spm-tile-val" style="font-size:13px;">${t.orderId?escAdmin(t.orderId):'—'}</div></div>
+      <div class="spm-tile"><div class="spm-tile-lbl">Duration</div><div class="spm-tile-val" style="font-size:13px;">${fmtDuration(t.durationMs)}</div></div>
+      <div class="spm-tile"><div class="spm-tile-lbl">Resolved</div><div class="spm-tile-val" style="font-size:13px;">${t.resolved?'Yes':'No'}</div></div>
+      <div class="spm-tile"><div class="spm-tile-lbl">Rating</div><div class="spm-tile-val" style="font-size:13px;">${starsHtml(rating)}</div></div>
+    </div>
+    <div class="spm-sec-h">Issue</div>
+    <div style="font-size:12.5px;line-height:1.6;margin-bottom:12px;">${escAdmin(t.issue||'—')}</div>
+    <div class="spm-sec-h">Action Taken</div>
+    <div style="font-size:12.5px;line-height:1.6;margin-bottom:12px;">${escAdmin(t.actionTaken||'—')}</div>
+    <div class="spm-sec-h">Transcript</div>
+    <div class="tix-transcript">${msgs.length?msgs.map(m=>{
+      const staff=m.sender!=='customer';
+      return `<div class="tix-msg ${staff?'staff':'customer'}"><div class="tix-bubble">${escAdmin(m.text)}</div></div>`;
+    }).join(''):'<div style="color:var(--muted);font-size:12px;text-align:center;">No messages.</div>'}</div>
+    ${notes.length?`<div class="spm-sec-h">Internal Notes</div>${notes.map(n=>`<div class="tix-note"><strong>${escAdmin(n.byName||'Agent')}:</strong> ${escAdmin(n.text)}</div>`).join('')}`:''}
+  `;
+  document.getElementById('tixDetailBg').classList.add('on');
+}
+function closeTicketDetail(){ document.getElementById('tixDetailBg').classList.remove('on'); }
+
+// ── PER-AGENT REPORT MODAL ────────────────────────
+let _agentReportUid=null, _agentReportRange='week';
+const IST_OFFSET_MS_ADM=5.5*3600*1000;
+function getRangeBoundsISTAdm(range){
+  const shifted=new Date(Date.now()+IST_OFFSET_MS_ADM);
+  let start;
+  if(range==='week'){
+    const day=shifted.getUTCDay();
+    const diffToMon=(day+6)%7;
+    start=Date.UTC(shifted.getUTCFullYear(),shifted.getUTCMonth(),shifted.getUTCDate()-diffToMon,0,0,0);
+  }else{
+    start=Date.UTC(shifted.getUTCFullYear(),shifted.getUTCMonth(),1,0,0,0);
+  }
+  return {startMs:start-IST_OFFSET_MS_ADM, endMs:Date.now()};
+}
+function clampOverlapMsAdm(startAt,endAt,winStart,winEnd){
+  const s=Math.max((td(startAt)||new Date(0)).getTime(), winStart);
+  const e=Math.min(endAt?(td(endAt)||new Date()).getTime():Date.now(), winEnd);
+  return Math.max(0, e-s);
+}
+async function openAgentReport(uid,name){
+  _agentReportUid=uid; _agentReportRange='week';
+  document.querySelectorAll('.adm-range button').forEach(b=>b.classList.toggle('active',b.dataset.r==='week'));
+  document.getElementById('agentReportTitle').textContent=name||'Agent Report';
+  document.getElementById('agentReportBg').classList.add('on');
+  await renderAgentReport();
+}
+function closeAgentReport(){ document.getElementById('agentReportBg').classList.remove('on'); }
+function agentReportSetRange(r){
+  _agentReportRange=r;
+  document.querySelectorAll('.adm-range button').forEach(b=>b.classList.toggle('active',b.dataset.r===r));
+  renderAgentReport();
+}
+async function renderAgentReport(){
+  const el=document.getElementById('agentReportBody');
+  el.innerHTML='<div style="text-align:center;color:var(--muted);padding:20px;">Loading…</div>';
+  try{
+    const logsSnap=await window._fbGetDocs(window._fbQuery(window._fbCol(window._db,'agentStatusLog'), window._fbWhere('agentUid','==',_agentReportUid)));
+    const logs=logsSnap.docs.map(d=>d.data());
+    const {startMs,endMs}=getRangeBoundsISTAdm(_agentReportRange);
+    const stateMs={Available:0,Break:0,Unavailable:0,Training:0};
+    logs.forEach(l=>{ const ov=clampOverlapMsAdm(l.startAt,l.endAt,startMs,endMs); if(ov>0&&stateMs.hasOwnProperty(l.state)) stateMs[l.state]+=ov; });
+    const totalMs=Object.values(stateMs).reduce((a,b)=>a+b,0);
+    const agentTickets=_tickets.filter(t=>t.agentUid===_agentReportUid && (td(t.endAt)?.getTime()||0)>=startMs && (td(t.endAt)?.getTime()||0)<=endMs);
+    const withFirstReply=agentTickets.filter(t=>t.firstReplyAt);
+    const avgFirstReplyMs=withFirstReply.length?withFirstReply.reduce((s,t)=>s+((td(t.firstReplyAt)||0)-(td(t.startAt)||0)),0)/withFirstReply.length:null;
+    const ratingByTicket=new Map(_surveys.filter(s=>s.rating!=null).map(s=>[s.ticketId,s.rating]));
+    const ratedTickets=agentTickets.filter(t=>ratingByTicket.has(t.ticketId));
+    const avgRating=ratedTickets.length?ratedTickets.reduce((s,t)=>s+ratingByTicket.get(t.ticketId),0)/ratedTickets.length:null;
+    const resolvedCount=agentTickets.filter(t=>t.resolved).length;
+    const pct=(ms)=>totalMs>0?Math.round(ms/totalMs*100):0;
+    el.innerHTML=`
+      <div class="spm-grid">
+        <div class="spm-tile"><div class="spm-tile-lbl">Available Time</div><div class="spm-tile-val">${fmtDuration(stateMs.Available)}</div></div>
+        <div class="spm-tile"><div class="spm-tile-lbl">Chats Handled</div><div class="spm-tile-val">${agentTickets.length}</div></div>
+        <div class="spm-tile"><div class="spm-tile-lbl">Resolved / Total</div><div class="spm-tile-val">${resolvedCount}/${agentTickets.length}</div></div>
+        <div class="spm-tile"><div class="spm-tile-lbl">Avg Rating</div><div class="spm-tile-val">${avgRating!=null?avgRating.toFixed(1)+'★':'—'}</div></div>
+      </div>
+      <div class="spm-sec-h">Time By Status</div>
+      ${['Available','Break','Training','Unavailable'].map(st=>`
+        <div class="spm-bar-row">
+          <span class="spm-bar-lbl">${st}</span>
+          <div class="spm-bar-track"><div class="spm-bar-fill" style="width:${pct(stateMs[st])}%;"></div></div>
+          <span class="spm-bar-pct">${pct(stateMs[st])}%</span>
+        </div>`).join('')}
+      <div class="spm-sec-h">Avg First Reply</div>
+      <div style="font-size:13px;">${avgFirstReplyMs!=null?fmtDuration(avgFirstReplyMs):'—'}</div>
+    `;
+  }catch(e){
+    console.error('[AgentReport] failed:',e.code,e.message);
+    el.innerHTML=`<div style="text-align:center;color:#ef4444;padding:20px;">Could not load report (${escAdmin(e.code||'error')}).</div>`;
   }
 }
 

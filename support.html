@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en" id="spHtml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>LinkUp Support</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23FDF6EA'/%3E%3Cg transform='translate(50,50) scale(1.15) translate(-40,-40)'%3E%3Cpath d='M16 38 A24 24 0 0 1 64 38' fill='none' stroke='%23FF8C00' stroke-width='7' stroke-linecap='round'/%3E%3Crect x='8' y='36' width='16' height='24' rx='8' fill='%23FF8C00'/%3E%3Crect x='56' y='36' width='16' height='24' rx='8' fill='%23FF8C00'/%3E%3Cpath d='M16 54 Q16 68 32 68' fill='none' stroke='%23FF8C00' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='34' cy='68' r='4' fill='%23FF8C00'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="theme-color" content="#ff8c00">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Support">
+<script>
+(function(){
+  try{
+    if(localStorage.getItem('lu_theme') === 'light') document.documentElement.classList.add('light-theme');
+  }catch(e){}
+})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import{getFirestore,doc,getDoc,setDoc,updateDoc,onSnapshot,collection,query,where,getDocs,arrayUnion,writeBatch,runTransaction}
+  from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import{getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged}
+  from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+const cfg={apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",authDomain:"food-app-linkup.firebaseapp.com",
+  projectId:"food-app-linkup",storageBucket:"food-app-linkup.firebasestorage.app",
+  messagingSenderId:"957073867036",appId:"1:957073867036:web:9ae4e4f2fd728d71777ad9"};
+const app=initializeApp(cfg,'support'),db=getFirestore(app),auth=getAuth(app);
+window._supDb=db; window._supAuth=auth;
+window._supDoc=doc; window._supGetDoc=getDoc; window._supSetDoc=setDoc; window._supUpdate=updateDoc;
+window._supSnap=onSnapshot; window._supCol=collection; window._supQuery=query; window._supWhere=where;
+window._supGetDocs=getDocs; window._supArrUnion=arrayUnion; window._supBatch=writeBatch; window._supTxn=runTransaction;
+window._supSignIn=signInWithEmailAndPassword; window._supSignOut=signOut; window._supOnAuth=onAuthStateChanged;
+window._supReady=true; window.dispatchEvent(new Event('supReady'));
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+:root{
+  --orange:#ff8c00;--odim:rgba(255,140,0,0.12);
+  --bg:#0b0b0f;--surface:#13131a;--card:#1a1a26;--border:#222235;--input-bg:#1e1e28;
+  --text:#e8e8f0;--muted:#888899;
+  --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--yellow:#f59e0b;
+}
+html.light-theme{
+  --bg:#FFF8ED;--surface:#FFFDF7;--card:#FFFFFF;--border:#F0E2C8;--input-bg:#FFF3E0;
+  --text:#2B2118;--muted:#8A7D6D;--odim:rgba(255,140,0,.08);
+}
+
+/* ── LOGIN ─────────────────────────────────────────── */
+#spLogin{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 60% 40%,rgba(255,140,0,.07) 0%,transparent 60%),var(--bg);
+  padding:20px;}
+.lb{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px 30px;
+  width:100%;max-width:380px;}
+.lb-logo{text-align:center;margin-bottom:26px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.lb-logo .ll-ico{width:52px;height:52px;}
+.lb-logo .ll-brand{font-family:'Jim Nightshade',cursive;font-size:30px;color:var(--orange);letter-spacing:1px;}
+.lb-logo .ll-sub{font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+.lf{margin-bottom:15px;}
+.lf label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:6px;}
+.lf input{width:100%;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);
+  border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.lf input:focus{border-color:var(--orange);}
+.lbtn{width:100%;padding:13px;background:var(--orange);color:#000;font-family:'Poppins',sans-serif;
+  font-size:15px;font-weight:800;border:none;border-radius:10px;cursor:pointer;margin-top:6px;transition:opacity .2s;}
+.lbtn:hover{opacity:.88;} .lbtn:disabled{opacity:.5;cursor:not-allowed;}
+.lerr{display:none;margin-top:12px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);
+  border-radius:8px;padding:9px 12px;font-size:12px;color:#ef4444;text-align:center;line-height:1.5;}
+.lerr.on{display:block;}
+
+/* ── APP SHELL ─────────────────────────────────────── */
+#spApp{display:none;height:100vh;overflow:hidden;flex-direction:column;}
+#spApp.on{display:flex;}
+.sp-hdr{display:flex;align-items:center;gap:12px;padding:10px 18px;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+.sp-hdr-logo{display:flex;align-items:center;gap:7px;}
+.sp-hdr-logo .hi{width:26px;height:26px;}
+.sp-hdr-brand{font-family:'Jim Nightshade',cursive;font-size:21px;color:var(--orange);}
+.sp-hours-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;display:flex;align-items:center;gap:5px;}
+.sp-hours-pill.on{background:rgba(34,197,94,.14);color:#22c55e;}
+.sp-hours-pill.off{background:rgba(239,68,68,.12);color:#ef4444;}
+.sp-waiting-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--odim);color:var(--orange);
+  display:flex;align-items:center;gap:5px;}
+.sp-hdr-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.sp-agent-name{font-size:12.5px;font-weight:700;}
+.sp-agent-role{font-size:10px;color:var(--muted);}
+.sp-theme-btn,.sp-logout-btn{width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;transition:all .15s;}
+.sp-theme-btn:hover,.sp-logout-btn:hover{border-color:var(--orange);}
+.ic-sm{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;vertical-align:middle;}
+
+/* AUX STATUS */
+.sp-aux-wrap{position:relative;}
+.sp-aux-btn{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:20px;border:1.5px solid rgba(34,197,94,.35);
+  background:rgba(34,197,94,.12);color:#22c55e;font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s;}
+.sp-aux-btn:hover{border-color:#22c55e;}
+.sp-aux-btn.st-break{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12);color:#f59e0b;}
+.sp-aux-btn.st-training{border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.12);color:#3b82f6;}
+.sp-aux-btn.st-unavailable{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12);color:#ef4444;}
+.sp-aux-timer{font-variant-numeric:tabular-nums;opacity:.85;}
+.sp-aux-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:6px;min-width:160px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:50;}
+.sp-aux-menu.on{display:block;}
+.sp-aux-opt{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;border-radius:8px;border:none;background:none;
+  color:var(--text);font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;transition:background .12s;}
+.sp-aux-opt:hover{background:var(--odim);}
+.sp-aux-opt.active{color:var(--orange);}
+.sp-aux-btn.sp-flash{animation:spAuxFlash 1s ease-in-out infinite;}
+@keyframes spAuxFlash{0%,100%{box-shadow:0 0 0 0 rgba(255,140,0,.5);}50%{box-shadow:0 0 0 6px rgba(255,140,0,0);}}
+
+.sp-body{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* LIST */
+.sp-list-col{width:300px;flex-shrink:0;background:var(--card);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;}
+.sp-list-tools{padding:12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sp-search{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'Poppins',sans-serif;font-size:12.5px;outline:none;margin-bottom:9px;}
+.sp-search:focus{border-color:var(--orange);}
+.sp-filters{display:flex;gap:5px;flex-wrap:wrap;}
+.sp-filter-btn{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1.5px solid var(--border);background:var(--bg);color:var(--muted);font-family:'Poppins',sans-serif;transition:all .15s;}
+.sp-filter-btn.active{border-color:var(--orange);background:var(--odim);color:var(--orange);}
+.sp-list{flex:1;overflow-y:auto;}
+.sp-item{padding:12px 14px;border-bottom:1px solid rgba(34,34,53,.4);cursor:pointer;transition:background .12s;}
+.sp-item:hover{background:rgba(255,140,0,.06);}
+.sp-item.active{background:var(--odim);box-shadow:inset 3px 0 0 var(--orange);}
+.sp-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;}
+.sp-item-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sp-unread-dot{width:9px;height:9px;border-radius:50%;background:var(--orange);flex-shrink:0;}
+.sp-item-meta{display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;}
+.sp-item-order{font-size:10.5px;color:var(--orange);font-weight:600;}
+.sp-item-status{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.3px;}
+.sp-item-status.new{background:rgba(239,68,68,.14);color:#ef4444;}
+.sp-item-status.mine{background:rgba(34,197,94,.14);color:#22c55e;}
+.sp-item-status.other{background:rgba(107,114,128,.14);color:#9ca3af;}
+.sp-item-last{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sp-item-time{font-size:10px;color:var(--muted);margin-top:4px;}
+.sp-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:12.5px;}
+
+/* THREAD */
+.sp-thread-col{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+.sp-thread-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:20px;}
+.sp-thread-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+.sp-thread-back{display:none;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0;line-height:1;}
+.sp-thread-name{font-size:14px;font-weight:700;}
+.sp-thread-order{font-size:11px;color:var(--orange);font-weight:600;margin-top:2px;}
+.sp-thread-hdr-acts{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;}
+.sp-hdr-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);
+  background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;transition:all .15s;white-space:nowrap;}
+.sp-hdr-btn:hover{border-color:var(--orange);}
+.sp-hdr-btn.end{color:#ef4444;border-color:rgba(239,68,68,.35);}
+.sp-tabs{display:flex;gap:4px;padding:8px 16px 0;background:var(--surface);flex-shrink:0;}
+.sp-tab{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+.sp-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+
+/* END CHAT FLOW */
+.sp-ec-card{background:var(--card);border:1px solid rgba(255,140,0,.25);border-radius:14px;padding:14px 16px;margin:0 18px 12px;flex-shrink:0;}
+.sp-ec-title{font-size:13px;font-weight:700;margin-bottom:10px;}
+.sp-ec-yn{display:flex;gap:10px;}
+.sp-ec-yn button{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);
+  font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .15s;}
+.sp-ec-yn button.yes:hover{border-color:#22c55e;color:#22c55e;}
+.sp-ec-yn button.no:hover{border-color:#ef4444;color:#ef4444;}
+.sp-ec-field{margin-bottom:10px;}
+.sp-ec-field label{display:block;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
+.sp-ec-field input,.sp-ec-field textarea{width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:12.5px;outline:none;resize:vertical;}
+.sp-ec-field input:focus,.sp-ec-field textarea:focus{border-color:var(--orange);}
+.sp-ec-resolved-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:11.5px;font-weight:700;margin-bottom:10px;}
+.sp-ec-resolved-pill.yes{background:rgba(34,197,94,.14);color:#22c55e;}
+.sp-ec-resolved-pill.no{background:rgba(239,68,68,.12);color:#ef4444;}
+.sp-ec-actions{display:flex;gap:8px;margin-top:4px;}
+.sp-ec-actions button{flex:1;padding:10px;border-radius:9px;border:none;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:800;cursor:pointer;}
+.sp-ec-submit{background:var(--orange);color:#000;}
+.sp-ec-cancel{background:var(--border);color:var(--text);}
+.sp-ec-err{font-size:11px;color:#ef4444;margin-top:-4px;margin-bottom:8px;display:none;}
+.sp-ec-err.on{display:block;}
+.sp-thread-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
+.sp-msg{display:flex;flex-direction:column;max-width:72%;}
+.sp-msg.customer{align-self:flex-start;align-items:flex-start;}
+.sp-msg.staff{align-self:flex-end;align-items:flex-end;}
+.sp-msg-by{font-size:10px;color:var(--muted);margin-bottom:2px;font-weight:600;}
+.sp-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word;}
+.sp-msg.customer .sp-bubble{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.sp-msg.staff .sp-bubble{background:var(--orange);color:#000;font-weight:600;border-bottom-right-radius:4px;}
+.sp-msg-time{font-size:10px;color:var(--muted);margin-top:3px;}
+.sp-thread-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);}
+.sp-thread-input-row textarea{flex:1;resize:none;padding:10px 13px;background:var(--bg);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;max-height:90px;min-height:42px;}
+.sp-thread-input-row textarea:focus{border-color:var(--orange);}
+.sp-send-btn{padding:0 18px;background:var(--orange);color:#000;border:none;border-radius:10px;font-weight:800;
+  cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;flex-shrink:0;transition:opacity .15s;}
+.sp-send-btn:hover{opacity:.88;} .sp-send-btn:disabled{opacity:.5;cursor:not-allowed;}
+.sp-closed-note{padding:12px 16px;background:var(--card);border-top:1px solid var(--border);text-align:center;
+  font-size:12px;color:var(--muted);flex-shrink:0;}
+.sp-closed-note button{margin-left:8px;background:none;border:none;color:var(--orange);font-weight:700;cursor:pointer;text-decoration:underline;font-family:'Poppins',sans-serif;font-size:12px;}
+
+/* INTERNAL NOTES */
+.sp-notes-wrap{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
+.sp-notes-hint{font-size:11px;color:var(--muted);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
+  border-radius:8px;padding:8px 12px;margin-bottom:2px;display:flex;align-items:center;gap:7px;}
+.sp-notes-hint svg{color:#f59e0b;}
+.sp-note{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.sp-note-by{font-size:10.5px;font-weight:700;color:var(--orange);margin-bottom:3px;}
+.sp-note-text{font-size:12.5px;line-height:1.5;}
+.sp-note-time{font-size:10px;color:var(--muted);margin-top:4px;}
+.sp-notes-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.sp-notes-input-row textarea{flex:1;resize:none;padding:10px 13px;background:var(--bg);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;min-height:42px;max-height:90px;}
+
+/* CONTEXT PANEL (customer's last orders) */
+.sp-ctx-col{width:270px;flex-shrink:0;background:var(--card);border-left:1px solid var(--border);
+  overflow-y:auto;padding:16px;}
+.sp-ctx-h{font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;}
+.sp-ctx-order{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.sp-ctx-order-top{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--orange);margin-bottom:4px;}
+.sp-ctx-order-items{font-size:11px;color:var(--muted);margin-bottom:4px;line-height:1.4;}
+.sp-ctx-order-bottom{display:flex;justify-content:space-between;font-size:11px;}
+.sp-ctx-empty{font-size:11.5px;color:var(--muted);}
+.sp-ctx-toggle{display:none;}
+.sp-ctx-drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:598;}
+.sp-ctx-drawer-bg.on{display:block;}
+
+/* TOAST */
+.sp-toast{position:fixed;bottom:20px;right:20px;left:20px;margin:0 auto;max-width:320px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;font-weight:600;z-index:2000;
+  opacity:0;transform:translateY(6px);transition:all .28s;pointer-events:none;text-align:center;}
+.sp-toast.on{opacity:1;transform:translateY(0);}
+
+/* MY STATS / SETTINGS MODAL */
+.sp-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1500;align-items:center;justify-content:center;padding:20px;}
+.sp-modal-bg.on{display:flex;}
+.sp-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:460px;
+  max-height:86vh;display:flex;flex-direction:column;overflow:hidden;}
+.sp-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sp-modal-title{font-size:15px;font-weight:800;}
+.sp-modal-close{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.sp-modal-tabs{display:flex;gap:4px;padding:10px 18px 0;flex-shrink:0;}
+.sp-modal-tab{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+.sp-modal-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+.sp-modal-body{padding:16px 18px 20px;overflow-y:auto;flex:1;min-height:0;}
+.sp-modal-range{display:flex;gap:8px;margin-bottom:16px;}
+.sp-range-btn{flex:1;padding:8px;border-radius:9px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);
+  font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+.sp-range-btn.active{border-color:var(--orange);background:var(--odim);color:var(--orange);}
+.sp-modal-mute-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-size:12.5px;}
+.sp-toggle-switch{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;}
+.sp-toggle-switch input{opacity:0;width:0;height:0;}
+.sp-toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:22px;cursor:pointer;transition:.2s;}
+.sp-toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.sp-toggle-switch input:checked + .sp-toggle-slider{background:var(--orange);}
+.sp-toggle-switch input:checked + .sp-toggle-slider:before{transform:translateX(18px);}
+.spm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
+.spm-tile{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.spm-tile-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.spm-tile-val{font-size:18px;font-weight:800;}
+.spm-sec-h{font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.6px;margin:18px 0 10px;}
+.spm-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11.5px;}
+.spm-bar-lbl{width:82px;flex-shrink:0;color:var(--muted);}
+.spm-bar-track{flex:1;height:8px;background:var(--card);border-radius:6px;overflow:hidden;}
+.spm-bar-fill{height:100%;background:var(--orange);border-radius:6px;}
+.spm-bar-pct{width:38px;flex-shrink:0;text-align:right;font-weight:700;}
+.spm-star-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;}
+.spm-star-row span:first-child{width:34px;flex-shrink:0;color:var(--muted);}
+.spm-rating-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--card);
+  border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:11.5px;}
+.spm-rating-stars{color:var(--orange);}
+
+/* END CHAT / SURVEY shared small helpers */
+.sp-empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:12px;}
+
+/* ── RESPONSIVE ────────────────────────────────────── */
+@media(max-width:999px){
+  .sp-ctx-col{display:none;position:fixed;right:0;top:0;bottom:0;z-index:599;width:270px;max-width:80vw;
+    transform:translateX(100%);transition:transform .25s;}
+  .sp-ctx-col.on{display:block;transform:translateX(0);}
+  .sp-ctx-toggle{display:inline-flex;}
+}
+@media(min-width:1000px){
+  .sp-ctx-drawer-bg{display:none!important;}
+}
+@media(max-width:768px){
+  .sp-hdr{padding:8px 12px;}
+  .sp-hdr-brand{font-size:18px;}
+  .sp-agent-role{display:none;}
+  .sp-thread-col{display:none;}
+  .sp-body.thread-open .sp-list-col{display:none;}
+  .sp-body.thread-open .sp-thread-col{display:flex;}
+  .sp-thread-back{display:block;}
+  .sp-list-col{width:100%;}
+  .sp-msg{max-width:88%;}
+}
+@media(max-width:420px){
+  .sp-filters{gap:4px;}
+  .sp-filter-btn{padding:5px 9px;font-size:10.5px;}
+  .sp-thread-hdr-acts{width:100%;order:3;margin-left:0;}
+  .sp-aux-btn{padding:6px 8px;font-size:10.5px;}
+  .sp-aux-lbl-text{display:none;}
+  .sp-hdr-btn span{display:none;}
+  .spm-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:359px){
+  .sp-modal{max-width:100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- Hidden brand-mark + icon sprite -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <symbol id="ic-logo-support" viewBox="0 0 80 80">
+      <path d="M16 38 A24 24 0 0 1 64 38" fill="none" stroke="#FF8C00" stroke-width="7" stroke-linecap="round"/>
+      <rect x="8" y="36" width="16" height="24" rx="8" fill="#FF8C00"/>
+      <rect x="56" y="36" width="16" height="24" rx="8" fill="#FF8C00"/>
+      <path d="M16 54 Q16 68 32 68" fill="none" stroke="#FF8C00" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="34" cy="68" r="4" fill="#FF8C00"/>
+    </symbol>
+    <symbol id="ic-headset" viewBox="0 0 24 24"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="2.5" y="13" width="5" height="7" rx="2"/><rect x="16.5" y="13" width="5" height="7" rx="2"/><path d="M19 20v.5a3 3 0 0 1-3 3h-3"/></symbol>
+    <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></symbol>
+    <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+    <symbol id="ic-bell-off" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-9.3-5"/><path d="M5.5 5.5A6 6 0 0 0 6 8c0 7-3 9-3 9h13"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M2 2l20 20"/></symbol>
+    <symbol id="ic-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="ic-close" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></symbol>
+    <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4V4Z"/></symbol>
+    <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.6 1.6 7-6.2-3.9-6.2 3.9 1.6-7-5.4-4.6 7.1-.6Z"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20.3 20.3l-5-5"/></symbol>
+    <symbol id="ic-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="ic-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0"/><circle cx="17" cy="8.5" r="2.6"/><path d="M14.5 20a5 5 0 0 1 8-3.4"/></symbol>
+    <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="ic-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="ic-receipt" viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2Z"/><path d="M9 7h6M9 11h6M9 15h4"/></symbol>
+    <symbol id="ic-coffee" viewBox="0 0 24 24"><path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1-1 1-1 2M12 3c0 1-1 1-1 2"/></symbol>
+    <symbol id="ic-book" viewBox="0 0 24 24"><path d="M12 6c-1.5-1.5-4-2-7-2v14c3 0 5.5.5 7 2 1.5-1.5 4-2 7-2V4c-3 0-5.5.5-7 2Z"/><path d="M12 6v14"/></symbol>
+    <symbol id="ic-status-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M5.5 5.5l13 13"/></symbol>
+    <symbol id="ic-status-on" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M7.8 12.5l2.6 2.6 5.8-6.2"/></symbol>
+    <symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V9Z"/><path d="M10 6.5v2M10 11v2M10 15.5v2"/></symbol>
+    <symbol id="ic-volume" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M17 8.5a5 5 0 0 1 0 7"/><path d="M19.5 6a9 9 0 0 1 0 12"/></symbol>
+    <symbol id="ic-volume-mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9l5 6M21 9l-5 6"/></symbol>
+    <symbol id="ic-hourglass" viewBox="0 0 24 24"><path d="M6 2h12M6 22h12M7 2c0 5 4 6 5 8-1 2-5 3-5 8M17 2c0 5-4 6-5 8 1 2 5 3 5 8"/></symbol>
+    <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></symbol>
+    <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/></symbol>
+    <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.5"/><circle cx="12" cy="8" r="0.15" fill="currentColor" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 2.5 20 6v6c0 5-3.5 8.5-8 9.5-4.5-1-8-4.5-8-9.5V6l8-3.5Z"/></symbol>
+    <symbol id="ic-send" viewBox="0 0 24 24"><path d="M3 11.5 20.5 3 15 20.5l-4-7.5-8-1.5Z"/><path d="M11 13.5 20.5 3"/></symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-8M2 20h20"/></symbol>
+    <symbol id="ic-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 2"/></symbol>
+  </defs>
+</svg>
+
+<!-- ══════════════════════════════════════ LOGIN ══════════════════════════════════════ -->
+<div id="spLogin">
+  <div class="lb">
+    <div class="lb-logo">
+      <svg class="ll-ico" aria-label="LinkUp Support"><use href="#ic-logo-support"></use></svg>
+      <div class="ll-brand">LinkUp</div>
+      <div class="ll-sub">Support Panel</div>
+    </div>
+    <div class="lf">
+      <label>Email</label>
+      <input type="email" id="spEmail" placeholder="you@linkup.support" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('spPass').focus()">
+    </div>
+    <div class="lf">
+      <label>Password</label>
+      <input type="password" id="spPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')spDoLogin()">
+    </div>
+    <button class="lbtn" id="spLoginBtn" onclick="spDoLogin()">Sign In →</button>
+    <div class="lerr" id="spErr"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ APP ══════════════════════════════════════ -->
+<div id="spApp">
+  <div class="sp-hdr">
+    <div class="sp-hdr-logo">
+      <svg class="hi" style="color:var(--orange);" aria-label="LinkUp Support"><use href="#ic-logo-support"></use></svg>
+      <div class="sp-hdr-brand">LinkUp Support</div>
+    </div>
+
+    <div class="sp-aux-wrap">
+      <button class="sp-aux-btn" id="spAuxBtn" onclick="toggleAuxMenu()">
+        <svg class="ic-sm" id="spAuxIcon"><use href="#ic-status-on"></use></svg>
+        <span id="spAuxLabel" class="sp-aux-lbl-text">Available</span>
+        <span class="sp-aux-timer" id="spAuxTimer">00:00</span>
+        <svg class="ic-sm"><use href="#ic-chevron-down"></use></svg>
+      </button>
+      <div class="sp-aux-menu" id="spAuxMenu">
+        <button class="sp-aux-opt" data-state="Available" onclick="setAgentAuxState('Available')"><svg class="ic-sm"><use href="#ic-status-on"></use></svg>Available</button>
+        <button class="sp-aux-opt" data-state="Break" onclick="setAgentAuxState('Break')"><svg class="ic-sm"><use href="#ic-coffee"></use></svg>Break</button>
+        <button class="sp-aux-opt" data-state="Training" onclick="setAgentAuxState('Training')"><svg class="ic-sm"><use href="#ic-book"></use></svg>Training</button>
+        <button class="sp-aux-opt" data-state="Unavailable" onclick="setAgentAuxState('Unavailable')"><svg class="ic-sm"><use href="#ic-status-off"></use></svg>Unavailable</button>
+      </div>
+    </div>
+
+    <div class="sp-hours-pill" id="spHoursPill">—</div>
+    <div class="sp-waiting-pill" id="spWaitingPill" style="display:none;"><svg class="ic-sm"><use href="#ic-hourglass"></use></svg><span id="spWaitingTxt">0 waiting</span></div>
+    <div class="sp-hdr-right">
+      <div style="text-align:right;">
+        <div class="sp-agent-name" id="spAgentName">—</div>
+        <div class="sp-agent-role" id="spAgentRole">Agent</div>
+      </div>
+      <button class="sp-theme-btn" id="spStatsBtn" onclick="openMyStats()" title="My stats & settings"><svg class="ic-sm"><use href="#ic-chart"></use></svg></button>
+      <button class="sp-theme-btn" id="spThemeBtn" onclick="spToggleTheme()" title="Toggle theme"><svg class="ic-sm"><use href="#ic-moon"></use></svg></button>
+      <button class="sp-logout-btn" onclick="spDoLogout()" title="Sign out"><svg class="ic-sm"><use href="#ic-logout"></use></svg></button>
+    </div>
+  </div>
+
+  <div class="sp-body" id="spBody">
+    <!-- LIST -->
+    <div class="sp-list-col">
+      <div class="sp-list-tools">
+        <input class="sp-search" id="spSearch" placeholder="Search name, order ID, message…" oninput="renderSpList()">
+        <div class="sp-filters">
+          <button class="sp-filter-btn active" data-f="all" onclick="setSpFilter('all')">All</button>
+          <button class="sp-filter-btn" data-f="unread" onclick="setSpFilter('unread')">Unread</button>
+          <button class="sp-filter-btn" data-f="mine" onclick="setSpFilter('mine')">Mine</button>
+        </div>
+      </div>
+      <div class="sp-list" id="spList"></div>
+    </div>
+
+    <!-- THREAD -->
+    <div class="sp-thread-col" id="spThreadCol">
+      <div class="sp-thread-empty" id="spThreadEmpty">Select a conversation to view messages.</div>
+      <div id="spThreadActive" style="display:none;flex-direction:column;flex:1;min-height:0;">
+        <div class="sp-thread-hdr">
+          <button class="sp-thread-back" onclick="closeSpThread()">‹</button>
+          <div>
+            <div class="sp-thread-name" id="spThreadName">—</div>
+            <div class="sp-thread-order" id="spThreadOrder"></div>
+          </div>
+          <div class="sp-thread-hdr-acts">
+            <button class="sp-hdr-btn" id="spCtxToggleBtn" onclick="toggleSpCtxDrawer()" style="display:none;"><svg class="ic-sm"><use href="#ic-info"></use></svg> <span>Info</span></button>
+            <button class="sp-hdr-btn end" id="spEndChatBtn" onclick="openEndChatFlow()"><svg class="ic-sm"><use href="#ic-headset"></use></svg> <span>End Chat</span></button>
+          </div>
+        </div>
+        <div class="sp-tabs">
+          <div class="sp-tab active" id="spTabMsgs" onclick="spSwitchTab('messages')"><svg class="ic-sm"><use href="#ic-chat"></use></svg> Messages</div>
+          <div class="sp-tab" id="spTabNotes" onclick="spSwitchTab('notes')"><svg class="ic-sm"><use href="#ic-lock"></use></svg> Internal Notes</div>
+        </div>
+        <div id="spPaneMessages" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+          <div class="sp-thread-messages" id="spThreadMessages"></div>
+          <div id="spEndChatFlow"></div>
+          <div class="sp-thread-input-row" id="spReplyRow">
+            <textarea id="spReplyInput" rows="1" placeholder="Type a reply…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendSpReply();}"></textarea>
+            <button class="sp-send-btn" id="spSendBtn" onclick="sendSpReply()"><svg class="ic-sm"><use href="#ic-send"></use></svg></button>
+          </div>
+        </div>
+        <div id="spPaneNotes" style="display:none;flex-direction:column;flex:1;min-height:0;">
+          <div class="sp-notes-wrap" id="spNotesList"></div>
+          <div class="sp-notes-input-row">
+            <textarea id="spNoteInput" rows="1" placeholder="Add an internal note (never seen by the customer)…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addSpNote();}"></textarea>
+            <button class="sp-send-btn" onclick="addSpNote()">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMER CONTEXT -->
+    <div class="sp-ctx-drawer-bg" id="spCtxBg" onclick="toggleSpCtxDrawer()"></div>
+    <div class="sp-ctx-col" id="spCtxCol">
+      <div class="sp-ctx-h">Last 3 Orders</div>
+      <div id="spCtxOrders"><div class="sp-ctx-empty">Select a conversation.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="sp-toast" id="spToast"></div>
+
+<!-- ══════════════════════════════════════ MY STATS / SETTINGS ══════════════════════════════════════ -->
+<div class="sp-modal-bg" id="spStatsBg" onclick="if(event.target===this)closeMyStats()">
+  <div class="sp-modal" onclick="event.stopPropagation()">
+    <div class="sp-modal-hdr">
+      <div class="sp-modal-title">My Stats &amp; Settings</div>
+      <button class="sp-modal-close" onclick="closeMyStats()"><svg class="ic-sm"><use href="#ic-close"></use></svg></button>
+    </div>
+    <div class="sp-modal-tabs">
+      <div class="sp-modal-tab active" id="spmTabStats" onclick="spmSwitchTab('stats')"><svg class="ic-sm"><use href="#ic-chart"></use></svg> Stats</div>
+      <div class="sp-modal-tab" id="spmTabSettings" onclick="spmSwitchTab('settings')"><svg class="ic-sm"><use href="#ic-settings"></use></svg> Settings</div>
+    </div>
+    <div class="sp-modal-body">
+      <div id="spmPaneStats">
+        <div class="sp-modal-range">
+          <button class="sp-range-btn active" data-r="week" onclick="spmSetRange('week')">This Week</button>
+          <button class="sp-range-btn" data-r="month" onclick="spmSetRange('month')">This Month</button>
+        </div>
+        <div id="spmStatsContent"><div class="sp-empty">Loading…</div></div>
+      </div>
+      <div id="spmPaneSettings" style="display:none;">
+        <div class="sp-ec-field">
+          <label>Notification Volume</label>
+          <input type="range" id="spmVolume" min="0" max="100" value="70" oninput="spmVolumeInput(this.value)" onchange="spmVolumeCommit(this.value)" style="width:100%;">
+          <div id="spmVolumeVal" style="font-size:11px;color:var(--muted);margin-top:4px;">70%</div>
+        </div>
+        <div class="sp-modal-mute-row">
+          <span style="display:flex;align-items:center;gap:8px;"><svg class="ic-sm"><use href="#ic-volume-mute"></use></svg> Mute all notification sounds</span>
+          <label class="sp-toggle-switch">
+            <input type="checkbox" id="spmMuteToggle" onchange="spmMuteChange(this.checked)">
+            <span class="sp-toggle-slider"></span>
+          </label>
+        </div>
+        <button class="sp-hdr-btn" style="margin-top:14px;" onclick="testChime()"><svg class="ic-sm"><use href="#ic-bell"></use></svg> Test notification sound</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ STALE-SESSION PROMPT ══════════════════════════════════════ -->
+<div class="sp-modal-bg" id="spResumeBg" style="display:none;">
+  <div class="sp-modal" style="max-width:340px;" onclick="event.stopPropagation()">
+    <div class="sp-modal-hdr"><div class="sp-modal-title">Welcome back</div></div>
+    <div class="sp-modal-body">
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px;">Your last session ended without logging out. Pick your current status to continue.</p>
+      <div class="sp-aux-menu on" style="position:static;width:100%;box-shadow:none;">
+        <button class="sp-aux-opt" onclick="resumeAuxState('Available')"><svg class="ic-sm"><use href="#ic-status-on"></use></svg>Available</button>
+        <button class="sp-aux-opt" onclick="resumeAuxState('Break')"><svg class="ic-sm"><use href="#ic-coffee"></use></svg>Break</button>
+        <button class="sp-aux-opt" onclick="resumeAuxState('Training')"><svg class="ic-sm"><use href="#ic-book"></use></svg>Training</button>
+        <button class="sp-aux-opt" onclick="resumeAuxState('Unavailable')"><svg class="ic-sm"><use href="#ic-status-off"></use></svg>Unavailable</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_EMAIL='adminlinkup@gmail.com';
+const SUPPORT_HOURS={start:9,end:23};
+function isWithinSupportHours(){ const h=new Date().getHours(); return h>=SUPPORT_HOURS.start && h<SUPPORT_HOURS.end; }
+
+let spProfile=null; // {uid, name, email, isAdmin:bool}
+let _spConvos=[], _spUnsub=null, _spActiveId=null, _spFilter='all', _spTab='messages', _spSending=false;
+
+function spEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function spToMillis(at){
+  if(!at) return 0;
+  if(at.toDate) return at.toDate().getTime();
+  if(at instanceof Date) return at.getTime();
+  if(at.seconds) return at.seconds*1000;
+  return new Date(at).getTime()||0;
+}
+function spTime(at){
+  const ms=spToMillis(at); if(!ms) return '';
+  return new Date(ms).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+function spToast(msg,col){
+  const e=document.getElementById('spToast');
+  e.textContent=msg; e.style.borderLeft='3px solid '+(col||'var(--orange)');
+  e.classList.add('on'); clearTimeout(window._spTt);
+  window._spTt=setTimeout(()=>e.classList.remove('on'),3200);
+}
+
+// ── THEME ────────────────────────────────────────────
+function spApplyTheme(){
+  const light=localStorage.getItem('lu_theme')==='light';
+  document.documentElement.classList.toggle('light-theme',light);
+  const b=document.getElementById('spThemeBtn');
+  if(b) b.innerHTML=`<svg class="ic-sm"><use href="#${light?'ic-sun':'ic-moon'}"></use></svg>`;
+}
+function spToggleTheme(){
+  const light=localStorage.getItem('lu_theme')==='light';
+  localStorage.setItem('lu_theme', light?'dark':'light');
+  spApplyTheme();
+}
+spApplyTheme();
+
+// ── HOURS / TITLE ────────────────────────────────────
+function spUpdateHoursPill(){
+  const el=document.getElementById('spHoursPill');
+  const on=isWithinSupportHours();
+  el.className='sp-hours-pill '+(on?'on':'off');
+  el.innerHTML=on?'Within support hours':'Outside 9AM–11PM';
+}
+setInterval(spUpdateHoursPill,60000);
+
+// A conversation counts as "new/unassigned" (subject to hard-hide routing)
+// when nobody has claimed it yet but the customer has actually written in.
+function isUnclaimedChat(c){ return !c.assignedAgentUid && (c.messages||[]).length>0; }
+function isVisibleToMe(c){
+  if(spProfile?.isAdmin) return true;
+  if(isUnclaimedChat(c)) return spProfile?.currentStatus==='Available';
+  return true;
+}
+
+function spUpdateTitleAndWaiting(){
+  const visible=_spConvos.filter(isVisibleToMe);
+  const unread=visible.filter(c=>c.unreadByAdmin).length;
+  _baseTitle=unread>0?`(${unread}) LinkUp Support`:'LinkUp Support';
+  if(!_titleFlashInterval) document.title=_baseTitle;
+  const waiting=visible.filter(c=>c.lastSender==='customer').length;
+  const wp=document.getElementById('spWaitingPill');
+  const wt=document.getElementById('spWaitingTxt');
+  if(waiting>0){ wp.style.display='inline-flex'; if(wt) wt.textContent=`${waiting} waiting`; }
+  else wp.style.display='none';
+  spCheckNewChats(visible);
+}
+
+// ── AUTH ─────────────────────────────────────────────
+async function spDoLogin(){
+  const email=document.getElementById('spEmail').value.trim();
+  const pass=document.getElementById('spPass').value;
+  const btn=document.getElementById('spLoginBtn');
+  const err=document.getElementById('spErr');
+  err.classList.remove('on');
+  if(!email||!pass){err.textContent='⚠️ Enter email and password.';err.classList.add('on');return;}
+  btn.disabled=true; btn.textContent='Signing in…';
+  try{
+    await window._supSignIn(window._supAuth,email,pass);
+  }catch(e){
+    const c=e.code||'';
+    err.textContent=(c.includes('invalid')||c.includes('password')||c.includes('user-not-found'))
+      ?'❌ Invalid email or password.'
+      :c.includes('too-many')?'⚠️ Too many attempts. Try later.':'⚠️ Sign in failed.';
+    err.classList.add('on');
+    btn.disabled=false; btn.textContent='Sign In →';
+  }
+}
+async function spDoLogout(){
+  await closeCurrentAuxLog();
+  spCleanup();
+  try{ await window._supSignOut(window._supAuth); }catch(e){}
+}
+window.addEventListener('pagehide', ()=>{
+  // Best-effort only — catches a normal tab close, not a crash.
+  if(spProfile && spProfile.currentLogId){
+    const now=new Date();
+    try{
+      window._supUpdate(window._supDoc(window._supDb,'agentStatusLog',spProfile.currentLogId),
+        {endAt:now, durationMs: now.getTime()-spProfile.statusSinceMs});
+    }catch(e){}
+  }
+});
+function spShowLogin(err){
+  document.getElementById('spApp').classList.remove('on');
+  document.getElementById('spLogin').style.display='flex';
+  const e=document.getElementById('spErr');
+  if(err){ e.textContent=err; e.classList.add('on'); } else { e.classList.remove('on'); }
+  const btn=document.getElementById('spLoginBtn');
+  btn.disabled=false; btn.textContent='Sign In →';
+}
+async function spShowApp(){
+  document.getElementById('spLogin').style.display='none';
+  document.getElementById('spApp').classList.add('on');
+  document.getElementById('spAgentName').textContent=spProfile.name;
+  document.getElementById('spAgentRole').textContent=spProfile.isAdmin?'Admin':'Support Agent';
+  const auxWrap=document.querySelector('.sp-aux-wrap');
+  if(auxWrap) auxWrap.style.display=spProfile.isAdmin?'none':'block';
+  const statsBtn=document.getElementById('spStatsBtn');
+  if(statsBtn) statsBtn.style.display=spProfile.isAdmin?'none':'flex';
+  spUpdateHoursPill();
+  startSpListener();
+  if(!spProfile.isAdmin){
+    await initAuxState();
+    loadNotifSettings();
+  }
+  armAudioUnlock();
+}
+function spCleanup(){
+  if(_spUnsub){_spUnsub();_spUnsub=null;}
+  if(_auxTickTimer){clearInterval(_auxTickTimer);_auxTickTimer=null;}
+  _spConvos=[]; _spActiveId=null; spProfile=null; _spKnownIds=null;
+  document.title='LinkUp Support';
+  document.getElementById('spAuxMenu')?.classList.remove('on');
+}
+
+function spSetupAuth(){
+  window._supOnAuth(window._supAuth, async fbUser=>{
+    if(!fbUser){ spCleanup(); spShowLogin(); return; }
+    const uid=window._supAuth.currentUser?.uid ?? fbUser.uid;
+    if(spProfile?.uid===uid && document.getElementById('spApp').classList.contains('on')) return;
+    if((fbUser.email||'').toLowerCase()===ADMIN_EMAIL){
+      spProfile={uid,name:'Admin',email:fbUser.email,isAdmin:true};
+      spShowApp();
+      return;
+    }
+    try{
+      const snap=await window._supGetDoc(window._supDoc(window._supDb,'supportAgents',uid));
+      if(!snap.exists()){
+        await window._supSignOut(window._supAuth);
+        spShowLogin('❌ This account is not registered as a support agent. Contact your administrator.');
+        return;
+      }
+      const data=snap.data();
+      if(data.role!=='support'){
+        await window._supSignOut(window._supAuth);
+        spShowLogin('❌ Access denied. Only support agent accounts can sign in here.');
+        return;
+      }
+      if(data.active===false){
+        await window._supSignOut(window._supAuth);
+        spShowLogin('❌ Your support access has been deactivated. Contact your administrator.');
+        return;
+      }
+      spProfile={uid,name:data.name||fbUser.email,email:data.email||fbUser.email,isAdmin:false};
+      spShowApp();
+    }catch(e){
+      console.error('[Support] profile check failed:',e);
+      spShowLogin('⚠️ Could not verify your account. Check your connection and try again.');
+    }
+  });
+}
+if(window._supOnAuth) spSetupAuth();
+else window.addEventListener('supReady',spSetupAuth);
+
+// ── CONVERSATIONS LISTENER ───────────────────────────
+function startSpListener(){
+  if(_spUnsub){_spUnsub();_spUnsub=null;}
+  _spUnsub=window._supSnap(window._supCol(window._supDb,'supportChats'), snap=>{
+    _spConvos=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>spToMillis(b.lastMessageAt||b.updatedAt)-spToMillis(a.lastMessageAt||a.updatedAt));
+    spUpdateTitleAndWaiting();
+    renderSpList();
+    if(_spActiveId){
+      const active=_spConvos.find(c=>c.id===_spActiveId);
+      if(active) renderSpThread(active);
+    }
+  }, err=>{
+    console.error('[Support] listen failed:',err.code,err.message);
+    const el=document.getElementById('spList');
+    el.innerHTML=`<div class="sp-empty">⚠️ Could not load conversations.<br>${spEsc(err.code)}</div>`;
+  });
+}
+
+function setSpFilter(f){
+  _spFilter=f;
+  document.querySelectorAll('.sp-filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
+  renderSpList();
+}
+
+function spMatchesFilter(c){
+  if(!isVisibleToMe(c)) return false;
+  if(_spFilter==='unread') return !!c.unreadByAdmin;
+  if(_spFilter==='mine') return c.assignedAgentUid===spProfile?.uid;
+  return true; // all
+}
+
+function renderSpList(){
+  const el=document.getElementById('spList');
+  const q=(document.getElementById('spSearch')?.value||'').trim().toLowerCase();
+  let list=_spConvos.filter(c=>(c.messages||[]).length>0).filter(spMatchesFilter);
+  if(q){
+    list=list.filter(c=>
+      (c.customerName||'').toLowerCase().includes(q) ||
+      (c.orderId||'').toLowerCase().includes(q) ||
+      (c.lastMessage||'').toLowerCase().includes(q)
+    );
+  }
+  if(!list.length){
+    el.innerHTML=`<div class="sp-empty">${spProfile&&!spProfile.isAdmin&&spProfile.currentStatus!=='Available'?'No conversations — switch to Available to receive new chats.':'No conversations match.'}</div>`;
+    return;
+  }
+  el.innerHTML=list.map(c=>{
+    const unread=!!c.unreadByAdmin;
+    const active=c.id===_spActiveId;
+    const mine=c.assignedAgentUid===spProfile?.uid;
+    const badge=!c.assignedAgentUid?'<span class="sp-item-status new">new</span>'
+      :mine?'<span class="sp-item-status mine">yours</span>'
+      :`<span class="sp-item-status other">${spEsc(c.assignedAgentName||'agent')}</span>`;
+    const prefix=c.lastSender==='customer'?'':'You: ';
+    return `<div class="sp-item${active?' active':''}" onclick="openSpConversation('${c.id}')">
+      <div class="sp-item-top">
+        <span class="sp-item-name">${spEsc(c.customerName||'Customer')}</span>
+        ${unread?'<span class="sp-unread-dot"></span>':''}
+      </div>
+      <div class="sp-item-meta">
+        <span class="sp-item-order">${c.orderId?('#'+spEsc(c.orderId)):'General'}</span>
+        ${badge}
+      </div>
+      <div class="sp-item-last">${spEsc(prefix+(c.lastMessage||''))}</div>
+      <div class="sp-item-time">${spTime(c.lastMessageAt||c.updatedAt)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── THREAD ────────────────────────────────────────────
+function openSpConversation(id){
+  _spActiveId=id;
+  _ecState=null;
+  const ecEl=document.getElementById('spEndChatFlow'); if(ecEl) ecEl.innerHTML='';
+  document.getElementById('spBody').classList.add('thread-open');
+  const c=_spConvos.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('spThreadEmpty').style.display='none';
+  document.getElementById('spThreadActive').style.display='flex';
+  spSwitchTab('messages');
+  renderSpThread(c);
+  renderSpList();
+  loadSpCustomerOrders(id);
+  if(c.unreadByAdmin){
+    window._supUpdate(window._supDoc(window._supDb,'supportChats',id),{unreadByAdmin:false}).catch(e=>console.warn('[Support] mark-read failed:',e));
+  }
+}
+function closeSpThread(){
+  _spActiveId=null;
+  _ecState=null;
+  const ecEl=document.getElementById('spEndChatFlow'); if(ecEl) ecEl.innerHTML='';
+  document.getElementById('spBody').classList.remove('thread-open');
+  document.getElementById('spThreadEmpty').style.display='flex';
+  document.getElementById('spThreadActive').style.display='none';
+  renderSpList();
+}
+function spSwitchTab(tab){
+  _spTab=tab;
+  document.getElementById('spTabMsgs').classList.toggle('active',tab==='messages');
+  document.getElementById('spTabNotes').classList.toggle('active',tab==='notes');
+  document.getElementById('spPaneMessages').style.display=tab==='messages'?'flex':'none';
+  document.getElementById('spPaneNotes').style.display=tab==='notes'?'flex':'none';
+}
+
+function renderSpThread(c){
+  document.getElementById('spThreadName').textContent=c.customerName||'Customer';
+  document.getElementById('spThreadOrder').textContent=c.orderId?('Order #'+c.orderId):'General enquiry';
+  document.getElementById('spCtxToggleBtn').style.display=window.innerWidth<1000?'inline-block':'none';
+
+  const msgs=(c.messages||[]).slice().sort((a,b)=>spToMillis(a.at)-spToMillis(b.at));
+  const el=document.getElementById('spThreadMessages');
+  el.innerHTML=msgs.length ? msgs.map(m=>{
+    const isStaff=m.sender!=='customer';
+    const byLabel=isStaff ? (m.byUid===spProfile?.uid?'You':(m.byName||'LinkUp Support')) : '';
+    return `<div class="sp-msg ${isStaff?'staff':'customer'}">
+      ${isStaff?`<div class="sp-msg-by">${spEsc(byLabel)}</div>`:''}
+      <div class="sp-bubble">${spEsc(m.text)}</div>
+      <div class="sp-msg-time">${spTime(m.at)}</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
+  el.scrollTop=el.scrollHeight;
+
+  renderSpNotes(c);
+}
+
+function renderSpNotes(c){
+  const el=document.getElementById('spNotesList');
+  const notes=(c.internalNotes||[]).slice().sort((a,b)=>spToMillis(a.at)-spToMillis(b.at));
+  let html='<div class="sp-notes-hint"><svg class="ic-sm"><use href="#ic-lock"></use></svg> Internal only — the customer never sees this.</div>';
+  html += notes.length ? notes.map(n=>`<div class="sp-note">
+      <div class="sp-note-by">${spEsc(n.byName||'Agent')}</div>
+      <div class="sp-note-text">${spEsc(n.text)}</div>
+      <div class="sp-note-time">${spTime(n.at)}</div>
+    </div>`).join('') : '';
+  el.innerHTML=html;
+  el.scrollTop=el.scrollHeight;
+}
+
+async function sendSpReply(){
+  if(!_spActiveId||_spSending) return;
+  const inp=document.getElementById('spReplyInput');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  const btn=document.getElementById('spSendBtn');
+  _spSending=true; btn.disabled=true;
+  const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  const now=new Date();
+  const c=_spConvos.find(x=>x.id===_spActiveId);
+  const byRole=spProfile.isAdmin?'admin':'support';
+  const payload={
+    messages:window._supArrUnion({id,sender:'staff',text:txt,at:now,byUid:spProfile.uid,byName:spProfile.name,byRole}),
+    lastMessage:txt,
+    lastMessageAt:now,
+    lastSender:'staff',
+    updatedAt:now
+  };
+  if(!c?.assignedAgentUid){ payload.assignedAgentUid=spProfile.uid; payload.assignedAgentName=spProfile.name; }
+  if(!c?.firstReplyAt){ payload.firstReplyAt=now; }
+  try{
+    await window._supUpdate(window._supDoc(window._supDb,'supportChats',_spActiveId), payload);
+    inp.value='';
+  }catch(e){
+    console.error('[Support] reply failed:',e.code,e.message);
+    spToast('⚠️ Reply failed to send — check connection and try again.','#ef4444');
+  }finally{
+    _spSending=false; btn.disabled=false;
+  }
+}
+
+async function addSpNote(){
+  if(!_spActiveId) return;
+  const inp=document.getElementById('spNoteInput');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  const id='n'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  const now=new Date();
+  try{
+    await window._supUpdate(window._supDoc(window._supDb,'supportChats',_spActiveId),{
+      internalNotes:window._supArrUnion({id,byUid:spProfile.uid,byName:spProfile.name,text:txt,at:now}),
+      updatedAt:now
+    });
+    inp.value='';
+  }catch(e){
+    console.error('[Support] note failed:',e.code,e.message);
+    spToast('⚠️ Could not save note.','#ef4444');
+  }
+}
+
+function genToken(len=24){
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const buf=new Uint8Array(len);
+  crypto.getRandomValues(buf);
+  return Array.from(buf,b=>chars[b%chars.length]).join('');
+}
+function fmtDuration(ms){
+  if(ms==null||ms<0||isNaN(ms)) ms=0;
+  const s=Math.floor(ms/1000);
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  const pad=n=>String(n).padStart(2,'0');
+  return h>0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+}
+
+// ── AGENT AUX STATUS ──────────────────────────────────
+let _auxTickTimer=null;
+const AUX_ICONS={Available:'ic-status-on',Break:'ic-coffee',Training:'ic-book',Unavailable:'ic-status-off'};
+const AUX_CLASSES={Available:'',Break:'st-break',Training:'st-training',Unavailable:'st-unavailable'};
+
+function renderAuxUI(){
+  if(!spProfile||spProfile.isAdmin) return;
+  const btn=document.getElementById('spAuxBtn');
+  const icon=document.getElementById('spAuxIcon');
+  const label=document.getElementById('spAuxLabel');
+  btn.className='sp-aux-btn '+(AUX_CLASSES[spProfile.currentStatus]||'');
+  icon.innerHTML=`<use href="#${AUX_ICONS[spProfile.currentStatus]||'ic-status-off'}"></use>`;
+  label.textContent=spProfile.currentStatus||'—';
+  document.querySelectorAll('.sp-aux-opt').forEach(b=>b.classList.toggle('active',b.dataset.state===spProfile.currentStatus));
+  tickAuxTimer();
+}
+function tickAuxTimer(){
+  if(_auxTickTimer) clearInterval(_auxTickTimer);
+  const el=document.getElementById('spAuxTimer');
+  const tick=()=>{ if(spProfile&&spProfile.statusSinceMs && el) el.textContent=fmtDuration(Date.now()-spProfile.statusSinceMs); };
+  tick();
+  _auxTickTimer=setInterval(tick,1000);
+}
+function toggleAuxMenu(){ document.getElementById('spAuxMenu').classList.toggle('on'); }
+document.addEventListener('click',(e)=>{
+  const wrap=document.querySelector('.sp-aux-wrap');
+  if(wrap && !wrap.contains(e.target)) document.getElementById('spAuxMenu')?.classList.remove('on');
+});
+
+async function beginAuxState(newState, oldLogId){
+  const now=new Date();
+  const newLogId='st_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  const batch=window._supBatch(window._supDb);
+  if(oldLogId){
+    batch.update(window._supDoc(window._supDb,'agentStatusLog',oldLogId),
+      {endAt:now, durationMs: now.getTime()-(spProfile.statusSinceMs||now.getTime())});
+  }
+  batch.set(window._supDoc(window._supDb,'agentStatusLog',newLogId),
+    {agentUid:spProfile.uid, agentName:spProfile.name, state:newState, startAt:now, endAt:null, durationMs:null});
+  batch.update(window._supDoc(window._supDb,'supportAgents',spProfile.uid),
+    {currentStatus:newState, statusSince:now, currentLogId:newLogId});
+  await batch.commit();
+  spProfile.currentStatus=newState; spProfile.statusSinceMs=now.getTime(); spProfile.currentLogId=newLogId;
+  renderAuxUI();
+}
+
+async function initAuxState(){
+  try{
+    const ref=window._supDoc(window._supDb,'supportAgents',spProfile.uid);
+    const snap=await window._supGetDoc(ref);
+    const data=snap.exists()?snap.data():{};
+    if(!data.currentStatus||!data.statusSince){
+      await beginAuxState('Available', null);
+      renderSpList(); spUpdateTitleAndWaiting();
+      return;
+    }
+    const sinceMs=spToMillis(data.statusSince);
+    if(Date.now()-sinceMs>12*3600*1000){
+      // Stale/abandoned session (tab closed without logout) — don't silently
+      // resume and inflate a state's total with a bogus multi-hour gap.
+      spProfile.currentLogId=data.currentLogId||null;
+      spProfile.staleSinceMs=sinceMs;
+      document.getElementById('spResumeBg').style.display='flex';
+      return;
+    }
+    spProfile.currentStatus=data.currentStatus;
+    spProfile.statusSinceMs=sinceMs;
+    spProfile.currentLogId=data.currentLogId||null;
+    renderAuxUI();
+    renderSpList(); spUpdateTitleAndWaiting();
+  }catch(e){
+    console.error('[Support] AUX init failed:',e.code,e.message);
+  }
+}
+
+async function resumeAuxState(newState){
+  document.getElementById('spResumeBg').style.display='none';
+  try{
+    if(spProfile.currentLogId){
+      await window._supUpdate(window._supDoc(window._supDb,'agentStatusLog',spProfile.currentLogId),
+        {endAt:new Date(spProfile.staleSinceMs), durationMs:0});
+    }
+    await beginAuxState(newState, null);
+    renderSpList(); spUpdateTitleAndWaiting();
+  }catch(e){
+    console.error('[Support] resume AUX failed:',e.code,e.message);
+    spToast('⚠️ Could not resume — try again.','#ef4444');
+  }
+}
+
+async function setAgentAuxState(newState){
+  document.getElementById('spAuxMenu').classList.remove('on');
+  if(spProfile.currentStatus===newState) return;
+  try{
+    await beginAuxState(newState, spProfile.currentLogId);
+    renderSpList(); spUpdateTitleAndWaiting();
+  }catch(e){
+    console.error('[Support] AUX change failed:',e.code,e.message);
+    spToast('⚠️ Could not update status — try again.','#ef4444');
+  }
+}
+
+async function closeCurrentAuxLog(){
+  if(!spProfile || spProfile.isAdmin || !spProfile.currentLogId) return;
+  const now=new Date();
+  try{
+    await window._supUpdate(window._supDoc(window._supDb,'agentStatusLog',spProfile.currentLogId),
+      {endAt:now, durationMs: now.getTime()-spProfile.statusSinceMs});
+  }catch(e){ console.warn('[Support] close AUX log on logout failed:',e); }
+}
+
+// ── NOTIFICATION SOUNDS (Web Audio API — no audio files) ─
+let _audioCtx=null, _notifVolume=70, _notifMuted=false;
+function loadNotifSettings(){
+  (async()=>{
+    try{
+      const snap=await window._supGetDoc(window._supDoc(window._supDb,'supportAgents',spProfile.uid));
+      const d=snap.exists()?snap.data():{};
+      _notifVolume = typeof d.notifVolume==='number' ? d.notifVolume : 70;
+      _notifMuted = !!d.notifMuted;
+      const vSlider=document.getElementById('spmVolume'); if(vSlider) vSlider.value=_notifVolume;
+      const vVal=document.getElementById('spmVolumeVal'); if(vVal) vVal.textContent=_notifVolume+'%';
+      const muteToggle=document.getElementById('spmMuteToggle'); if(muteToggle) muteToggle.checked=_notifMuted;
+    }catch(e){}
+  })();
+}
+function armAudioUnlock(){
+  const unlock=()=>{
+    if(!_audioCtx){ try{ _audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+    if(_audioCtx && _audioCtx.state==='suspended') _audioCtx.resume().catch(()=>{});
+  };
+  document.addEventListener('click',unlock,{once:true});
+  document.addEventListener('touchstart',unlock,{once:true});
+}
+function playTone(freqs, durationSec, gainPeak){
+  if(_notifMuted || !_audioCtx) return;
+  const vol=(gainPeak??0.18)*(_notifVolume/100);
+  if(vol<=0) return;
+  const now=_audioCtx.currentTime;
+  freqs.forEach((f,i)=>{
+    const osc=_audioCtx.createOscillator();
+    const gain=_audioCtx.createGain();
+    osc.type='sine'; osc.frequency.value=f;
+    const start=now+i*0.09;
+    gain.gain.setValueAtTime(0.0001,start);
+    gain.gain.linearRampToValueAtTime(vol,start+0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001,start+durationSec);
+    osc.connect(gain); gain.connect(_audioCtx.destination);
+    osc.start(start); osc.stop(start+durationSec+0.02);
+  });
+}
+function playChime(kind){
+  if(kind==='message') playTone([880,1175],0.28,0.16);   // brighter 2-note chime — new message on a chat you own
+  else playTone([520],0.32,0.12);                          // softer single tone — a new chat just routed to you
+}
+function testChime(){ playChime('message'); }
+
+let _spKnownIds=null, _spPrevLastMsg=null;
+function spCheckNewChats(visible){
+  if(spProfile && !spProfile.isAdmin){
+    if(_spKnownIds){
+      for(const c of visible){
+        if(!_spKnownIds.has(c.id) && isUnclaimedChat(c) && spProfile.currentStatus==='Available'){
+          playChime('routed'); flashNewChatBadge();
+        }
+      }
+    }
+    if(_spPrevLastMsg){
+      for(const c of visible){
+        if(c.assignedAgentUid===spProfile.uid && c.lastSender==='customer'){
+          const prev=_spPrevLastMsg.get(c.id), cur=spToMillis(c.lastMessageAt);
+          if(prev && cur>prev) playChime('message');
+        }
+      }
+    }
+  }
+  _spPrevLastMsg=new Map(visible.map(c=>[c.id, spToMillis(c.lastMessageAt)]));
+  _spKnownIds=new Set(visible.map(c=>c.id));
+}
+let _titleFlashInterval=null, _titleFlashUntil=0, _baseTitle='LinkUp Support';
+function flashNewChatBadge(){
+  const btn=document.getElementById('spAuxBtn');
+  if(btn){ btn.classList.add('sp-flash'); setTimeout(()=>btn.classList.remove('sp-flash'), 4000); }
+  // Visual fallback in case sound is muted/blocked — flash the tab title for ~6s.
+  _titleFlashUntil=Date.now()+6000;
+  if(_titleFlashInterval) return;
+  let on=false;
+  _titleFlashInterval=setInterval(()=>{
+    if(Date.now()>_titleFlashUntil){
+      clearInterval(_titleFlashInterval); _titleFlashInterval=null;
+      document.title=_baseTitle;
+      return;
+    }
+    on=!on;
+    document.title=on?'New chat! — LinkUp Support':_baseTitle;
+  },900);
+}
+
+// ── END CHAT + DISPOSITION ────────────────────────────
+let _ecState=null;
+function openEndChatFlow(){
+  const c=_spConvos.find(x=>x.id===_spActiveId);
+  if(!c) return;
+  _ecState={step:'confirm'};
+  renderEndChatFlow(c);
+}
+function cancelEndChatFlow(){
+  _ecState=null;
+  const el=document.getElementById('spEndChatFlow'); if(el) el.innerHTML='';
+}
+function ecPickResolved(val){
+  _ecState={step:'form', resolved:val};
+  const c=_spConvos.find(x=>x.id===_spActiveId);
+  renderEndChatFlow(c);
+}
+function renderEndChatFlow(c){
+  const el=document.getElementById('spEndChatFlow');
+  if(!el) return;
+  if(!_ecState){ el.innerHTML=''; return; }
+  if(_ecState.step==='confirm'){
+    el.innerHTML=`<div class="sp-ec-card">
+      <div class="sp-ec-title">Was the customer's issue resolved?</div>
+      <div class="sp-ec-yn">
+        <button class="yes" onclick="ecPickResolved(true)">Yes</button>
+        <button class="no" onclick="ecPickResolved(false)">No</button>
+      </div>
+      <div class="sp-ec-actions" style="margin-top:10px;"><button class="sp-ec-cancel" onclick="cancelEndChatFlow()">Cancel</button></div>
+    </div>`;
+    return;
+  }
+  el.innerHTML=`<div class="sp-ec-card">
+    <div class="sp-ec-title">End Chat — Disposition</div>
+    <span class="sp-ec-resolved-pill ${_ecState.resolved?'yes':'no'}"><svg class="ic-sm"><use href="#${_ecState.resolved?'ic-check':'ic-close'}"></use></svg>${_ecState.resolved?'Resolved':'Not resolved'}</span>
+    <div class="sp-ec-field"><label>Order ID</label><input id="ecOrderId" value="${spEsc(c.orderId||'')}" placeholder="e.g. LU-1042"></div>
+    <div class="sp-ec-field"><label>Issue *</label><textarea id="ecIssue" rows="2" placeholder="What was the customer's issue?"></textarea></div>
+    <div class="sp-ec-field"><label>Action Taken *</label><textarea id="ecAction" rows="2" placeholder="What did you do to resolve/handle it?"></textarea></div>
+    <div class="sp-ec-err" id="ecErr">Issue and Action taken are required.</div>
+    <div class="sp-ec-actions">
+      <button class="sp-ec-cancel" onclick="cancelEndChatFlow()">Cancel</button>
+      <button class="sp-ec-submit" id="ecSubmitBtn" onclick="submitEndChat()">Submit &amp; End Chat</button>
+    </div>
+  </div>`;
+}
+async function submitEndChat(){
+  const c=_spConvos.find(x=>x.id===_spActiveId);
+  if(!c||!_ecState) return;
+  const orderId=document.getElementById('ecOrderId').value.trim();
+  const issue=document.getElementById('ecIssue').value.trim();
+  const actionTaken=document.getElementById('ecAction').value.trim();
+  const err=document.getElementById('ecErr');
+  if(!issue||!actionTaken){ err.classList.add('on'); return; }
+  err.classList.remove('on');
+  const btn=document.getElementById('ecSubmitBtn');
+  btn.disabled=true; btn.textContent='Ending…';
+  try{
+    const counterRef=window._supDoc(window._supDb,'counters','tickets');
+    const ticketNum=await window._supTxn(window._supDb, async(txn)=>{
+      const snap=await txn.get(counterRef);
+      const current=snap.exists()?(snap.data().lastTicketNumber||1000):1000;
+      const next=current+1;
+      txn.set(counterRef,{lastTicketNumber:next});
+      return next;
+    });
+    const ticketId=`TK-${ticketNum}`;
+    const surveyToken=genToken(24);
+    const now=new Date();
+    const startAt=c.createdAt||now;
+    const agentName=spProfile.isAdmin?'Admin':spProfile.name;
+    const batch=window._supBatch(window._supDb);
+    batch.set(window._supDoc(window._supDb,'tickets',ticketId),{
+      ticketId, chatId:c.id, customerName:c.customerName||'Customer', customerPhone:c.customerPhone||'',
+      agentUid:spProfile.uid, agentName, orderId:orderId||null, issue, resolved:!!_ecState.resolved, actionTaken,
+      startAt, firstReplyAt:c.firstReplyAt||null, endAt:now, durationMs: now.getTime()-spToMillis(startAt),
+      transcript:c.messages||[], internalNotes:c.internalNotes||[], createdAt:now
+    });
+    batch.set(window._supDoc(window._supDb,'ticketSurveys',surveyToken),{ticketId, rating:null, ratedAt:null, createdAt:now});
+    batch.update(window._supDoc(window._supDb,'supportChats',c.id),{
+      messages:[], internalNotes:[], assignedAgentUid:null, assignedAgentName:null, firstReplyAt:null,
+      lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
+      pendingSurvey:{ticketId, surveyToken, endedAt:now}, updatedAt:now
+    });
+    await batch.commit();
+    _ecState=null;
+    spToast(`✅ Chat ended — ${ticketId} created.`,'#22c55e');
+    closeSpThread();
+  }catch(e){
+    console.error('[Support] end chat failed:',e.code,e.message);
+    spToast('⚠️ Could not end chat — check connection and try again.','#ef4444');
+    btn.disabled=false; btn.textContent='Submit & End Chat';
+  }
+}
+
+// ── MY STATS / SETTINGS ───────────────────────────────
+let _spmRange='week';
+const IST_OFFSET_MS=5.5*3600*1000;
+function getRangeBoundsIST(range){
+  const shifted=new Date(Date.now()+IST_OFFSET_MS); // read via UTC getters => IST wall-clock digits
+  let start;
+  if(range==='week'){
+    const day=shifted.getUTCDay();
+    const diffToMon=(day+6)%7;
+    start=Date.UTC(shifted.getUTCFullYear(),shifted.getUTCMonth(),shifted.getUTCDate()-diffToMon,0,0,0);
+  }else{
+    start=Date.UTC(shifted.getUTCFullYear(),shifted.getUTCMonth(),1,0,0,0);
+  }
+  return {startMs: start-IST_OFFSET_MS, endMs: Date.now()};
+}
+function clampOverlapMs(startAt,endAt,winStart,winEnd){
+  const s=Math.max(spToMillis(startAt), winStart);
+  const e=Math.min(endAt?spToMillis(endAt):Date.now(), winEnd);
+  return Math.max(0, e-s);
+}
+async function spmFetchAgentData(agentUid){
+  const [logsSnap,ticketsSnap,surveysSnap]=await Promise.all([
+    window._supGetDocs(window._supQuery(window._supCol(window._supDb,'agentStatusLog'), window._supWhere('agentUid','==',agentUid))),
+    window._supGetDocs(window._supQuery(window._supCol(window._supDb,'tickets'), window._supWhere('agentUid','==',agentUid))),
+    window._supGetDocs(window._supCol(window._supDb,'ticketSurveys'))
+  ]);
+  return {
+    logs: logsSnap.docs.map(d=>d.data()),
+    tickets: ticketsSnap.docs.map(d=>({id:d.id,...d.data()})),
+    surveys: surveysSnap.docs.map(d=>d.data())
+  };
+}
+function computeAgentStats(range,{logs,tickets,surveys}){
+  const {startMs,endMs}=getRangeBoundsIST(range);
+  const stateMs={Available:0,Break:0,Unavailable:0,Training:0};
+  logs.forEach(l=>{
+    const overlap=clampOverlapMs(l.startAt,l.endAt,startMs,endMs);
+    if(overlap>0 && stateMs.hasOwnProperty(l.state)) stateMs[l.state]+=overlap;
+  });
+  const totalLoggedMs=Object.values(stateMs).reduce((a,b)=>a+b,0);
+  const ticketsInRange=tickets.filter(t=>{ const ms=spToMillis(t.endAt); return ms>=startMs && ms<=endMs; });
+  const withFirstReply=ticketsInRange.filter(t=>t.firstReplyAt);
+  const avgFirstReplyMs=withFirstReply.length
+    ? withFirstReply.reduce((s,t)=>s+(spToMillis(t.firstReplyAt)-spToMillis(t.startAt)),0)/withFirstReply.length
+    : null;
+  const ratingByTicket=new Map(surveys.filter(s=>s.rating!=null).map(s=>[s.ticketId,s.rating]));
+  const ratedTickets=ticketsInRange.filter(t=>ratingByTicket.has(t.ticketId));
+  const ratingsList=ratedTickets.map(t=>({ticketId:t.ticketId,customerName:t.customerName,rating:ratingByTicket.get(t.ticketId)}));
+  const histogram=[0,0,0,0,0];
+  ratedTickets.forEach(t=>{ const r=ratingByTicket.get(t.ticketId); if(r>=1&&r<=5) histogram[r-1]++; });
+  const avgRating=ratedTickets.length ? ratedTickets.reduce((s,t)=>s+ratingByTicket.get(t.ticketId),0)/ratedTickets.length : null;
+  return {stateMs, totalLoggedMs, availableMs:stateMs.Available, chatsHandled:ticketsInRange.length,
+    resolvedCount:ticketsInRange.filter(t=>t.resolved).length, avgFirstReplyMs, ratingsList, histogram, avgRating, ratedCount:ratedTickets.length};
+}
+function openMyStats(){
+  document.getElementById('spStatsBg').classList.add('on');
+  spmSwitchTab('stats');
+  spmRenderStats();
+}
+function closeMyStats(){ document.getElementById('spStatsBg').classList.remove('on'); }
+function spmSwitchTab(tab){
+  document.getElementById('spmTabStats').classList.toggle('active',tab==='stats');
+  document.getElementById('spmTabSettings').classList.toggle('active',tab==='settings');
+  document.getElementById('spmPaneStats').style.display=tab==='stats'?'block':'none';
+  document.getElementById('spmPaneSettings').style.display=tab==='settings'?'block':'none';
+}
+function spmSetRange(r){
+  _spmRange=r;
+  document.querySelectorAll('.sp-range-btn').forEach(b=>b.classList.toggle('active',b.dataset.r===r));
+  spmRenderStats();
+}
+function spmVolumeInput(val){
+  _notifVolume=parseInt(val,10);
+  document.getElementById('spmVolumeVal').textContent=val+'%';
+}
+async function spmVolumeCommit(val){
+  try{ await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{notifVolume:parseInt(val,10)}); }catch(e){}
+}
+async function spmMuteChange(checked){
+  _notifMuted=checked;
+  try{ await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{notifMuted:checked}); }catch(e){}
+}
+async function spmRenderStats(){
+  const el=document.getElementById('spmStatsContent');
+  el.innerHTML='<div class="sp-empty">Loading…</div>';
+  try{
+    const data=await spmFetchAgentData(spProfile.uid);
+    const s=computeAgentStats(_spmRange,data);
+    const pct=(ms)=>s.totalLoggedMs>0?Math.round(ms/s.totalLoggedMs*100):0;
+    const stars=(n)=>Array.from({length:5},(_,i)=>`<svg class="ic-sm" style="color:var(--orange);fill:${i<n?'var(--orange)':'none'};"><use href="#ic-star"></use></svg>`).join('');
+    el.innerHTML=`
+      <div class="spm-grid">
+        <div class="spm-tile"><div class="spm-tile-lbl">Logged-in Time</div><div class="spm-tile-val">${fmtDuration(s.totalLoggedMs)}</div></div>
+        <div class="spm-tile"><div class="spm-tile-lbl">Available Time</div><div class="spm-tile-val">${fmtDuration(s.availableMs)}</div></div>
+        <div class="spm-tile"><div class="spm-tile-lbl">Chats Handled</div><div class="spm-tile-val">${s.chatsHandled}</div></div>
+        <div class="spm-tile"><div class="spm-tile-lbl">Avg First Reply</div><div class="spm-tile-val">${s.avgFirstReplyMs!=null?fmtDuration(s.avgFirstReplyMs):'—'}</div></div>
+      </div>
+      <div class="spm-sec-h">Time By Status</div>
+      ${['Available','Break','Training','Unavailable'].map(st=>`
+        <div class="spm-bar-row">
+          <span class="spm-bar-lbl">${st}</span>
+          <div class="spm-bar-track"><div class="spm-bar-fill" style="width:${pct(s.stateMs[st])}%;"></div></div>
+          <span class="spm-bar-pct">${pct(s.stateMs[st])}%</span>
+        </div>`).join('')}
+      <div class="spm-sec-h">Ratings Received${s.avgRating!=null?` — avg ${s.avgRating.toFixed(1)}★ (${s.ratedCount})`:''}</div>
+      ${s.ratedCount ? [5,4,3,2,1].map(n=>`
+        <div class="spm-star-row"><span>${n}★</span><div class="spm-bar-track"><div class="spm-bar-fill" style="width:${Math.round(s.histogram[n-1]/s.ratedCount*100)}%;"></div></div><span class="spm-bar-pct">${s.histogram[n-1]}</span></div>
+      `).join('') : '<div class="sp-empty">No ratings yet.</div>'}
+      ${s.ratingsList.map(r=>`
+        <div class="spm-rating-item"><span>${spEsc(r.ticketId)} · ${spEsc(r.customerName||'Customer')}</span><span class="spm-rating-stars">${stars(r.rating)}</span></div>
+      `).join('')}
+    `;
+  }catch(e){
+    console.error('[Support] stats failed:',e.code,e.message);
+    el.innerHTML=`<div class="sp-empty">⚠️ Could not load stats (${spEsc(e.code||'error')}).</div>`;
+  }
+}
+
+// ── CUSTOMER CONTEXT (last 3 orders) ─────────────────
+async function loadSpCustomerOrders(walletToken){
+  const el=document.getElementById('spCtxOrders');
+  el.innerHTML='<div class="sp-ctx-empty">Loading…</div>';
+  try{
+    const q=window._supQuery(window._supCol(window._supDb,'orders'), window._supWhere('walletToken','==',walletToken));
+    const snap=await window._supGetDocs(q);
+    const orders=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>spToMillis(b.createdAt)-spToMillis(a.createdAt))
+      .slice(0,3);
+    if(_spActiveId!==walletToken) return; // agent switched conversations while this was loading
+    if(!orders.length){ el.innerHTML='<div class="sp-ctx-empty">No previous orders.</div>'; return; }
+    el.innerHTML=orders.map(o=>`<div class="sp-ctx-order">
+      <div class="sp-ctx-order-top"><span>#${spEsc(o.orderId||o.id)}</span><span>₹${o.amount??'—'}</span></div>
+      <div class="sp-ctx-order-items">${spEsc((o.items||[]).join(', ')||'—')}</div>
+      <div class="sp-ctx-order-bottom"><span style="color:var(--muted);">${spTime(o.createdAt)}</span><span style="color:var(--muted);text-transform:capitalize;">${spEsc(o.status||'')}</span></div>
+    </div>`).join('');
+  }catch(e){
+    console.error('[Support] orders context failed:',e.code,e.message);
+    el.innerHTML=`<div class="sp-ctx-empty">⚠️ Could not load orders (${spEsc(e.code||'error')}).</div>`;
+  }
+}
+
+function toggleSpCtxDrawer(){
+  document.getElementById('spCtxCol').classList.toggle('on');
+  document.getElementById('spCtxBg').classList.toggle('on');
+}
+
+window.addEventListener('resize', ()=>{
+  const btn=document.getElementById('spCtxToggleBtn');
+  if(btn) btn.style.display=(window.innerWidth<1000 && _spActiveId)?'inline-block':'none';
+  if(window.innerWidth>=1000){
+    document.getElementById('spCtxCol').classList.remove('on');
+    document.getElementById('spCtxBg').classList.remove('on');
+  }
+});
+
+spUpdateHoursPill();
+</script>
+</body>
+</html>
