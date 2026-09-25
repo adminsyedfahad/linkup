@@ -17,6 +17,7 @@
   }catch(e){}
 })();
 </script>
+<script src="support-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
@@ -145,6 +146,7 @@ html.light-theme{
 .sp-item-status.new{background:rgba(239,68,68,.14);color:#ef4444;}
 .sp-item-status.mine{background:rgba(34,197,94,.14);color:#22c55e;}
 .sp-item-status.other{background:rgba(107,114,128,.14);color:#9ca3af;}
+.sp-item-status.ended{background:rgba(239,68,68,.14);color:#ef4444;}
 .sp-item-last{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sp-item-time{font-size:10px;color:var(--muted);margin-top:4px;}
 .sp-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:12.5px;}
@@ -162,6 +164,7 @@ html.light-theme{
   background:var(--card);color:var(--text);font-family:'Poppins',sans-serif;transition:all .15s;white-space:nowrap;}
 .sp-hdr-btn:hover{border-color:var(--orange);}
 .sp-hdr-btn.end{color:#ef4444;border-color:rgba(239,68,68,.35);}
+.sp-ended-banner{display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(239,68,68,.08);border-bottom:1px solid rgba(239,68,68,.2);color:#ef4444;font-size:12px;font-weight:700;flex-shrink:0;}
 .sp-tabs{display:flex;gap:4px;padding:8px 16px 0;background:var(--surface);flex-shrink:0;}
 .sp-tab{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
 .sp-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
@@ -497,8 +500,12 @@ html.light-theme{
           </div>
           <div class="sp-thread-hdr-acts">
             <button class="sp-hdr-btn" id="spCtxToggleBtn" onclick="toggleSpCtxDrawer()" style="display:none;"><svg class="ic-sm"><use href="#ic-info"></use></svg> <span>Info</span></button>
-            <button class="sp-hdr-btn end" id="spEndChatBtn" onclick="openEndChatFlow()"><svg class="ic-sm"><use href="#ic-headset"></use></svg> <span>End Chat</span></button>
+            <button class="sp-hdr-btn end" id="spEndChatBtn" onclick="openEndChatFlow()"><svg class="ic-sm"><use href="#ic-headset"></use></svg> <span id="spEndChatBtnLabel">End Chat</span></button>
           </div>
+        </div>
+        <div class="sp-ended-banner" id="spEndedBanner" style="display:none;">
+          <svg class="ic-sm"><use href="#ic-close"></use></svg>
+          Ended by customer — please complete the disposition below.
         </div>
         <div class="sp-tabs">
           <div class="sp-tab active" id="spTabMsgs" onclick="spSwitchTab('messages')"><svg class="ic-sm"><use href="#ic-chat"></use></svg> Messages</div>
@@ -593,8 +600,8 @@ html.light-theme{
 
 <script>
 const ADMIN_EMAIL='adminlinkup@gmail.com';
-const SUPPORT_HOURS={start:9,end:23};
-function isWithinSupportHours(){ const h=new Date().getHours(); return h>=SUPPORT_HOURS.start && h<SUPPORT_HOURS.end; }
+// SUPPORT_HOURS / isWithinSupportHours() / formatSupportHoursLabel() come
+// from support-config.js — shared with index.html and admin.html.
 
 let spProfile=null; // {uid, name, email, isAdmin:bool}
 let _spConvos=[], _spUnsub=null, _spActiveId=null, _spFilter='all', _spTab='messages', _spSending=false;
@@ -639,7 +646,7 @@ function spUpdateHoursPill(){
   const el=document.getElementById('spHoursPill');
   const on=isWithinSupportHours();
   el.className='sp-hours-pill '+(on?'on':'off');
-  el.innerHTML=on?'Within support hours':'Outside 9AM–11PM';
+  el.innerHTML=on?'Within support hours':('Outside '+formatSupportHoursLabel());
 }
 setInterval(spUpdateHoursPill,60000);
 
@@ -648,7 +655,15 @@ setInterval(spUpdateHoursPill,60000);
 // has actually written in. Assignment is now fully automatic (round-robin
 // claim transaction) — agents never manually claim a chat, so queued chats
 // are hidden from their list entirely (nothing for a human to do with one).
-function isUnclaimedChat(c){ return !c.assignedAgentUid && (c.messages||[]).length>0; }
+// customerEndRequested excludes a chat the customer already closed
+// themselves — it's no longer waiting for an agent, just waiting to be
+// swept into a ticket (see watchCustomerEndRequests). endChatLockBy must be
+// excluded too, separately: acquireEndChatLock's transaction flips
+// customerEndRequested back to false the moment it takes the lock (before
+// finishEndChat's own batch has cleared assignedAgentUid/messages a moment
+// later) — without this check, maybeClaimNextChat can race into that gap
+// and claim a chat that's already mid-close.
+function isUnclaimedChat(c){ return !c.assignedAgentUid && !c.customerEndRequested && !c.endChatLockBy && (c.messages||[]).length>0; }
 function isVisibleToMe(c){
   if(spProfile?.isAdmin) return true;
   if(isUnclaimedChat(c)) return false;
@@ -825,7 +840,27 @@ function startAgentsListener(){
     _allAgents=snap.docs.map(d=>({uid:d.id,...d.data()}));
     maybeClaimNextChat();
     checkStaleAgents();
+    updateSupportPresence();
   }, err=>{ console.error('[Support] agents listen failed:',err.code,err.message); });
+}
+
+// Customers can't list supportAgents (staff-only), so they can't tell
+// whether anyone's actually Available. Every signed-in staff client (any
+// agent, any status, or admin) keeps a tiny public aggregate doc fresh with
+// the true online count, so index.html's header is never lying about it.
+// Deliberately NOT restricted to "my turn" like the claim/queue-position
+// helpers below — this must keep updating even when zero agents are
+// Available (e.g. the last one just went on Break), and a few redundant
+// writes from multiple open staff tabs is a non-issue.
+let _lastPresenceWrite = { count: -1, at: 0 };
+function updateSupportPresence(){
+  if(!spProfile || !window._supDb) return;
+  const count = _allAgents.filter(isAgentOnline).length;
+  const now = Date.now();
+  if(count === _lastPresenceWrite.count && (now - _lastPresenceWrite.at) < 30000) return; // debounce
+  _lastPresenceWrite = { count, at: now };
+  window._supSetDoc(window._supDoc(window._supDb,'supportPresence','live'),
+    { availableCount: count, updatedAt: window._supServerTs() }, { merge: true }).catch(()=>{});
 }
 
 function tiebreakHash(uid){
@@ -1033,9 +1068,11 @@ function renderSpList(){
     const unread=!!c.unreadByAdmin;
     const active=c.id===_spActiveId;
     const mine=c.assignedAgentUid===spProfile?.uid;
+    const endedByCustomer=!!c.customerEndRequested && !!c.assignedAgentUid && !c.endChatLockBy;
     const badge=!c.assignedAgentUid?'<span class="sp-item-status new">queued</span>'
       :mine?'<span class="sp-item-status mine">yours</span>'
       :`<span class="sp-item-status other">${spEsc(c.assignedAgentName||'agent')}</span>`;
+    const endedBadge=endedByCustomer?' <span class="sp-item-status ended">ended by customer</span>':'';
     const prefix=c.lastSender==='customer'?'':'You: ';
     return `<div class="sp-item${active?' active':''}" onclick="openSpConversation('${c.id}')">
       <div class="sp-item-top">
@@ -1044,7 +1081,7 @@ function renderSpList(){
       </div>
       <div class="sp-item-meta">
         <span class="sp-item-order">${c.orderId?('#'+spEsc(c.orderId)):'General'}</span>
-        ${badge}
+        ${badge}${endedBadge}
       </div>
       <div class="sp-item-last">${spEsc(prefix+(c.lastMessage||''))}</div>
       <div class="sp-item-time">${spTime(c.lastMessageAt||c.updatedAt)}</div>
@@ -1094,6 +1131,16 @@ function renderSpThread(c){
   document.getElementById('spThreadName').textContent=c.customerName||'Customer';
   document.getElementById('spThreadOrder').textContent=c.orderId?('Order #'+c.orderId):'General enquiry';
   document.getElementById('spCtxToggleBtn').style.display=window.innerWidth<1000?'inline-block':'none';
+
+  // The customer can close their own side instantly (see endChatByCustomer
+  // in index.html) without any agent being connected — if that happened
+  // while this chat was assigned, surface it here so the owning agent still
+  // records a real disposition instead of it silently vanishing.
+  const endedByCustomer=!!c.customerEndRequested && !!c.assignedAgentUid && !c.endChatLockBy;
+  const endedBanner=document.getElementById('spEndedBanner');
+  if(endedBanner) endedBanner.style.display=endedByCustomer?'flex':'none';
+  const endBtnLabel=document.getElementById('spEndChatBtnLabel');
+  if(endBtnLabel) endBtnLabel.textContent=endedByCustomer?'Complete Ticket':'End Chat';
 
   const msgs=(c.messages||[]).slice().sort((a,b)=>spToMillis(a.at)-spToMillis(b.at));
   const el=document.getElementById('spThreadMessages');
@@ -1568,7 +1615,13 @@ async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}
       return next;
     });
     const ticketId=`TK-${ticketNum}`;
-    const surveyToken=genToken(24);
+    // If the customer already closed the chat themselves (see
+    // endChatByCustomer in index.html), they pre-seeded pendingSurvey with
+    // their OWN token so their survey card could render instantly without
+    // waiting for staff — reuse that token rather than orphaning it with a
+    // fresh one, and merge (never overwrite) since they may have already rated.
+    const existingSurveyToken=c.pendingSurvey&&c.pendingSurvey.surveyToken;
+    const surveyToken=existingSurveyToken||genToken(24);
     const now=new Date();
     const startAt=c.createdAt||now;
     const agentName=spProfile.isAdmin?'Admin':spProfile.name;
@@ -1581,11 +1634,15 @@ async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}
       startAt, firstReplyAt:c.firstReplyAt||null, endAt:now, durationMs: now.getTime()-spToMillis(startAt),
       transcript:c.messages||[], internalNotes:c.internalNotes||[], createdAt:now
     });
-    batch.set(window._supDoc(window._supDb,'ticketSurveys',surveyToken),{ticketId, rating:null, comment:null, ratedAt:null, createdAt:now});
+    if(existingSurveyToken){
+      batch.set(window._supDoc(window._supDb,'ticketSurveys',surveyToken),{ticketId},{merge:true});
+    }else{
+      batch.set(window._supDoc(window._supDb,'ticketSurveys',surveyToken),{ticketId, rating:null, comment:null, ratedAt:null, createdAt:now});
+    }
     batch.update(window._supDoc(window._supDb,'supportChats',c.id),{
       messages:[], internalNotes:[], assignedAgentUid:null, assignedAgentName:null, firstReplyAt:null,
       lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
-      endChatLockBy:null, endChatLockAt:null, customerEndRequested:false, triageSource:null,
+      endChatLockBy:null, endChatLockAt:null, customerEndRequested:false, customerClosedAt:null, triageSource:null,
       pendingSurvey:{ticketId, surveyToken, endedAt:now}, updatedAt:now
     });
     await batch.commit();
@@ -1600,6 +1657,11 @@ async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}
     return null;
   }
 }
+// Never a dead end: a 15s ceiling flips the button back to usable with a
+// clear error if the lock/ticket writes hang (e.g. offline), rather than
+// leaving "Ending…" stuck forever. If the underlying calls do eventually
+// resolve after the timeout fired, the lock they hold prevents any
+// double-submit from a manual retry.
 async function submitEndChat(){
   const c=_spConvos.find(x=>x.id===_spActiveId);
   if(!c||!_ecState) return;
@@ -1611,32 +1673,51 @@ async function submitEndChat(){
   err.classList.remove('on');
   const btn=document.getElementById('ecSubmitBtn');
   btn.disabled=true; btn.textContent='Ending…';
-  const locked=await acquireEndChatLock(c.id);
-  if(!locked){
-    spToast('⚠️ This chat is already being closed.','#f59e0b');
-    btn.disabled=false; btn.textContent='Submit & End Chat';
-    return;
-  }
-  const ticketId=await finishEndChat(c.id,{resolved:_ecState.resolved, issue, actionTaken, orderIdOverride:orderId||null});
-  if(ticketId){
-    _ecState=null;
-    spToast(`✅ Chat ended — ${ticketId} created.`,'#22c55e');
-    closeSpThread();
-  }else{
-    spToast('⚠️ Could not end chat — check connection and try again.','#ef4444');
-    btn.disabled=false; btn.textContent='Submit & End Chat';
+  let timedOut=false;
+  const resetBtn=(msg,color)=>{ spToast(msg,color); if(btn){btn.disabled=false; btn.textContent='Submit & End Chat';} };
+  const timeoutId=setTimeout(()=>{
+    timedOut=true;
+    resetBtn('⚠️ Taking longer than expected — check your connection and try again.','#f59e0b');
+  },15000);
+  try{
+    const locked=await acquireEndChatLock(c.id);
+    if(timedOut) return; // already told the agent; let a manual retry go through the lock check
+    if(!locked){
+      clearTimeout(timeoutId);
+      resetBtn('⚠️ This chat is already being closed.','#f59e0b');
+      return;
+    }
+    const ticketId=await finishEndChat(c.id,{resolved:_ecState.resolved, issue, actionTaken, orderIdOverride:orderId||null});
+    if(timedOut) return;
+    clearTimeout(timeoutId);
+    if(ticketId){
+      _ecState=null;
+      spToast(`✅ Chat ended — ${ticketId} created.`,'#22c55e');
+      closeSpThread();
+    }else{
+      resetBtn('⚠️ Could not end chat — check connection and try again.','#ef4444');
+    }
+  }catch(e){
+    clearTimeout(timeoutId);
+    if(!timedOut){
+      console.error('[Support] submitEndChat failed:',e);
+      resetBtn('⚠️ Could not end chat — check connection and try again.','#ef4444');
+    }
   }
 }
 
 // Any live staff client (not just the assigned agent — avoids a single
-// point of failure) races to process a customer-initiated end-chat. The
-// lock above makes this race-safe regardless of who picks it up.
+// point of failure) auto-files a chat the customer ended while it was still
+// queued (nobody was ever assigned, so there's no one to fill in a
+// disposition). A chat that WAS assigned when the customer ended it is left
+// alone here — the owning agent sees an "Ended by customer" banner in the
+// thread and completes the real disposition form themselves.
 async function watchCustomerEndRequests(list){
   if(!spProfile) return;
   for(const c of list){
-    if(c.customerEndRequested && !c.endChatLockBy){
+    if(c.customerEndRequested && !c.endChatLockBy && !c.assignedAgentUid){
       const locked=await acquireEndChatLock(c.id);
-      if(locked) await finishEndChat(c.id,{resolved:true, issue:'(ended by customer)', actionTaken:'(customer ended the chat)'});
+      if(locked) await finishEndChat(c.id,{resolved:false, issue:'(ended in queue — no agent)', actionTaken:'(customer ended the chat while still queued; no agent was ever assigned)'});
     }
   }
 }

@@ -13,12 +13,13 @@
   }catch(e){}
 })();
 </script>
+<script src="support-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Jim+Nightshade&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, where, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs, runTransaction, writeBatch } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, where, doc, updateDoc, arrayUnion, setDoc, getDoc, getDocs, runTransaction, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
 const cfg = {
   apiKey:"AIzaSyDECLCi8TkzjypIDuoNz1Ua_nhurG17Gas",
@@ -36,7 +37,7 @@ window._fbSnap=onSnapshot; window._fbQuery=query;
 window._fbOrderBy=orderBy; window._fbCol=collection;
 window._fbDoc=doc; window._fbUpdate=updateDoc; window._fbArrUnion=arrayUnion;
 window._fbSetDoc=setDoc; window._fbGetDoc=getDoc; window._fbGetDocs=getDocs;
-window._fbWhere=where; window._fbTxn=runTransaction; window._fbBatch=writeBatch;
+window._fbWhere=where; window._fbTxn=runTransaction; window._fbBatch=writeBatch; window._fbServerTs=serverTimestamp;
 window._fbReady=true; window.dispatchEvent(new Event('firebaseReady'));
 </script>
 <style>
@@ -912,7 +913,7 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
         <div class="sc hl"><div class="sc-lbl">Waiting For Reply</div><div class="sc-val" id="supStatWaiting">0</div></div>
         <div class="sc"><div class="sc-lbl">Active Conversations</div><div class="sc-val" id="supStatOpen">0</div></div>
         <div class="sc"><div class="sc-lbl">Replies Today</div><div class="sc-val" id="supStatRepliesToday">0</div></div>
-        <div class="sc"><div class="sc-lbl">Agents Available Now</div><div class="sc-val" id="supStatAgents">0</div></div>
+        <div class="sc"><div class="sc-lbl">Agents Available Now</div><div class="sc-val" id="supStatAgents">0</div><div style="font-size:10.5px;color:var(--muted);margin-top:2px;" id="supStatCustomerView">—</div></div>
       </div>
 
       <div class="ref-block">
@@ -2494,9 +2495,25 @@ function startSupportAgentsListener(){
     renderSupportAgentsList();
     renderSupportStats();
     startAgentTimerTicker();
+    updateSupportPresenceFromAdmin();
   },err=>{
     console.error('[SupportAgents] listen failed:',err.code,err.message);
   });
+}
+
+// Customers can't list supportAgents, so index.html reads a small public
+// aggregate doc instead — kept fresh by every signed-in staff client
+// (agents in support.html, and admin here too), so the customer header is
+// never wrong just because no agent tab happens to be open.
+let _lastAdminPresenceWrite={count:-1,at:0};
+function updateSupportPresenceFromAdmin(){
+  if(!window._db) return;
+  const now=Date.now();
+  const count=_supportAgents.filter(isAgentOnlineAdm).length;
+  if(count===_lastAdminPresenceWrite.count && (now-_lastAdminPresenceWrite.at)<30000) return;
+  _lastAdminPresenceWrite={count,at:now};
+  window._fbSetDoc(window._fbDoc(window._db,'supportPresence','live'),
+    {availableCount:count, updatedAt:window._fbServerTs()},{merge:true}).catch(()=>{});
 }
 function startTicketsListener(){
   if(!window._db) return;
@@ -2539,17 +2556,34 @@ function fmtTimer(ms){
 }
 
 // ── STATS ────────────────────────────────────────
+// Same "Available in Firestore isn't enough" staleness check as
+// support.html's isAgentOnline() — a status stuck Available with no recent
+// heartbeat (crashed tab, or an account that predates this feature) doesn't
+// count as truly online here either.
+function isAgentOnlineAdm(a){
+  if(a.active===false||a.currentStatus!=='Available') return false;
+  const seen=td(a.lastSeenAt);
+  return !!seen && (Date.now()-seen.getTime())<45000;
+}
 function renderSupportStats(){
   const waiting=_supportConvos.filter(c=>c.lastSender==='customer' && (c.messages||[]).length>0).length;
   const active=_supportConvos.filter(c=>(c.messages||[]).length>0).length;
   let repliesToday=0;
   _supportConvos.forEach(c=>(c.messages||[]).forEach(m=>{ if(isStaffMsg(m) && isTodayTs(m.at)) repliesToday++; }));
-  const availableNow=_supportAgents.filter(a=>a.active!==false && a.currentStatus==='Available').length;
+  const availableNow=_supportAgents.filter(isAgentOnlineAdm).length;
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('supStatWaiting',waiting);
   set('supStatOpen',active);
   set('supStatRepliesToday',repliesToday);
   set('supStatAgents',availableNow);
+  // Same 3-state logic customers see in index.html's chat header — lets
+  // admin sanity-check what a customer would currently be shown.
+  const view=document.getElementById('supStatCustomerView');
+  if(view){
+    if(!isWithinSupportHours()) view.textContent=`Customer view: Offline (outside ${formatSupportHoursLabel()})`;
+    else if(availableNow>0) view.textContent='Customer view: Online';
+    else view.textContent='Customer view: All agents busy';
+  }
 }
 
 // ── PER-AGENT ACTIVITY (live table — chats-handled/first-reply come from
