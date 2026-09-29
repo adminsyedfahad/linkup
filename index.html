@@ -1897,20 +1897,15 @@ button,a,[onclick]{
 .chat-addr-form{background:var(--card);border:1px solid rgba(255,140,0,0.25);border-radius:14px;padding:14px;margin-top:6px;}
 .chat-addr-form .form-group{margin-bottom:10px;}
 .chat-addr-form input{width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:13px;outline:none;font-family:'Poppins',sans-serif;}
-/* Post-chat CSAT survey card */
-.chat-survey-card{background:var(--card);border:1px solid rgba(255,140,0,0.25);border-radius:14px;padding:18px 16px;margin:0 14px 14px;text-align:center;}
-.chat-survey-title{font-size:13.5px;font-weight:700;margin-bottom:14px;line-height:1.5;}
-.chat-survey-stars{display:flex;justify-content:center;gap:6px;margin-bottom:6px;}
-.chat-survey-star{width:32px;height:32px;cursor:pointer;fill:none;stroke:var(--muted);stroke-width:1.7;transition:transform .1s;}
-.chat-survey-star:hover{transform:scale(1.12);}
-.chat-survey-star.picked{fill:var(--orange);stroke:var(--orange);}
-.chat-survey-submit{margin-top:14px;width:100%;padding:11px;border-radius:10px;border:none;background:var(--orange);color:#000;
-  font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;cursor:pointer;opacity:.4;pointer-events:none;transition:opacity .15s;}
-.chat-survey-submit.ready{opacity:1;pointer-events:auto;}
-.chat-survey-thanks{padding:26px 16px;text-align:center;}
-.chat-survey-thanks svg{width:40px;height:40px;color:#22c55e;margin-bottom:10px;}
-.chat-survey-thanks-title{font-size:14px;font-weight:700;margin-bottom:5px;}
-.chat-survey-thanks-sub{font-size:12px;color:var(--muted);}
+/* Post-chat closing message */
+.chat-closed-card{background:var(--card);border:1px solid rgba(255,140,0,0.25);border-radius:14px;padding:22px 16px;margin:6px 0;text-align:center;}
+.chat-closed-card svg{width:36px;height:36px;color:var(--orange);margin-bottom:10px;}
+.chat-closed-title{font-size:14px;font-weight:700;margin-bottom:6px;line-height:1.45;}
+.chat-closed-sub{font-size:12.5px;color:var(--muted);line-height:1.55;}
+.chat-closed-btn{margin-top:16px;width:100%;padding:11px;border-radius:10px;border:none;background:var(--orange);color:#000;
+  font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;cursor:pointer;}
+.chat-closed-btn:active{transform:scale(0.98);}
+.chat-closed-wait{margin-top:14px;font-size:11.5px;color:var(--muted);font-style:italic;}
 .chat-addr-form input:focus{border-color:var(--orange);}
 .chat-confirm-btn{width:100%;padding:11px;background:var(--orange);color:#000;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;margin-top:4px;}
 
@@ -1941,14 +1936,11 @@ button,a,[onclick]{
 .chat-att-file{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--orange);font-size:12px;font-weight:600;text-decoration:none;}
 .chat-att-file svg{width:15px;height:15px;flex-shrink:0;}
 .chat-msg.user .chat-att-file{color:#000;background:rgba(0,0,0,0.12);border-color:transparent;}
-/* Survey comment box */
-.chat-survey-comment{width:100%;min-height:60px;margin-top:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:12.5px;font-family:'Poppins',sans-serif;resize:vertical;outline:none;}
-.chat-survey-comment:focus{border-color:var(--orange);}
 /* Contained floating background scoped to the chat window */
 .chat-window{position:relative;}
 .chat-window-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;border-radius:24px 24px 0 0;}
 .chat-window-bg .lu-fi{position:absolute;}
-.chat-header,.chat-offline-banner,.chat-messages,#chatSurveyWrap,#chatStatusFooter,.chat-input-row,.chat-queue-banner{position:relative;z-index:1;}
+.chat-header,.chat-offline-banner,.chat-messages,#chatStatusFooter,.chat-input-row,.chat-queue-banner{position:relative;z-index:1;}
 
 </style>
 </head>
@@ -7159,11 +7151,14 @@ let _chatConfirmed = [];  // messages currently confirmed in Firestore
 let _chatPending = [];    // sent locally, not yet confirmed (or failed)
 let _chatLastData = null; // latest raw supportChats doc, for header/queue/agent-name logic
 let _chatTriageView = null; // null = triage menu showing; a TRIAGE_ANSWERS key = that answer view
+let _chatShowClosing = false; // closing message is up until the customer taps "Start a new chat"
 
 function openSupportChat(orderId) {
   _chatOrderId = orderId || null;
   _chatClosedLocally = false;
+  _chatShowClosing = false;
   _chatTriageView = null;
+  _chatConfirmed = []; // fresh open — never treat a previous session's messages as "live"
   document.getElementById('chatOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   closePsheet('help');
@@ -7173,9 +7168,6 @@ function openSupportChat(orderId) {
   document.getElementById('chatMessages').innerHTML = '<div class="chat-loading">Loading conversation…</div>';
   const inputRow = document.getElementById('chatInputRow');
   if(inputRow) inputRow.style.display = 'none';
-  const surveyWrap = document.getElementById('chatSurveyWrap');
-  if(surveyWrap) surveyWrap.innerHTML = ''; // don't carry a stale "Thank you!" into a fresh open
-  _chatSurveyToken = null;
   const endBtn = document.getElementById('chatEndBtn');
   if(endBtn){ endBtn.style.display = 'none'; endBtn.disabled = false; endBtn.textContent = 'End Chat'; }
   const qBanner = document.getElementById('chatQueueBanner');
@@ -7272,17 +7264,21 @@ function subscribeChatConversation(){
   _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
   _chatUnsub = window._fbSnap(_chatConvRef, snap => {
     const data = snap.exists() ? snap.data() : null;
-    // Captured before _chatConfirmed is overwritten below: if this chat was
-    // already live, it cannot possibly have a stored rating yet, so an
-    // agent-initiated close can skip the "already rated?" network check and
-    // close just as instantly as the customer-initiated path already does.
+    // Captured before _chatConfirmed is overwritten below. Staff closing a
+    // chat wipes its messages, so live -> empty means an agent just ended it:
+    // show the closing message instantly, straight off this snapshot.
+    // (pendingSurvey is deliberately ignored — the survey is gone and a stale
+    // value must never block or replace the chat UI.)
     const hadLiveMessages = _chatConfirmed.length > 0;
     _chatLastData = data;
     _chatConfirmed = (data && Array.isArray(data.messages)) ? data.messages : [];
     _chatPending = _chatPending.filter(p => p.status==='failed' || !_chatConfirmed.some(m=>m.id===p.id));
+    if(_chatConfirmed.length === 0){
+      if(hadLiveMessages && !_chatClosedLocally && !_chatPending.length) _chatShowClosing = true;
+      _chatClosedLocally = false; // the old chat is fully wrapped up — a new one can start
+    }
     refreshChatHeader();
     renderChatMessages();
-    handlePendingSurvey(data && data.pendingSurvey, hadLiveMessages);
   }, err => {
     console.warn('[Chat] listen failed:', err);
     renderChatMessages();
@@ -7497,16 +7493,18 @@ function renderChatMessages(){
   const inputRow = document.getElementById('chatInputRow');
   const endBtn = document.getElementById('chatEndBtn');
   const qBanner = document.getElementById('chatQueueBanner');
-  const surveyShowing = !!document.getElementById('chatSurveyWrap')?.innerHTML;
   const noMessagesYet = _chatConfirmed.length === 0 && _chatPending.length === 0;
+  // Customer ended it but staff haven't wrapped it up yet (messages not yet
+  // cleared) — the old conversation must not reappear as if still live.
+  const awaitingWrapUp = _chatConfirmed.length > 0
+    && (_chatClosedLocally || !!(_chatLastData && _chatLastData.customerEndRequested));
 
-  if(surveyShowing){
-    // handlePendingSurvey owns the view while a post-chat survey is showing
-    msgsEl.innerHTML = '';
+  if(_chatShowClosing || awaitingWrapUp){
     if(inputRow) inputRow.style.display = 'none';
     if(endBtn) endBtn.style.display = 'none';
     if(qBanner) qBanner.style.display = 'none';
     document.getElementById('chatStatusFooter').innerHTML = '';
+    msgsEl.innerHTML = renderChatClosedCard(_chatShowClosing);
     return;
   }
 
@@ -7773,7 +7771,7 @@ async function uploadAndSendChatAttachment(file){
 // Closing must never depend on an agent or admin being connected, or on any
 // network round-trip — the moment the customer taps this, we stop listening
 // entirely (so no stale/queued snapshot can ever re-show the live chat or
-// let another message land) and render the closing/survey UI synchronously,
+// let another message land) and render the closing message synchronously,
 // right here, off local state. The Firestore write is fire-and-forget from
 // the UI's perspective — it just informs staff, whenever any come online.
 function endChatByCustomer(){
@@ -7786,16 +7784,11 @@ function endChatByCustomer(){
   if(_presenceUnsub){ _presenceUnsub(); _presenceUnsub = null; }
   clearMyChatTyping();
 
-  const surveyToken = (_chatLastData && _chatLastData.pendingSurvey && _chatLastData.pendingSurvey.surveyToken)
-    || genToken(24);
+  // Instant — no setTimeout, no await, no network check.
+  _chatShowClosing = true;
+  renderChatMessages();
+
   const now = new Date();
-  const pendingSurvey = { surveyToken, endedAt: now, ticketId: null };
-
-  // Instant — no setTimeout, no await, no network check. This token is
-  // either brand new or was never rated (the End Chat button can't be
-  // showing otherwise), so there's nothing to check before rendering.
-  renderSurveyCard(surveyToken);
-
   const write = (attempt) => {
     if(!window._fbReady || !window._db){
       if(attempt < 6) setTimeout(() => write(attempt+1), 4000);
@@ -7803,8 +7796,6 @@ function endChatByCustomer(){
     }
     window._fbSetDoc(_chatConvRef, {
       customerEndRequested: true,
-      customerClosedAt: now,
-      pendingSurvey,
       updatedAt: now
     }, { merge: true }).catch(e => {
       console.warn('[Chat] end-chat write failed (attempt '+attempt+'):', e);
@@ -7814,100 +7805,28 @@ function endChatByCustomer(){
   write(0);
 }
 
-// ── POST-CHAT SURVEY (CSAT) ───────────────────────────
-// Agent ends the chat -> supportChats/{walletToken}.pendingSurvey = {ticketId, surveyToken, endedAt}.
-// We read ticketSurveys/{surveyToken} (public get:true, holds only {ticketId,rating,ratedAt,createdAt} —
-// no chatId/agentUid/agentName, so the customer never learns the agent's identity from this doc either)
-// to see if it's already been answered, so reopening the chat later doesn't re-prompt.
-let _chatSurveyToken = null, _chatSurveyRating = 0;
-// The actual (synchronous, no network) render of the survey card — split
-// out so the customer's own instant-close path can call it directly
-// without waiting on the "already rated?" network check below, which only
-// matters for the *reopen* case (a stale pendingSurvey from a past visit).
-function renderSurveyCard(surveyToken){
-  const wrap = document.getElementById('chatSurveyWrap');
-  const inputRow = document.getElementById('chatInputRow');
-  if(!wrap) return;
-  _chatSurveyToken = surveyToken;
-  _chatSurveyRating = 0;
-  if(inputRow) inputRow.style.display = 'none';
-  wrap.innerHTML = `<div class="chat-survey-card" id="chatSurveyCard">
-    <div class="chat-survey-title">Thanks for chatting with LinkUp.<br>We hope we sorted it out for you. How did we do?</div>
-    <div class="chat-survey-stars" id="chatSurveyStars">
-      ${[1,2,3,4,5].map(n=>`<svg class="chat-survey-star" data-n="${n}" onclick="pickSurveyStar(${n})"><use href="#ic-star"></use></svg>`).join('')}
-    </div>
-    <textarea class="chat-survey-comment" id="chatSurveyComment" placeholder="Anything you'd like to add? (optional)" maxlength="500"></textarea>
-    <button class="chat-survey-submit" id="chatSurveySubmitBtn" onclick="submitChatSurvey()">Submit</button>
+// ── POST-CHAT CLOSING MESSAGE ─────────────────────────
+// Shown the instant a chat ends — by the customer (endChatByCustomer) or by
+// staff (live -> empty snapshot in subscribeChatConversation). No survey.
+// While the customer's own end is still being wrapped up by staff, the
+// button is swapped for a short note; the live snapshot then flips the view
+// to the triage menu on its own.
+function renderChatClosedCard(canStartNew){
+  return `<div class="chat-closed-card">
+    <svg class="ic"><use href="#ic-heart-filled"></use></svg>
+    <div class="chat-closed-title">Thanks for chatting with LinkUp!</div>
+    <div class="chat-closed-sub">We hope we sorted everything out for you. We're always here if you need anything else.</div>
+    ${canStartNew
+      ? '<button class="chat-closed-btn" onclick="startFreshChat()">Start a new chat</button>'
+      : '<div class="chat-closed-wait">Wrapping up your previous chat — you can start a new one in a moment.</div>'}
   </div>`;
-  renderChatMessages(); // re-evaluate the empty-state prompt now that the survey card exists
-  const msgsEl = document.getElementById('chatMessages');
-  if(msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
 }
-async function handlePendingSurvey(pendingSurvey, hadLiveMessages){
-  const wrap = document.getElementById('chatSurveyWrap');
-  const inputRow = document.getElementById('chatInputRow');
-  if(!wrap) return;
-  if(!pendingSurvey || !pendingSurvey.surveyToken){
-    wrap.innerHTML = '';
-    _chatSurveyToken = null;
-    if(inputRow) inputRow.style.display = 'flex';
-    renderChatMessages();
-    return;
-  }
-  if(_chatSurveyToken === pendingSurvey.surveyToken && wrap.innerHTML) return; // already rendered, don't lose tap state
-  if(hadLiveMessages){
-    // A chat that was live a moment ago cannot already have a stored
-    // rating — render instantly, same as the customer's own end-chat path.
-    renderSurveyCard(pendingSurvey.surveyToken);
-    return;
-  }
-  if(window._fbReady && window._db){
-    try{
-      const snap = await window._fbGetDoc(window._fbDoc(window._db, 'ticketSurveys', pendingSurvey.surveyToken));
-      if(snap.exists() && snap.data().rating != null){
-        wrap.innerHTML = '';
-        if(inputRow) inputRow.style.display = 'flex';
-        renderChatMessages();
-        return;
-      }
-    }catch(e){ console.warn('[Chat] survey check failed, showing survey anyway:', e); }
-  }
-  // If we can't reach Firestore to check (offline, etc.), show the survey
-  // rather than leaving the customer stuck with no closing screen at all.
-  renderSurveyCard(pendingSurvey.surveyToken);
-}
-function pickSurveyStar(n){
-  _chatSurveyRating = n;
-  document.querySelectorAll('#chatSurveyStars .chat-survey-star').forEach(s=>{
-    s.classList.toggle('picked', parseInt(s.dataset.n,10) <= n);
-  });
-  document.getElementById('chatSurveySubmitBtn')?.classList.add('ready');
-}
-async function submitChatSurvey(){
-  if(!_chatSurveyRating || !_chatSurveyToken) return;
-  const btn = document.getElementById('chatSurveySubmitBtn');
-  if(btn){ btn.disabled = true; btn.textContent = 'Submitting…'; }
-  const commentEl = document.getElementById('chatSurveyComment');
-  const comment = commentEl ? commentEl.value.trim().slice(0,500) : '';
-  try{
-    // setDoc(merge) rather than updateDoc: when the customer ended the chat
-    // themselves with nobody online, this doc doesn't exist server-side yet
-    // (no agent/admin has created it) — merge creates it if missing, or
-    // updates it in place if staff already created the stub.
-    await window._fbSetDoc(window._fbDoc(window._db, 'ticketSurveys', _chatSurveyToken), {
-      rating: _chatSurveyRating, comment: comment || null, ratedAt: new Date()
-    }, { merge: true });
-    const wrap = document.getElementById('chatSurveyWrap');
-    if(wrap) wrap.innerHTML = `<div class="chat-survey-thanks">
-      <svg class="ic"><use href="#ic-heart-filled"></use></svg>
-      <div class="chat-survey-thanks-title">Thank you!</div>
-      <div class="chat-survey-thanks-sub">We appreciate your feedback.</div>
-    </div>`;
-    setTimeout(closeSupportChat, 1800);
-  }catch(e){
-    console.warn('[Chat] survey submit failed:', e);
-    if(btn){ btn.disabled = false; btn.textContent = 'Submit'; }
-  }
+function startFreshChat(){
+  _chatShowClosing = false;
+  _chatTriageView = null;
+  if(!_chatUnsub) subscribeChatConversation();
+  if(!_presenceUnsub) watchSupportPresence();
+  renderChatMessages();
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -8413,7 +8332,6 @@ function reverseGeocode(lat, lng) {
     <div class="chat-queue-banner" id="chatQueueBanner" style="display:none;"></div>
     <!-- Messages -->
     <div class="chat-messages" id="chatMessages"></div>
-    <div id="chatSurveyWrap"></div>
     <div id="chatStatusFooter"></div>
     <div class="chat-upload-progress" id="chatUploadProgress"><div class="chat-upload-spin"></div><span>Uploading… <span id="chatUploadPct">0%</span></span></div>
     <!-- Input -->

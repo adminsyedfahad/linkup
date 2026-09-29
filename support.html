@@ -351,13 +351,8 @@ html.light-theme{
 .spm-bar-track{flex:1;height:8px;background:var(--card);border-radius:6px;overflow:hidden;}
 .spm-bar-fill{height:100%;background:var(--orange);border-radius:6px;}
 .spm-bar-pct{width:38px;flex-shrink:0;text-align:right;font-weight:700;}
-.spm-star-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;}
-.spm-star-row span:first-child{width:34px;flex-shrink:0;color:var(--muted);}
-.spm-rating-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--card);
-  border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:11.5px;}
-.spm-rating-stars{color:var(--orange);}
 
-/* END CHAT / SURVEY shared small helpers */
+/* END CHAT shared small helpers */
 .sp-empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:12px;}
 
 /* ── RESPONSIVE ────────────────────────────────────── */
@@ -1788,13 +1783,6 @@ async function finishEndChat(chatId,{resolved,comment}){
       return next;
     });
     const ticketId=`TK-${ticketNum}`;
-    // If the customer already closed the chat themselves (see
-    // endChatByCustomer in index.html), they pre-seeded pendingSurvey with
-    // their OWN token so their survey card could render instantly without
-    // waiting for staff — reuse that token rather than orphaning it with a
-    // fresh one, and merge (never overwrite) since they may have already rated.
-    const existingSurveyToken=c.pendingSurvey&&c.pendingSurvey.surveyToken;
-    const surveyToken=existingSurveyToken||genToken(24);
     const now=new Date();
     const startAt=c.createdAt||now;
     const agentName=spProfile.isAdmin?'Admin':spProfile.name;
@@ -1807,17 +1795,13 @@ async function finishEndChat(chatId,{resolved,comment}){
       startAt, firstReplyAt:c.firstReplyAt||null, endAt:now, durationMs: now.getTime()-spToMillis(startAt),
       transcript:c.messages||[], internalNotes:c.internalNotes||[], createdAt:now
     });
-    if(existingSurveyToken){
-      batch.set(window._supDoc(window._supDb,'ticketSurveys',surveyToken),{ticketId},{merge:true});
-    }else{
-      batch.set(window._supDoc(window._supDb,'ticketSurveys',surveyToken),{ticketId, rating:null, comment:null, ratedAt:null, createdAt:now});
-    }
     batch.update(window._supDoc(window._supDb,'supportChats',c.id),{
       messages:[], internalNotes:[], assignedAgentUid:null, assignedAgentName:null, firstReplyAt:null,
       lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
       endChatLockBy:null, endChatLockAt:null, endChatLockByName:null, customerEndRequested:false, customerClosedAt:null, triageSource:null,
       customerLastSeenAt:null, staffLastSeenAt:null,
-      pendingSurvey:{ticketId, surveyToken, endedAt:now}, updatedAt:now
+      // Survey removed for now — clear any stale pendingSurvey left by older code.
+      pendingSurvey:null, updatedAt:now
     });
     await batch.commit();
     if(wasMine){
@@ -1909,18 +1893,16 @@ function clampOverlapMs(startAt,endAt,winStart,winEnd){
   return Math.max(0, e-s);
 }
 async function spmFetchAgentData(agentUid){
-  const [logsSnap,ticketsSnap,surveysSnap]=await Promise.all([
+  const [logsSnap,ticketsSnap]=await Promise.all([
     window._supGetDocs(window._supQuery(window._supCol(window._supDb,'agentStatusLog'), window._supWhere('agentUid','==',agentUid))),
-    window._supGetDocs(window._supQuery(window._supCol(window._supDb,'tickets'), window._supWhere('agentUid','==',agentUid))),
-    window._supGetDocs(window._supCol(window._supDb,'ticketSurveys'))
+    window._supGetDocs(window._supQuery(window._supCol(window._supDb,'tickets'), window._supWhere('agentUid','==',agentUid)))
   ]);
   return {
     logs: logsSnap.docs.map(d=>d.data()),
-    tickets: ticketsSnap.docs.map(d=>({id:d.id,...d.data()})),
-    surveys: surveysSnap.docs.map(d=>d.data())
+    tickets: ticketsSnap.docs.map(d=>({id:d.id,...d.data()}))
   };
 }
-function computeAgentStats(range,{logs,tickets,surveys}){
+function computeAgentStats(range,{logs,tickets}){
   const {startMs,endMs}=getRangeBoundsIST(range);
   const stateMs={Available:0,Break:0,Unavailable:0,Training:0};
   logs.forEach(l=>{
@@ -1933,14 +1915,8 @@ function computeAgentStats(range,{logs,tickets,surveys}){
   const avgFirstReplyMs=withFirstReply.length
     ? withFirstReply.reduce((s,t)=>s+(spToMillis(t.firstReplyAt)-spToMillis(t.startAt)),0)/withFirstReply.length
     : null;
-  const ratingByTicket=new Map(surveys.filter(s=>s.rating!=null).map(s=>[s.ticketId,s.rating]));
-  const ratedTickets=ticketsInRange.filter(t=>ratingByTicket.has(t.ticketId));
-  const ratingsList=ratedTickets.map(t=>({ticketId:t.ticketId,customerName:t.customerName,rating:ratingByTicket.get(t.ticketId)}));
-  const histogram=[0,0,0,0,0];
-  ratedTickets.forEach(t=>{ const r=ratingByTicket.get(t.ticketId); if(r>=1&&r<=5) histogram[r-1]++; });
-  const avgRating=ratedTickets.length ? ratedTickets.reduce((s,t)=>s+ratingByTicket.get(t.ticketId),0)/ratedTickets.length : null;
   return {stateMs, totalLoggedMs, availableMs:stateMs.Available, chatsHandled:ticketsInRange.length,
-    resolvedCount:ticketsInRange.filter(t=>t.resolved).length, avgFirstReplyMs, ratingsList, histogram, avgRating, ratedCount:ratedTickets.length};
+    resolvedCount:ticketsInRange.filter(t=>t.resolved).length, avgFirstReplyMs};
 }
 function openMyStats(){
   document.getElementById('spStatsBg').classList.add('on');
@@ -1977,7 +1953,6 @@ async function spmRenderStats(){
     const data=await spmFetchAgentData(spProfile.uid);
     const s=computeAgentStats(_spmRange,data);
     const pct=(ms)=>s.totalLoggedMs>0?Math.round(ms/s.totalLoggedMs*100):0;
-    const stars=(n)=>Array.from({length:5},(_,i)=>`<svg class="ic-sm" style="color:var(--orange);fill:${i<n?'var(--orange)':'none'};"><use href="#ic-star"></use></svg>`).join('');
     el.innerHTML=`
       <div class="spm-grid">
         <div class="spm-tile"><div class="spm-tile-lbl">Logged-in Time</div><div class="spm-tile-val">${fmtDuration(s.totalLoggedMs)}</div></div>
@@ -1992,13 +1967,6 @@ async function spmRenderStats(){
           <div class="spm-bar-track"><div class="spm-bar-fill" style="width:${pct(s.stateMs[st])}%;"></div></div>
           <span class="spm-bar-pct">${pct(s.stateMs[st])}%</span>
         </div>`).join('')}
-      <div class="spm-sec-h">Ratings Received${s.avgRating!=null?` — avg ${s.avgRating.toFixed(1)}★ (${s.ratedCount})`:''}</div>
-      ${s.ratedCount ? [5,4,3,2,1].map(n=>`
-        <div class="spm-star-row"><span>${n}★</span><div class="spm-bar-track"><div class="spm-bar-fill" style="width:${Math.round(s.histogram[n-1]/s.ratedCount*100)}%;"></div></div><span class="spm-bar-pct">${s.histogram[n-1]}</span></div>
-      `).join('') : '<div class="sp-empty">No ratings yet.</div>'}
-      ${s.ratingsList.map(r=>`
-        <div class="spm-rating-item"><span>${spEsc(r.ticketId)} · ${spEsc(r.customerName||'Guest')}</span><span class="spm-rating-stars">${stars(r.rating)}</span></div>
-      `).join('')}
     `;
   }catch(e){
     console.error('[Support] stats failed:',e.code,e.message);

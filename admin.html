@@ -446,7 +446,6 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
 .sp-ec-err.on{display:block;}
 .tix-row{cursor:pointer;}
 .tix-row:hover{background:rgba(255,140,0,.06);}
-.tix-stars{color:var(--orange);white-space:nowrap;}
 .tix-transcript{max-height:340px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;}
 .tix-msg{display:flex;flex-direction:column;max-width:78%;margin-bottom:8px;}
 .tix-msg.customer{align-self:flex-start;}
@@ -460,7 +459,6 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
 .adm-att-file{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--orange);font-size:11.5px;font-weight:600;text-decoration:none;}
 .adm-att-file svg{width:14px;height:14px;flex-shrink:0;}
 .tix-msg.staff .adm-att-file,.sup-msg.admin .adm-att-file{color:#000;background:rgba(0,0,0,.12);border-color:transparent;}
-.tix-survey-comment{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;font-style:italic;}
 .rdm-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
 .rdm-filter-btn{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-family:'Poppins',sans-serif;transition:all .15s;}
 .rdm-filter-btn.active{border-color:var(--orange);background:rgba(255,140,0,.1);color:var(--orange);}
@@ -651,7 +649,6 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
     <button class="mnb" id="mnsup" onclick="showSec('support')"><svg class="ic"><use href="#ic-shield"></use></svg> Support</button>
     <button class="mnb" id="mnag" onclick="showSec('agents')"><svg class="ic"><use href="#ic-headset"></use></svg> Agents</button>
     <button class="mnb" id="mntix" onclick="showSec('tickets')"><svg class="ic"><use href="#ic-ticket"></use></svg> Tickets</button>
-    <button class="mnb" id="mnsrev" onclick="showSec('support-reviews')"><svg class="ic"><use href="#ic-star"></use></svg> Reviews</button>
     <button class="mnb" id="mnstm" onclick="showSec('statements')"><svg class="ic"><use href="#ic-chat"></use></svg> Statements</button>
     <button class="mnb" id="mnri" onclick="showSec('riders')">👤 Riders</button>
     <button class="mnb" id="mnrest" onclick="showSec('restaurants')">🍽️ Restaurants</button>
@@ -698,9 +695,6 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
       </div>
       <div class="ni" id="ntix" onclick="showSec('tickets')">
         <span class="ico"><svg class="ic"><use href="#ic-ticket"></use></svg></span> Tickets
-      </div>
-      <div class="ni" id="nsrev" onclick="showSec('support-reviews')">
-        <span class="ico"><svg class="ic"><use href="#ic-star"></use></svg></span> Support Reviews
       </div>
       <div class="ni" id="nstm" onclick="showSec('statements')">
         <span class="ico"><svg class="ic"><use href="#ic-chat"></use></svg></span> Statements
@@ -1025,7 +1019,7 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
     <div class="sec" id="sec-tickets">
       <div class="rev-header">
         <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:8px;"><svg class="ic"><use href="#ic-ticket"></use></svg> Tickets</h2>
-        <p style="margin:0;color:var(--muted);font-size:13px;">Every ended support chat — disposition, transcript and rating.</p>
+        <p style="margin:0;color:var(--muted);font-size:13px;">Every ended support chat — disposition and transcript.</p>
       </div>
       <div class="fr">
         <select class="fsel" id="tixFilterAgent" onchange="renderTicketsList()"><option value="all">All agents</option></select>
@@ -1040,72 +1034,12 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
           <option value="yes">Resolved only</option>
           <option value="no">Unresolved only</option>
         </select>
-        <select class="fsel" id="tixFilterRating" onchange="renderTicketsList()">
-          <option value="all">Any rating</option>
-          <option value="5">5 stars</option>
-          <option value="4">4 stars</option>
-          <option value="3">3 stars</option>
-          <option value="2">2 stars</option>
-          <option value="1">1 star</option>
-          <option value="none">Not rated</option>
-        </select>
         <input class="si" id="tixSearch" placeholder="Search ticket ID, order ID, customer…" style="max-width:240px;padding:7px 11px;font-size:12px;" oninput="renderTicketsList()">
         <span class="fcnt" id="tixFilterCount"></span>
       </div>
       <div class="tw"><table class="ot" id="tixTable">
-        <thead><tr><th>Ticket</th><th>Customer</th><th>Agent</th><th>Order</th><th>Issue</th><th>Resolved</th><th>Duration</th><th>Rating</th><th>Ended</th></tr></thead>
-        <tbody id="tixTbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);">No tickets yet.</td></tr></tbody>
-      </table></div>
-    </div>
-
-    <!-- SUPPORT REVIEWS -->
-    <div class="sec" id="sec-support-reviews">
-      <div class="rev-header">
-        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:8px;"><svg class="ic"><use href="#ic-star"></use></svg> Support Reviews</h2>
-        <p style="margin:0;color:var(--muted);font-size:13px;">Every rating a customer left after a support chat.</p>
-      </div>
-      <div class="sg" style="margin-top:16px;">
-        <div class="sc hl"><div class="sc-lbl">Average Rating</div><div class="sc-val" id="srevAvgAll">—</div></div>
-        <div class="sc"><div class="sc-lbl">Total Reviews</div><div class="sc-val" id="srevTotal">0</div></div>
-        <div class="sc" style="grid-column:span 2;">
-          <div class="sc-lbl">By Star</div>
-          <div id="srevStarBreakdown" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;"></div>
-        </div>
-      </div>
-      <div class="ref-block" style="margin-top:14px;">
-        <h3 style="display:flex;align-items:center;gap:7px;"><svg class="ic"><use href="#ic-users"></use></svg> By Agent</h3>
-        <div class="tw"><table class="ot" id="srevAgentTable">
-          <thead><tr><th>Agent</th><th>Avg Rating</th><th>Reviews</th></tr></thead>
-          <tbody id="srevAgentTbody"><tr><td colspan="3" style="text-align:center;color:var(--muted);">No reviews yet.</td></tr></tbody>
-        </table></div>
-      </div>
-      <div class="fr" style="margin-top:14px;">
-        <select class="fsel" id="srevFilterAgent" onchange="renderReviewsSection()"><option value="all">All agents</option></select>
-        <select class="fsel" id="srevFilterDate" onchange="renderReviewsSection()">
-          <option value="all">All time</option>
-          <option value="today">Today</option>
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-        </select>
-        <select class="fsel" id="srevFilterResolved" onchange="renderReviewsSection()">
-          <option value="all">Resolved &amp; Unresolved</option>
-          <option value="yes">Resolved only</option>
-          <option value="no">Unresolved only</option>
-        </select>
-        <select class="fsel" id="srevFilterStar" onchange="renderReviewsSection()">
-          <option value="all">Any rating</option>
-          <option value="5">5 stars</option>
-          <option value="4">4 stars</option>
-          <option value="3">3 stars</option>
-          <option value="2">2 stars</option>
-          <option value="1">1 star</option>
-        </select>
-        <input class="si" id="srevSearch" placeholder="Search ticket ID, order ID, customer…" style="max-width:240px;padding:7px 11px;font-size:12px;" oninput="renderReviewsSection()">
-        <span class="fcnt" id="srevFilterCount"></span>
-      </div>
-      <div class="tw"><table class="ot" id="srevTable">
-        <thead><tr><th>Rating</th><th>Comment</th><th>Ticket</th><th>Chat ID</th><th>Agent</th><th>Date</th><th>Disposition</th></tr></thead>
-        <tbody id="srevTbody"><tr><td colspan="7" style="text-align:center;color:var(--muted);">No reviews yet.</td></tr></tbody>
+        <thead><tr><th>Ticket</th><th>Customer</th><th>Agent</th><th>Order</th><th>Issue</th><th>Resolved</th><th>Duration</th><th>Ended</th></tr></thead>
+        <tbody id="tixTbody"><tr><td colspan="8"style="text-align:center;color:var(--muted);">No tickets yet.</td></tr></tbody>
       </table></div>
     </div>
 
@@ -2492,7 +2426,7 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',support:'nsup',agents:'nag',tickets:'ntix','support-reviews':'nsrev',statements:'nstm',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',support:'nsup',agents:'nag',tickets:'ntix',statements:'nstm',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
@@ -2501,17 +2435,15 @@ function showSec(name){
   document.getElementById('mnsup').classList.toggle('active',name==='support');
   document.getElementById('mnag').classList.toggle('active',name==='agents');
   document.getElementById('mntix').classList.toggle('active',name==='tickets');
-  document.getElementById('mnsrev').classList.toggle('active',name==='support-reviews');
   document.getElementById('mnstm').classList.toggle('active',name==='statements');
   document.getElementById('mnri').classList.toggle('active',name==='riders'||name==='rider-detail');
   document.getElementById('mnrest').classList.toggle('active',name==='restaurants');
   document.getElementById('mnoff').classList.toggle('active',name==='offers');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',support:'Support Monitor',agents:'Support Agents',tickets:'Tickets','support-reviews':'Support Reviews',statements:'Canned Statements',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',support:'Support Monitor',agents:'Support Agents',tickets:'Tickets',statements:'Canned Statements',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
   if(name==='reviews'){ loadReviews(); }
-  if(name==='support-reviews'){ if(!_ticketsUnsub) startTicketsListener(); if(!_surveysUnsub) startSurveysListener(); if(!_supportAgentsUnsub) startSupportAgentsListener(); renderReviewsSection(); }
   if(name==='statements'){ loadStatementsForAdmin(); }
   if(name==='rider-ratings'){ loadRiderRatings(); }
   if(name==='riders'){
@@ -2523,7 +2455,7 @@ function showSec(name){
   if(name==='offers'){ loadOffersSettings(); }
   if(name==='support'){ if(!_supportUnsub) startSupportListener(); if(!_supportAgentsUnsub) startSupportAgentsListener(); }
   if(name==='agents'){ if(!_supportAgentsUnsub) startSupportAgentsListener(); }
-  if(name==='tickets'){ if(!_ticketsUnsub) startTicketsListener(); if(!_surveysUnsub) startSurveysListener(); if(!_supportAgentsUnsub) startSupportAgentsListener(); }
+  if(name==='tickets'){ if(!_ticketsUnsub) startTicketsListener(); if(!_supportAgentsUnsub) startSupportAgentsListener(); }
 }
 
 // ── SUPPORT MONITOR ─────────────────────────────
@@ -2534,7 +2466,6 @@ function showSec(name){
 let _supportUnsub=null, _supportConvos=[], _supportActiveId=null, _supSending=false, _admLastSeenBumpAt=null;
 let _supportAgentsUnsub=null, _supportAgents=[];
 let _ticketsUnsub=null, _tickets=[];
-let _surveysUnsub=null, _surveys=[];
 let _agentTimerInterval=null;
 
 function escAdmin(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -2593,11 +2524,9 @@ function startSupportAgentsListener(){
       .sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     renderSupportAgentFilterOptions();
     renderTicketsAgentFilterOptions();
-    renderReviewsAgentFilterOptions();
     renderSupportAgentTable();
     renderSupportAgentsList();
     renderSupportStats();
-    renderReviewsSection();
     startAgentTimerTicker();
     updateSupportPresenceFromAdmin();
   },err=>{
@@ -2627,17 +2556,7 @@ function startTicketsListener(){
       .sort((a,b)=>(td(b.endAt)||0)-(td(a.endAt)||0));
     renderTicketsList();
     renderSupportAgentTable();
-    renderReviewsSection();
   },err=>{ console.error('[Tickets] listen failed:',err.code,err.message); });
-}
-function startSurveysListener(){
-  if(!window._db) return;
-  if(_surveysUnsub){_surveysUnsub();_surveysUnsub=null;}
-  _surveysUnsub=window._fbSnap(window._fbCol(window._db,'ticketSurveys'),snap=>{
-    _surveys=snap.docs.map(d=>({id:d.id,...d.data()}));
-    renderTicketsList();
-    renderReviewsSection();
-  },err=>{ console.error('[TicketSurveys] listen failed:',err.code,err.message); });
 }
 
 function fdt(ts){
@@ -3026,10 +2945,6 @@ async function submitAdminEndChat(){
       return next;
     });
     const ticketId=`TK-${ticketNum}`;
-    // Reuse the customer's own pre-seeded survey token if they already
-    // closed their side themselves — never orphan an in-progress rating.
-    const existingSurveyToken=c.pendingSurvey&&c.pendingSurvey.surveyToken;
-    const surveyToken=existingSurveyToken||genToken(24);
     const now=new Date();
     const startAt=c.createdAt||now;
     const orderId=c.orderId||null; // auto-filled — never asked
@@ -3040,17 +2955,13 @@ async function submitAdminEndChat(){
       startAt, firstReplyAt:c.firstReplyAt||null, endAt:now, durationMs: now.getTime()-((td(startAt)||now).getTime()),
       transcript:c.messages||[], internalNotes:c.internalNotes||[], createdAt:now
     });
-    if(existingSurveyToken){
-      batch.set(window._fbDoc(window._db,'ticketSurveys',surveyToken),{ticketId},{merge:true});
-    }else{
-      batch.set(window._fbDoc(window._db,'ticketSurveys',surveyToken),{ticketId, rating:null, comment:null, ratedAt:null, createdAt:now});
-    }
     batch.update(window._fbDoc(window._db,'supportChats',c.id),{
       messages:[], internalNotes:[], assignedAgentUid:null, assignedAgentName:null, firstReplyAt:null,
       lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
       endChatLockBy:null, endChatLockAt:null, endChatLockByName:null, customerEndRequested:false, customerClosedAt:null, triageSource:null,
       customerLastSeenAt:null, staffLastSeenAt:null,
-      pendingSurvey:{ticketId, surveyToken, endedAt:now}, updatedAt:now
+      // Survey removed for now — clear any stale pendingSurvey left by older code.
+      pendingSurvey:null, updatedAt:now
     });
     await batch.commit();
     if(timedOut) return;
@@ -3240,14 +3151,6 @@ function renderTicketsAgentFilterOptions(){
     _supportAgents.map(a=>`<option value="${a.uid}">${escAdmin(a.name)}</option>`).join('');
   if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
 }
-function ratingForTicket(ticketId){
-  const s=_surveys.find(x=>x.ticketId===ticketId && x.rating!=null);
-  return s?s.rating:null;
-}
-function commentForTicket(ticketId){
-  const s=_surveys.find(x=>x.ticketId===ticketId && x.rating!=null);
-  return s&&s.comment?s.comment:null;
-}
 // Tickets created after the Yes/No+comment simplification store t.comment;
 // older tickets (pre-simplification) still have issue/actionTaken — this
 // reads either shape so history keeps displaying correctly.
@@ -3258,7 +3161,6 @@ function getFilteredTickets(){
   const agentF=document.getElementById('tixFilterAgent')?.value||'all';
   const dateF=document.getElementById('tixFilterDate')?.value||'all';
   const resF=document.getElementById('tixFilterResolved')?.value||'all';
-  const ratF=document.getElementById('tixFilterRating')?.value||'all';
   const q=(document.getElementById('tixSearch')?.value||'').trim().toLowerCase();
   const now=new Date();
   return _tickets.filter(t=>{
@@ -3271,16 +3173,9 @@ function getFilteredTickets(){
       if(dateF==='7d' && d<new Date(now.getTime()-7*86400000)) return false;
       if(dateF==='30d' && d<new Date(now.getTime()-30*86400000)) return false;
     }
-    const rating=ratingForTicket(t.ticketId);
-    if(ratF==='none' && rating!=null) return false;
-    if(ratF!=='all' && ratF!=='none' && rating!==parseInt(ratF,10)) return false;
     if(q && !((t.ticketId||'').toLowerCase().includes(q)||(t.orderId||'').toLowerCase().includes(q)||(t.customerName||'').toLowerCase().includes(q))) return false;
     return true;
   });
-}
-function starsHtml(n){
-  if(n==null) return '<span style="color:var(--muted);">—</span>';
-  return `<span class="tix-stars">${'★'.repeat(n)}${'☆'.repeat(5-n)}</span>`;
 }
 function renderTicketsList(){
   const tbody=document.getElementById('tixTbody');
@@ -3289,7 +3184,7 @@ function renderTicketsList(){
   const cnt=document.getElementById('tixFilterCount');
   if(cnt) cnt.textContent=`${list.length} of ${_tickets.length}`;
   if(!list.length){
-    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);">No tickets match.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);">No tickets match.</td></tr>';
     return;
   }
   tbody.innerHTML=list.map(t=>`<tr class="tix-row" onclick="openTicketDetail('${t.id}')">
@@ -3300,102 +3195,9 @@ function renderTicketsList(){
     <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escAdmin(dispositionText(t))}</td>
     <td>${t.resolved?'<span style="color:#22c55e;font-weight:700;">Yes</span>':'<span style="color:#ef4444;font-weight:700;">No</span>'}</td>
     <td>${fmtDuration(t.durationMs)}</td>
-    <td>${starsHtml(ratingForTicket(t.ticketId))}</td>
     <td>${fdt(t.endAt)}</td>
   </tr>`).join('');
 }
-// ── SUPPORT REVIEWS ─────────────────────────────
-// Reuses _tickets/_surveys (already loaded for Tickets) and the existing
-// openTicketDetail modal — a review IS just a ticket that has a rating.
-function renderReviewsAgentFilterOptions(){
-  const sel=document.getElementById('srevFilterAgent');
-  if(!sel) return;
-  const cur=sel.value;
-  sel.innerHTML='<option value="all">All agents</option>'+
-    _supportAgents.map(a=>`<option value="${a.uid}">${escAdmin(a.name)}</option>`).join('');
-  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
-}
-function getFilteredReviews(){
-  const agentF=document.getElementById('srevFilterAgent')?.value||'all';
-  const dateF=document.getElementById('srevFilterDate')?.value||'all';
-  const resF=document.getElementById('srevFilterResolved')?.value||'all';
-  const starF=document.getElementById('srevFilterStar')?.value||'all';
-  const q=(document.getElementById('srevSearch')?.value||'').trim().toLowerCase();
-  const now=new Date();
-  return _tickets.filter(t=>{
-    const rating=ratingForTicket(t.ticketId);
-    if(rating==null) return false;
-    if(agentF!=='all' && t.agentUid!==agentF) return false;
-    if(resF==='yes' && !t.resolved) return false;
-    if(resF==='no' && t.resolved) return false;
-    if(starF!=='all' && rating!==parseInt(starF,10)) return false;
-    if(dateF!=='all'){
-      const d=td(t.endAt); if(!d) return false;
-      if(dateF==='today' && d<sod(now)) return false;
-      if(dateF==='7d' && d<new Date(now.getTime()-7*86400000)) return false;
-      if(dateF==='30d' && d<new Date(now.getTime()-30*86400000)) return false;
-    }
-    if(q && !((t.ticketId||'').toLowerCase().includes(q)||(t.orderId||'').toLowerCase().includes(q)||(t.customerName||'').toLowerCase().includes(q))) return false;
-    return true;
-  });
-}
-function renderReviewsSection(){
-  const tbody=document.getElementById('srevTbody');
-  if(!tbody) return; // section not in the DOM yet on first load — fine, re-called when it is
-  const list=getFilteredReviews();
-  const cnt=document.getElementById('srevFilterCount');
-  const allReviews=_tickets.filter(t=>ratingForTicket(t.ticketId)!=null);
-  if(cnt) cnt.textContent=`${list.length} of ${allReviews.length}`;
-
-  // Summary — computed from the full review set, not the filtered list, so
-  // the top numbers stay a stable "overall" picture regardless of filters.
-  const avgAllEl=document.getElementById('srevAvgAll'), totalEl=document.getElementById('srevTotal');
-  if(avgAllEl) avgAllEl.textContent = allReviews.length ? (allReviews.reduce((s,t)=>s+ratingForTicket(t.ticketId),0)/allReviews.length).toFixed(1)+'★' : '—';
-  if(totalEl) totalEl.textContent = allReviews.length;
-  const starBreak=document.getElementById('srevStarBreakdown');
-  if(starBreak){
-    const counts=[5,4,3,2,1].map(n=>allReviews.filter(t=>ratingForTicket(t.ticketId)===n).length);
-    const max=Math.max(1,...counts);
-    starBreak.innerHTML=[5,4,3,2,1].map((n,i)=>`
-      <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
-        <span style="width:26px;color:var(--muted);">${n}★</span>
-        <div style="flex:1;height:6px;border-radius:4px;background:var(--bg);overflow:hidden;"><div style="height:100%;width:${(counts[i]/max*100)}%;background:var(--orange);"></div></div>
-        <span style="width:20px;text-align:right;color:var(--muted);">${counts[i]}</span>
-      </div>`).join('');
-  }
-  const agentTbody=document.getElementById('srevAgentTbody');
-  if(agentTbody){
-    const byAgent=new Map();
-    allReviews.forEach(t=>{
-      const key=t.agentUid||'—';
-      const entry=byAgent.get(key)||{name:t.agentName||'—',sum:0,count:0};
-      entry.sum+=ratingForTicket(t.ticketId); entry.count++;
-      byAgent.set(key,entry);
-    });
-    const rows=[...byAgent.values()].sort((a,b)=>b.count-a.count);
-    agentTbody.innerHTML = rows.length ? rows.map(r=>`<tr><td>${escAdmin(r.name)}</td><td>${(r.sum/r.count).toFixed(1)}★</td><td>${r.count}</td></tr>`).join('')
-      : '<tr><td colspan="3" style="text-align:center;color:var(--muted);">No reviews yet.</td></tr>';
-  }
-
-  // Filtered list
-  if(!list.length){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);">No reviews match.</td></tr>';
-    return;
-  }
-  tbody.innerHTML=list.map(t=>{
-    const comment=commentForTicket(t.ticketId);
-    return `<tr class="tix-row" onclick="openTicketDetail('${t.id}')">
-    <td>${starsHtml(ratingForTicket(t.ticketId))}</td>
-    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:${comment?'normal':'italic'};color:${comment?'inherit':'var(--muted)'};">${comment?escAdmin(comment):'No comment'}</td>
-    <td>${escAdmin(t.ticketId)}</td>
-    <td style="font-size:11px;color:var(--muted);">${escAdmin(t.chatId||'—')}</td>
-    <td>${escAdmin(t.agentName||'—')}</td>
-    <td>${fdt(t.endAt)}</td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escAdmin(dispositionText(t))}</td>
-  </tr>`;
-  }).join('');
-}
-
 // ── CANNED STATEMENTS (shared library) ──────────────
 // Single doc at supportContent/statements — every edit here rewrites the
 // whole doc (admin-only write per firestore.rules). Agents in support.html
@@ -3504,8 +3306,6 @@ function openTicketDetail(id){
   const t=_tickets.find(x=>x.id===id);
   if(!t) return;
   document.getElementById('tixDetailTitle').textContent=t.ticketId;
-  const rating=ratingForTicket(t.ticketId);
-  const comment=commentForTicket(t.ticketId);
   const msgs=(t.transcript||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
   const notes=(t.internalNotes||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
   document.getElementById('tixDetailBody').innerHTML=`
@@ -3515,7 +3315,7 @@ function openTicketDetail(id){
       <div class="spm-tile"><div class="spm-tile-lbl">Order</div><div class="spm-tile-val" style="font-size:13px;">${t.orderId?escAdmin(t.orderId):'—'}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Duration</div><div class="spm-tile-val" style="font-size:13px;">${fmtDuration(t.durationMs)}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Resolved</div><div class="spm-tile-val" style="font-size:13px;">${t.resolved?'Yes':'No'}</div></div>
-      <div class="spm-tile"><div class="spm-tile-lbl">Rating</div><div class="spm-tile-val" style="font-size:13px;">${starsHtml(rating)}</div>${comment?`<div class="tix-survey-comment">“${escAdmin(comment)}”</div>`:''}</div>
+      <div class="spm-tile"><div class="spm-tile-lbl">Ended</div><div class="spm-tile-val" style="font-size:13px;">${fdt(t.endAt)||'—'}</div></div>
     </div>
     <div class="spm-sec-h">${t.comment!==undefined?'Comments':'Issue / Action Taken'}</div>
     <div style="font-size:12.5px;line-height:1.6;margin-bottom:12px;">${escAdmin(dispositionText(t))}</div>
@@ -3576,9 +3376,6 @@ async function renderAgentReport(){
     const agentTickets=_tickets.filter(t=>t.agentUid===_agentReportUid && (td(t.endAt)?.getTime()||0)>=startMs && (td(t.endAt)?.getTime()||0)<=endMs);
     const withFirstReply=agentTickets.filter(t=>t.firstReplyAt);
     const avgFirstReplyMs=withFirstReply.length?withFirstReply.reduce((s,t)=>s+((td(t.firstReplyAt)||0)-(td(t.startAt)||0)),0)/withFirstReply.length:null;
-    const ratingByTicket=new Map(_surveys.filter(s=>s.rating!=null).map(s=>[s.ticketId,s.rating]));
-    const ratedTickets=agentTickets.filter(t=>ratingByTicket.has(t.ticketId));
-    const avgRating=ratedTickets.length?ratedTickets.reduce((s,t)=>s+ratingByTicket.get(t.ticketId),0)/ratedTickets.length:null;
     const resolvedCount=agentTickets.filter(t=>t.resolved).length;
     const pct=(ms)=>totalMs>0?Math.round(ms/totalMs*100):0;
     el.innerHTML=`
@@ -3586,7 +3383,7 @@ async function renderAgentReport(){
         <div class="spm-tile"><div class="spm-tile-lbl">Available Time</div><div class="spm-tile-val">${fmtDuration(stateMs.Available)}</div></div>
         <div class="spm-tile"><div class="spm-tile-lbl">Chats Handled</div><div class="spm-tile-val">${agentTickets.length}</div></div>
         <div class="spm-tile"><div class="spm-tile-lbl">Resolved / Total</div><div class="spm-tile-val">${resolvedCount}/${agentTickets.length}</div></div>
-        <div class="spm-tile"><div class="spm-tile-lbl">Avg Rating</div><div class="spm-tile-val">${avgRating!=null?avgRating.toFixed(1)+'★':'—'}</div></div>
+        <div class="spm-tile"><div class="spm-tile-lbl">Avg First Reply</div><div class="spm-tile-val">${avgFirstReplyMs!=null?fmtDuration(avgFirstReplyMs):'—'}</div></div>
       </div>
       <div class="spm-sec-h">Time By Status</div>
       ${['Available','Break','Training','Unavailable'].map(st=>`
@@ -3595,8 +3392,6 @@ async function renderAgentReport(){
           <div class="spm-bar-track"><div class="spm-bar-fill" style="width:${pct(stateMs[st])}%;"></div></div>
           <span class="spm-bar-pct">${pct(stateMs[st])}%</span>
         </div>`).join('')}
-      <div class="spm-sec-h">Avg First Reply</div>
-      <div style="font-size:13px;">${avgFirstReplyMs!=null?fmtDuration(avgFirstReplyMs):'—'}</div>
     `;
   }catch(e){
     console.error('[AgentReport] failed:',e.code,e.message);
