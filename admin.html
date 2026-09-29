@@ -593,6 +593,11 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
     <symbol id="ic-status-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M5.5 5.5l13 13"/></symbol>
     <symbol id="ic-status-on" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M7.8 12.5l2.6 2.6 5.8-6.2"/></symbol>
     <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.6 7.1.6-5.4 4.6 1.6 7-6.2-3.9-6.2 3.9 1.6-7-5.4-4.6 7.1-.6Z"/></symbol>
+    <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4V4Z"/></symbol>
+    <symbol id="ic-edit" viewBox="0 0 24 24"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/><path d="M13.5 7.5l3 3"/></symbol>
+    <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></symbol>
+    <symbol id="ic-chevron-up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+    <symbol id="ic-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
     <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20V11M10 20V4M16 20v-8M2 20h20"/></symbol>
     <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20.3 20.3l-5-5"/></symbol>
     <symbol id="ic-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
@@ -639,6 +644,8 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
     <button class="mnb" id="mnsup" onclick="showSec('support')"><svg class="ic"><use href="#ic-shield"></use></svg> Support</button>
     <button class="mnb" id="mnag" onclick="showSec('agents')"><svg class="ic"><use href="#ic-headset"></use></svg> Agents</button>
     <button class="mnb" id="mntix" onclick="showSec('tickets')"><svg class="ic"><use href="#ic-ticket"></use></svg> Tickets</button>
+    <button class="mnb" id="mnsrev" onclick="showSec('support-reviews')"><svg class="ic"><use href="#ic-star"></use></svg> Reviews</button>
+    <button class="mnb" id="mnstm" onclick="showSec('statements')"><svg class="ic"><use href="#ic-chat"></use></svg> Statements</button>
     <button class="mnb" id="mnri" onclick="showSec('riders')">👤 Riders</button>
     <button class="mnb" id="mnrest" onclick="showSec('restaurants')">🍽️ Restaurants</button>
     <button class="mnb" id="mnoff" onclick="showSec('offers')">🎁 Offers</button>
@@ -684,6 +691,12 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
       </div>
       <div class="ni" id="ntix" onclick="showSec('tickets')">
         <span class="ico"><svg class="ic"><use href="#ic-ticket"></use></svg></span> Tickets
+      </div>
+      <div class="ni" id="nsrev" onclick="showSec('support-reviews')">
+        <span class="ico"><svg class="ic"><use href="#ic-star"></use></svg></span> Support Reviews
+      </div>
+      <div class="ni" id="nstm" onclick="showSec('statements')">
+        <span class="ico"><svg class="ic"><use href="#ic-chat"></use></svg></span> Statements
       </div>
       <div class="ni" id="nri" onclick="showSec('riders')">
         <span class="ico">👤</span> Rider Mgmt
@@ -977,6 +990,10 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
           <input class="ref-input" id="newAgentName" placeholder="Full name" autocomplete="off">
         </div>
         <div class="ref-field">
+          <label class="ref-lbl">Display Name (shown to customers)</label>
+          <input class="ref-input" id="newAgentDisplayName" placeholder="e.g. Fahad — defaults to first name" autocomplete="off">
+        </div>
+        <div class="ref-field">
           <label class="ref-lbl">Login Email</label>
           <input class="ref-input" id="newAgentEmail" placeholder="agent@example.com" autocomplete="off">
         </div>
@@ -1028,6 +1045,67 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
         <thead><tr><th>Ticket</th><th>Customer</th><th>Agent</th><th>Order</th><th>Issue</th><th>Resolved</th><th>Duration</th><th>Rating</th><th>Ended</th></tr></thead>
         <tbody id="tixTbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);">No tickets yet.</td></tr></tbody>
       </table></div>
+    </div>
+
+    <!-- SUPPORT REVIEWS -->
+    <div class="sec" id="sec-support-reviews">
+      <div class="rev-header">
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:8px;"><svg class="ic"><use href="#ic-star"></use></svg> Support Reviews</h2>
+        <p style="margin:0;color:var(--muted);font-size:13px;">Every rating a customer left after a support chat.</p>
+      </div>
+      <div class="sg" style="margin-top:16px;">
+        <div class="sc hl"><div class="sc-lbl">Average Rating</div><div class="sc-val" id="srevAvgAll">—</div></div>
+        <div class="sc"><div class="sc-lbl">Total Reviews</div><div class="sc-val" id="srevTotal">0</div></div>
+        <div class="sc" style="grid-column:span 2;">
+          <div class="sc-lbl">By Star</div>
+          <div id="srevStarBreakdown" style="display:flex;flex-direction:column;gap:4px;margin-top:6px;"></div>
+        </div>
+      </div>
+      <div class="ref-block" style="margin-top:14px;">
+        <h3 style="display:flex;align-items:center;gap:7px;"><svg class="ic"><use href="#ic-users"></use></svg> By Agent</h3>
+        <div class="tw"><table class="ot" id="srevAgentTable">
+          <thead><tr><th>Agent</th><th>Avg Rating</th><th>Reviews</th></tr></thead>
+          <tbody id="srevAgentTbody"><tr><td colspan="3" style="text-align:center;color:var(--muted);">No reviews yet.</td></tr></tbody>
+        </table></div>
+      </div>
+      <div class="fr" style="margin-top:14px;">
+        <select class="fsel" id="srevFilterAgent" onchange="renderReviewsSection()"><option value="all">All agents</option></select>
+        <select class="fsel" id="srevFilterDate" onchange="renderReviewsSection()">
+          <option value="all">All time</option>
+          <option value="today">Today</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select>
+        <select class="fsel" id="srevFilterResolved" onchange="renderReviewsSection()">
+          <option value="all">Resolved &amp; Unresolved</option>
+          <option value="yes">Resolved only</option>
+          <option value="no">Unresolved only</option>
+        </select>
+        <select class="fsel" id="srevFilterStar" onchange="renderReviewsSection()">
+          <option value="all">Any rating</option>
+          <option value="5">5 stars</option>
+          <option value="4">4 stars</option>
+          <option value="3">3 stars</option>
+          <option value="2">2 stars</option>
+          <option value="1">1 star</option>
+        </select>
+        <input class="si" id="srevSearch" placeholder="Search ticket ID, order ID, customer…" style="max-width:240px;padding:7px 11px;font-size:12px;" oninput="renderReviewsSection()">
+        <span class="fcnt" id="srevFilterCount"></span>
+      </div>
+      <div class="tw"><table class="ot" id="srevTable">
+        <thead><tr><th>Rating</th><th>Comment</th><th>Ticket</th><th>Chat ID</th><th>Agent</th><th>Date</th><th>Disposition</th></tr></thead>
+        <tbody id="srevTbody"><tr><td colspan="7" style="text-align:center;color:var(--muted);">No reviews yet.</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- CANNED STATEMENTS LIBRARY -->
+    <div class="sec" id="sec-statements">
+      <div class="rev-header">
+        <h2 style="font-size:20px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:8px;"><svg class="ic"><use href="#ic-chat"></use></svg> Canned Statements</h2>
+        <p style="margin:0;color:var(--muted);font-size:13px;">The shared statement library every agent sees in support.html. Agent-added statements stay personal to them and aren't shown here.</p>
+      </div>
+      <button class="ref-btn" style="width:auto;padding:9px 18px;margin:14px 0;" onclick="addStatementCategory()">+ Add Category</button>
+      <div id="admStmtList"></div>
     </div>
 
     <!-- TICKET DETAIL MODAL -->
@@ -2403,7 +2481,7 @@ function showSec(name){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',support:'nsup',agents:'nag',tickets:'ntix',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
+  const navMap={dashboard:'nd',search:'ns',wallet:'nw',reviews:'nr','rider-ratings':'nrr',support:'nsup',agents:'nag',tickets:'ntix','support-reviews':'nsrev',statements:'nstm',riders:'nri','rider-detail':'nri',restaurants:'nrest',offers:'noff',settings:'nst'};
   if(navMap[name]) document.getElementById(navMap[name]).classList.add('active');
   document.getElementById('mnd').classList.toggle('active',name==='dashboard');
   document.getElementById('mns').classList.toggle('active',name==='search');
@@ -2412,14 +2490,18 @@ function showSec(name){
   document.getElementById('mnsup').classList.toggle('active',name==='support');
   document.getElementById('mnag').classList.toggle('active',name==='agents');
   document.getElementById('mntix').classList.toggle('active',name==='tickets');
+  document.getElementById('mnsrev').classList.toggle('active',name==='support-reviews');
+  document.getElementById('mnstm').classList.toggle('active',name==='statements');
   document.getElementById('mnri').classList.toggle('active',name==='riders'||name==='rider-detail');
   document.getElementById('mnrest').classList.toggle('active',name==='restaurants');
   document.getElementById('mnoff').classList.toggle('active',name==='offers');
   document.getElementById('mnst').classList.toggle('active',name==='settings');
-  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',support:'Support Monitor',agents:'Support Agents',tickets:'Tickets',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
+  const titles={dashboard:'Dashboard',search:'Order Search',wallet:'Wallet & Refunds',reviews:'Customer Reviews','rider-ratings':'Rider Ratings',support:'Support Monitor',agents:'Support Agents',tickets:'Tickets','support-reviews':'Support Reviews',statements:'Canned Statements',riders:'Rider Management','rider-detail':'Rider Detail',restaurants:'Restaurant Management',offers:'Offers',settings:'Settings'};
   document.getElementById('mtitle').textContent=titles[name]||name;
   if(name==='dashboard'){newCnt=0;updBadge();}
   if(name==='reviews'){ loadReviews(); }
+  if(name==='support-reviews'){ if(!_ticketsUnsub) startTicketsListener(); if(!_surveysUnsub) startSurveysListener(); if(!_supportAgentsUnsub) startSupportAgentsListener(); renderReviewsSection(); }
+  if(name==='statements'){ loadStatementsForAdmin(); }
   if(name==='rider-ratings'){ loadRiderRatings(); }
   if(name==='riders'){
     if(!_riderRatingsCache.length) loadRiderRatings();
@@ -2491,9 +2573,11 @@ function startSupportAgentsListener(){
       .sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     renderSupportAgentFilterOptions();
     renderTicketsAgentFilterOptions();
+    renderReviewsAgentFilterOptions();
     renderSupportAgentTable();
     renderSupportAgentsList();
     renderSupportStats();
+    renderReviewsSection();
     startAgentTimerTicker();
     updateSupportPresenceFromAdmin();
   },err=>{
@@ -2523,6 +2607,7 @@ function startTicketsListener(){
       .sort((a,b)=>(td(b.endAt)||0)-(td(a.endAt)||0));
     renderTicketsList();
     renderSupportAgentTable();
+    renderReviewsSection();
   },err=>{ console.error('[Tickets] listen failed:',err.code,err.message); });
 }
 function startSurveysListener(){
@@ -2531,6 +2616,7 @@ function startSurveysListener(){
   _surveysUnsub=window._fbSnap(window._fbCol(window._db,'ticketSurveys'),snap=>{
     _surveys=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderTicketsList();
+    renderReviewsSection();
   },err=>{ console.error('[TicketSurveys] listen failed:',err.code,err.message); });
 }
 
@@ -2908,6 +2994,7 @@ async function sendSupportReply(){
 // Firestore REST API using a captured admin ID token.
 async function addSupportAgent(){
   const name=document.getElementById('newAgentName').value.trim();
+  const displayName=document.getElementById('newAgentDisplayName').value.trim()||name.split(' ')[0];
   const email=document.getElementById('newAgentEmail').value.trim().toLowerCase();
   const pass=document.getElementById('newAgentPass').value;
   const btn=document.getElementById('addAgentBtn');
@@ -2936,6 +3023,7 @@ async function addSupportAgent(){
         headers:{'Authorization':'Bearer '+adminToken,'Content-Type':'application/json'},
         body:JSON.stringify({fields:{
           name:      {stringValue:name},
+          displayName: {stringValue:displayName},
           email:     {stringValue:email},
           active:    {booleanValue:true},
           createdAt: {timestampValue:new Date().toISOString()},
@@ -2948,6 +3036,7 @@ async function addSupportAgent(){
     if(fsData.error) throw new Error('Firestore: '+fsData.error.message);
 
     document.getElementById('newAgentName').value='';
+    document.getElementById('newAgentDisplayName').value='';
     document.getElementById('newAgentEmail').value='';
     document.getElementById('newAgentPass').value='';
     msg.style.display='block'; msg.style.color='var(--green)';
@@ -2977,14 +3066,28 @@ function renderSupportAgentsList(){
     <div class="rdm-info">
       <div class="rdm-name">${escAdmin(a.name)}</div>
       <div class="rdm-phone">${escAdmin(a.email)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">Shown to customers as: <strong style="color:var(--text);">${escAdmin(a.displayName||a.name)}</strong></div>
       <span class="rdm-badge ${a.active===false?'inactive':'active'}">${a.active===false?'Inactive':'Active'}</span>
       ${a.currentStatus?` <span class="rdm-badge aux-${st}"><svg><use href="#${AUX_ICONS_ADM[st]||'ic-status-off'}"></use></svg>${st}</span>`:''}
     </div>
+    <button class="rdm-toggle" style="background:rgba(255,140,0,.14);color:var(--orange);" onclick="editAgentDisplayName('${a.uid}','${escAdmin(a.displayName||a.name).replace(/'/g,"\\'")}')">Edit Name</button>
     <button class="rdm-toggle" style="background:rgba(255,140,0,.14);color:var(--orange);" onclick="openAgentReport('${a.uid}','${escAdmin(a.name).replace(/'/g,"\\'")}')">Report</button>
     <button class="rdm-toggle ${a.active===false?'activate':'deactivate'}" onclick="toggleSupportAgentActive('${a.uid}',${a.active!==false})">${a.active===false?'Activate':'Deactivate'}</button>
     <button class="rdm-toggle deactivate" onclick="removeSupportAgent('${a.uid}','${escAdmin(a.name).replace(/'/g,"\\'")}')">Remove</button>
   </div>`;
   }).join('');
+}
+
+async function editAgentDisplayName(uid,current){
+  const next=prompt('Display name shown to customers (first name is usually best):',current);
+  if(next===null) return;
+  const trimmed=next.trim();
+  if(!trimmed){ toast('⚠️ Display name cannot be empty.','#f59e0b'); return; }
+  if(!window._db){toast('Not connected.','#ef4444');return;}
+  try{
+    await window._fbUpdate(window._fbDoc(window._db,'supportAgents',uid),{displayName:trimmed});
+    toast('✅ Display name updated.','#22c55e');
+  }catch(e){ toast('❌ '+e.message,'#ef4444'); }
 }
 
 async function toggleSupportAgentActive(uid,currentActive){
@@ -3083,6 +3186,202 @@ function renderTicketsList(){
     <td>${fdt(t.endAt)}</td>
   </tr>`).join('');
 }
+// ── SUPPORT REVIEWS ─────────────────────────────
+// Reuses _tickets/_surveys (already loaded for Tickets) and the existing
+// openTicketDetail modal — a review IS just a ticket that has a rating.
+function renderReviewsAgentFilterOptions(){
+  const sel=document.getElementById('srevFilterAgent');
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="all">All agents</option>'+
+    _supportAgents.map(a=>`<option value="${a.uid}">${escAdmin(a.name)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+function getFilteredReviews(){
+  const agentF=document.getElementById('srevFilterAgent')?.value||'all';
+  const dateF=document.getElementById('srevFilterDate')?.value||'all';
+  const resF=document.getElementById('srevFilterResolved')?.value||'all';
+  const starF=document.getElementById('srevFilterStar')?.value||'all';
+  const q=(document.getElementById('srevSearch')?.value||'').trim().toLowerCase();
+  const now=new Date();
+  return _tickets.filter(t=>{
+    const rating=ratingForTicket(t.ticketId);
+    if(rating==null) return false;
+    if(agentF!=='all' && t.agentUid!==agentF) return false;
+    if(resF==='yes' && !t.resolved) return false;
+    if(resF==='no' && t.resolved) return false;
+    if(starF!=='all' && rating!==parseInt(starF,10)) return false;
+    if(dateF!=='all'){
+      const d=td(t.endAt); if(!d) return false;
+      if(dateF==='today' && d<sod(now)) return false;
+      if(dateF==='7d' && d<new Date(now.getTime()-7*86400000)) return false;
+      if(dateF==='30d' && d<new Date(now.getTime()-30*86400000)) return false;
+    }
+    if(q && !((t.ticketId||'').toLowerCase().includes(q)||(t.orderId||'').toLowerCase().includes(q)||(t.customerName||'').toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+function renderReviewsSection(){
+  const tbody=document.getElementById('srevTbody');
+  if(!tbody) return; // section not in the DOM yet on first load — fine, re-called when it is
+  const list=getFilteredReviews();
+  const cnt=document.getElementById('srevFilterCount');
+  const allReviews=_tickets.filter(t=>ratingForTicket(t.ticketId)!=null);
+  if(cnt) cnt.textContent=`${list.length} of ${allReviews.length}`;
+
+  // Summary — computed from the full review set, not the filtered list, so
+  // the top numbers stay a stable "overall" picture regardless of filters.
+  const avgAllEl=document.getElementById('srevAvgAll'), totalEl=document.getElementById('srevTotal');
+  if(avgAllEl) avgAllEl.textContent = allReviews.length ? (allReviews.reduce((s,t)=>s+ratingForTicket(t.ticketId),0)/allReviews.length).toFixed(1)+'★' : '—';
+  if(totalEl) totalEl.textContent = allReviews.length;
+  const starBreak=document.getElementById('srevStarBreakdown');
+  if(starBreak){
+    const counts=[5,4,3,2,1].map(n=>allReviews.filter(t=>ratingForTicket(t.ticketId)===n).length);
+    const max=Math.max(1,...counts);
+    starBreak.innerHTML=[5,4,3,2,1].map((n,i)=>`
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;">
+        <span style="width:26px;color:var(--muted);">${n}★</span>
+        <div style="flex:1;height:6px;border-radius:4px;background:var(--bg);overflow:hidden;"><div style="height:100%;width:${(counts[i]/max*100)}%;background:var(--orange);"></div></div>
+        <span style="width:20px;text-align:right;color:var(--muted);">${counts[i]}</span>
+      </div>`).join('');
+  }
+  const agentTbody=document.getElementById('srevAgentTbody');
+  if(agentTbody){
+    const byAgent=new Map();
+    allReviews.forEach(t=>{
+      const key=t.agentUid||'—';
+      const entry=byAgent.get(key)||{name:t.agentName||'—',sum:0,count:0};
+      entry.sum+=ratingForTicket(t.ticketId); entry.count++;
+      byAgent.set(key,entry);
+    });
+    const rows=[...byAgent.values()].sort((a,b)=>b.count-a.count);
+    agentTbody.innerHTML = rows.length ? rows.map(r=>`<tr><td>${escAdmin(r.name)}</td><td>${(r.sum/r.count).toFixed(1)}★</td><td>${r.count}</td></tr>`).join('')
+      : '<tr><td colspan="3" style="text-align:center;color:var(--muted);">No reviews yet.</td></tr>';
+  }
+
+  // Filtered list
+  if(!list.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);">No reviews match.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=list.map(t=>{
+    const comment=commentForTicket(t.ticketId);
+    return `<tr class="tix-row" onclick="openTicketDetail('${t.id}')">
+    <td>${starsHtml(ratingForTicket(t.ticketId))}</td>
+    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:${comment?'normal':'italic'};color:${comment?'inherit':'var(--muted)'};">${comment?escAdmin(comment):'No comment'}</td>
+    <td>${escAdmin(t.ticketId)}</td>
+    <td style="font-size:11px;color:var(--muted);">${escAdmin(t.chatId||'—')}</td>
+    <td>${escAdmin(t.agentName||'—')}</td>
+    <td>${fdt(t.endAt)}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escAdmin(t.issue||'—')}</td>
+  </tr>`;
+  }).join('');
+}
+
+// ── CANNED STATEMENTS (shared library) ──────────────
+// Single doc at supportContent/statements — every edit here rewrites the
+// whole doc (admin-only write per firestore.rules). Agents in support.html
+// read it live and fall back to STATEMENTS_DEFAULTS if it's missing.
+let _adminStatements={categories:[...STATEMENTS_DEFAULTS.categories],statements:[...STATEMENTS_DEFAULTS.statements]};
+async function loadStatementsForAdmin(){
+  if(!window._db) return;
+  try{
+    const snap=await window._fbGetDoc(window._fbDoc(window._db,'supportContent','statements'));
+    _adminStatements = (snap.exists() && snap.data().categories && snap.data().statements)
+      ? snap.data() : {categories:[...STATEMENTS_DEFAULTS.categories],statements:[...STATEMENTS_DEFAULTS.statements]};
+  }catch(e){
+    console.error('[Statements] load failed:',e.code,e.message);
+    _adminStatements={categories:[...STATEMENTS_DEFAULTS.categories],statements:[...STATEMENTS_DEFAULTS.statements]};
+  }
+  renderAdminStatements();
+}
+async function saveAdminStatements(){
+  if(!window._db){ toast('Not connected.','#ef4444'); return; }
+  try{
+    await window._fbSetDoc(window._fbDoc(window._db,'supportContent','statements'),
+      {categories:_adminStatements.categories, statements:_adminStatements.statements, updatedAt:new Date()});
+  }catch(e){ toast('❌ Could not save: '+e.message,'#ef4444'); }
+}
+function renderAdminStatements(){
+  const el=document.getElementById('admStmtList');
+  if(!el) return;
+  el.innerHTML=_adminStatements.categories.map((cat,ci)=>{
+    const items=_adminStatements.statements.filter(s=>s.categoryId===cat.id);
+    return `<div class="ref-block" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <h3 style="margin:0;">${escAdmin(cat.name)}</h3>
+        <div style="display:flex;gap:6px;">
+          <button class="rdm-toggle" style="padding:6px 10px;" ${ci===0?'disabled':''} onclick="moveStatementCategory(${ci},-1)"><svg class="ic" style="width:13px;height:13px;"><use href="#ic-chevron-up"></use></svg></button>
+          <button class="rdm-toggle" style="padding:6px 10px;" ${ci===_adminStatements.categories.length-1?'disabled':''} onclick="moveStatementCategory(${ci},1)"><svg class="ic" style="width:13px;height:13px;"><use href="#ic-chevron-down"></use></svg></button>
+          <button class="rdm-toggle deactivate" onclick="deleteStatementCategory('${cat.id}')">Delete Category</button>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        ${items.length ? items.map(s=>`<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
+          <div style="flex:1;font-size:12.5px;line-height:1.5;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;">${escAdmin(s.text)}</div>
+          <button class="rdm-toggle" onclick="editAdminStatement('${s.id}')">Edit</button>
+          <button class="rdm-toggle deactivate" onclick="deleteAdminStatement('${s.id}')">Delete</button>
+        </div>`).join('') : '<p style="color:var(--muted);font-size:12px;">No statements in this category yet.</p>'}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <input class="ref-input" id="admStmtNew_${cat.id}" placeholder="New statement text — use {customer_name} or {order_id} if needed…" style="flex:1;">
+        <button class="ref-btn" style="width:auto;padding:0 16px;" onclick="addAdminStatement('${cat.id}')">Add</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function moveStatementCategory(idx,dir){
+  const arr=_adminStatements.categories;
+  const j=idx+dir;
+  if(j<0||j>=arr.length) return;
+  [arr[idx],arr[j]]=[arr[j],arr[idx]];
+  renderAdminStatements();
+  saveAdminStatements();
+}
+async function addAdminStatement(categoryId){
+  const inp=document.getElementById('admStmtNew_'+categoryId);
+  const text=inp?.value.trim();
+  if(!text) return;
+  _adminStatements.statements.push({id:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), categoryId, text});
+  if(inp) inp.value='';
+  renderAdminStatements();
+  await saveAdminStatements();
+}
+async function editAdminStatement(id){
+  const s=_adminStatements.statements.find(x=>x.id===id);
+  if(!s) return;
+  const next=prompt('Edit statement:',s.text);
+  if(next===null) return;
+  const trimmed=next.trim();
+  if(!trimmed) return;
+  s.text=trimmed;
+  renderAdminStatements();
+  await saveAdminStatements();
+}
+async function deleteAdminStatement(id){
+  if(!confirm('Delete this statement?')) return;
+  _adminStatements.statements=_adminStatements.statements.filter(x=>x.id!==id);
+  renderAdminStatements();
+  await saveAdminStatements();
+}
+async function addStatementCategory(){
+  const name=prompt('New category name:');
+  if(!name||!name.trim()) return;
+  const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  _adminStatements.categories.push({id,name:name.trim()});
+  renderAdminStatements();
+  await saveAdminStatements();
+}
+async function deleteStatementCategory(id){
+  const cat=_adminStatements.categories.find(c=>c.id===id);
+  if(!cat) return;
+  if(!confirm(`Delete category "${cat.name}" and all ${_adminStatements.statements.filter(s=>s.categoryId===id).length} of its statements? This cannot be undone.`)) return;
+  _adminStatements.categories=_adminStatements.categories.filter(c=>c.id!==id);
+  _adminStatements.statements=_adminStatements.statements.filter(s=>s.categoryId!==id);
+  renderAdminStatements();
+  await saveAdminStatements();
+}
+
 function openTicketDetail(id){
   const t=_tickets.find(x=>x.id===id);
   if(!t) return;

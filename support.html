@@ -129,10 +129,12 @@ html.light-theme{
 .sp-search{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
   color:var(--text);font-family:'Poppins',sans-serif;font-size:12.5px;outline:none;margin-bottom:9px;}
 .sp-search:focus{border-color:var(--orange);}
-.sp-filters{display:flex;gap:5px;flex-wrap:wrap;}
-.sp-filter-btn{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;
-  border:1.5px solid var(--border);background:var(--bg);color:var(--muted);font-family:'Poppins',sans-serif;transition:all .15s;}
-.sp-filter-btn.active{border-color:var(--orange);background:var(--odim);color:var(--orange);}
+.sp-list-tabs{display:flex;gap:4px;}
+.sp-list-tabs .sp-tab{padding:7px 12px;border-radius:8px;background:var(--bg);}
+.sp-list-tabs .sp-tab.active{background:var(--odim);}
+.sp-tab-count{display:inline-block;min-width:16px;padding:0 4px;border-radius:8px;background:rgba(255,140,0,.18);
+  color:var(--orange);font-size:10px;font-weight:800;text-align:center;margin-left:2px;}
+.sp-list-tabs .sp-tab:not(.active) .sp-tab-count{background:rgba(255,255,255,.08);color:var(--muted);}
 .sp-list{flex:1;overflow-y:auto;}
 .sp-item{padding:12px 14px;border-bottom:1px solid rgba(34,34,53,.4);cursor:pointer;transition:background .12s;}
 .sp-item:hover{background:rgba(255,140,0,.06);}
@@ -204,12 +206,14 @@ html.light-theme{
 .sp-thread-input-row textarea{flex:1;resize:none;padding:10px 13px;background:var(--bg);border:1px solid var(--border);
   border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;max-height:90px;min-height:42px;}
 .sp-thread-input-row textarea:focus{border-color:var(--orange);}
+.sp-thread-input-row textarea:disabled{opacity:.5;cursor:not-allowed;background:var(--card);}
 .sp-send-btn{padding:0 18px;background:var(--orange);color:#000;border:none;border-radius:10px;font-weight:800;
   cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;flex-shrink:0;transition:opacity .15s;}
 .sp-send-btn:hover{opacity:.88;} .sp-send-btn:disabled{opacity:.5;cursor:not-allowed;}
 .sp-attach-btn{width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
   background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;transition:all .15s;}
 .sp-attach-btn:hover{border-color:var(--orange);color:var(--orange);}
+.sp-attach-btn:disabled{opacity:.5;cursor:not-allowed;}
 .sp-typing-indicator{display:flex;align-items:center;gap:7px;padding:6px 16px;font-size:11.5px;color:var(--muted);flex-shrink:0;}
 .sp-typing-dots{display:inline-flex;gap:3px;}
 .sp-typing-dots span{width:5px;height:5px;border-radius:50%;background:var(--orange);animation:spTypingPulse 1.2s infinite;}
@@ -250,6 +254,32 @@ html.light-theme{
 .sp-ctx-order-bottom{display:flex;justify-content:space-between;font-size:11px;}
 .sp-ctx-empty{font-size:11.5px;color:var(--muted);}
 .sp-ctx-toggle{display:none;}
+/* Canned statements library */
+.sp-stmt-search{width:100%;padding:8px 11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'Poppins',sans-serif;font-size:12px;outline:none;margin-bottom:12px;}
+.sp-stmt-search:focus{border-color:var(--orange);}
+.sp-stmt-cat{margin-bottom:14px;}
+.sp-stmt-cat-h{font-size:11px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.sp-stmt-item{display:flex;align-items:flex-start;gap:4px;margin-bottom:6px;}
+.sp-stmt-btn{flex:1;text-align:left;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'Poppins',sans-serif;font-size:11.5px;line-height:1.45;cursor:pointer;transition:border-color .15s;}
+.sp-stmt-btn:hover{border-color:var(--orange);}
+.sp-stmt-mine-tag{display:inline-block;font-size:9px;font-weight:800;color:var(--orange);background:var(--odim);
+  border-radius:6px;padding:1px 5px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+.sp-stmt-item-acts{display:flex;flex-direction:column;gap:3px;flex-shrink:0;}
+.sp-stmt-icon-btn{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);
+  border-radius:6px;background:var(--bg);color:var(--muted);cursor:pointer;}
+.sp-stmt-icon-btn:hover{color:var(--orange);border-color:var(--orange);}
+.sp-stmt-icon-btn svg{width:12px;height:12px;}
+.sp-stmt-empty{font-size:11.5px;color:var(--muted);text-align:center;padding:14px 0;}
+.sp-stmt-add{border-top:1px solid var(--border);padding-top:12px;margin-top:6px;}
+.sp-stmt-add-sel{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'Poppins',sans-serif;font-size:11.5px;margin-bottom:8px;}
+.sp-stmt-add-text{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'Poppins',sans-serif;font-size:11.5px;resize:vertical;margin-bottom:8px;outline:none;}
+.sp-stmt-add-text:focus{border-color:var(--orange);}
+.sp-stmt-add-btn{width:100%;padding:9px;background:var(--orange);color:#000;border:none;border-radius:8px;
+  font-weight:800;font-size:11.5px;cursor:pointer;font-family:'Poppins',sans-serif;}
 .sp-ctx-drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:598;}
 .sp-ctx-drawer-bg.on{display:block;}
 
@@ -324,8 +354,8 @@ html.light-theme{
   .sp-msg{max-width:88%;}
 }
 @media(max-width:420px){
-  .sp-filters{gap:4px;}
-  .sp-filter-btn{padding:5px 9px;font-size:10.5px;}
+  .sp-list-tabs{gap:3px;}
+  .sp-list-tabs .sp-tab{padding:6px 9px;font-size:10.5px;}
   .sp-thread-hdr-acts{width:100%;order:3;margin-left:0;}
   .sp-aux-btn{padding:6px 8px;font-size:10.5px;}
   .sp-aux-lbl-text{display:none;}
@@ -479,10 +509,9 @@ html.light-theme{
     <div class="sp-list-col">
       <div class="sp-list-tools">
         <input class="sp-search" id="spSearch" placeholder="Search name, order ID, message…" oninput="renderSpList()">
-        <div class="sp-filters">
-          <button class="sp-filter-btn active" data-f="all" onclick="setSpFilter('all')">All</button>
-          <button class="sp-filter-btn" data-f="unread" onclick="setSpFilter('unread')">Unread</button>
-          <button class="sp-filter-btn" data-f="mine" onclick="setSpFilter('mine')">Mine</button>
+        <div class="sp-list-tabs">
+          <button class="sp-tab active" id="spListTabActive" onclick="setSpListTab('active')">Active <span class="sp-tab-count" id="spActiveCount">0</span></button>
+          <button class="sp-tab" id="spListTabInactive" onclick="setSpListTab('inactive')">Inactive <span class="sp-tab-count" id="spInactiveCount">0</span></button>
         </div>
       </div>
       <div class="sp-list" id="spList"></div>
@@ -505,7 +534,7 @@ html.light-theme{
         </div>
         <div class="sp-ended-banner" id="spEndedBanner" style="display:none;">
           <svg class="ic-sm"><use href="#ic-close"></use></svg>
-          Ended by customer — please complete the disposition below.
+          <span id="spEndedBannerText">Chat session ended.</span>
         </div>
         <div class="sp-tabs">
           <div class="sp-tab active" id="spTabMsgs" onclick="spSwitchTab('messages')"><svg class="ic-sm"><use href="#ic-chat"></use></svg> Messages</div>
@@ -533,11 +562,18 @@ html.light-theme{
       </div>
     </div>
 
-    <!-- CUSTOMER CONTEXT -->
+    <!-- CANNED STATEMENTS -->
     <div class="sp-ctx-drawer-bg" id="spCtxBg" onclick="toggleSpCtxDrawer()"></div>
     <div class="sp-ctx-col" id="spCtxCol">
-      <div class="sp-ctx-h">Last 3 Orders</div>
-      <div id="spCtxOrders"><div class="sp-ctx-empty">Select a conversation.</div></div>
+      <div class="sp-ctx-h">Statements</div>
+      <input class="sp-stmt-search" id="spStmtSearch" placeholder="Search statements…" oninput="renderStatements()">
+      <div id="spStmtList"></div>
+      <div class="sp-stmt-add">
+        <div class="sp-ctx-h" style="margin-top:4px;">Add your own</div>
+        <select class="sp-stmt-add-sel" id="spStmtAddCategory"></select>
+        <textarea class="sp-stmt-add-text" id="spStmtAddText" rows="2" placeholder="Use {customer_name} or {order_id} if needed…"></textarea>
+        <button class="sp-stmt-add-btn" onclick="addPersonalStatement()">Add statement</button>
+      </div>
     </div>
   </div>
 </div>
@@ -604,7 +640,7 @@ const ADMIN_EMAIL='adminlinkup@gmail.com';
 // from support-config.js — shared with index.html and admin.html.
 
 let spProfile=null; // {uid, name, email, isAdmin:bool}
-let _spConvos=[], _spUnsub=null, _spActiveId=null, _spFilter='all', _spTab='messages', _spSending=false;
+let _spConvos=[], _spUnsub=null, _spActiveId=null, _spListTab='active', _spTab='messages', _spSending=false;
 let _allAgents=[], _agentsUnsub=null, _claimInFlight=false;
 let _heartbeatInterval=null, _selfHealInterval=null, _staleCheckInFlight=false;
 
@@ -749,9 +785,12 @@ async function spShowApp(){
   if(statsBtn) statsBtn.style.display=spProfile.isAdmin?'none':'flex';
   const attachBtn=document.getElementById('spAttachBtn');
   if(attachBtn) attachBtn.style.display=ATTACHMENTS_ENABLED?'flex':'none';
+  const stmtAdd=document.querySelector('.sp-stmt-add');
+  if(stmtAdd) stmtAdd.style.display=spProfile.isAdmin?'none':'block'; // admin has no supportAgents doc to store personal statements on — manage the shared set from admin.html instead
   spUpdateHoursPill();
   startSpListener();
   startAgentsListener();
+  startStatementsListener();
   if(!spProfile.isAdmin){
     await initAuxState();
     loadNotifSettings();
@@ -767,6 +806,7 @@ function spCleanup(){
   if(_heartbeatInterval){clearInterval(_heartbeatInterval);_heartbeatInterval=null;}
   if(_selfHealInterval){clearInterval(_selfHealInterval);_selfHealInterval=null;}
   if(_typingUnsub){_typingUnsub();_typingUnsub=null;}
+  if(_statementsUnsub){_statementsUnsub();_statementsUnsub=null;}
   _spConvos=[]; _spActiveId=null; spProfile=null; _spKnownIds=null; _allAgents=[];
   document.title='LinkUp Support';
   document.getElementById('spAuxMenu')?.classList.remove('on');
@@ -778,7 +818,7 @@ function spSetupAuth(){
     const uid=window._supAuth.currentUser?.uid ?? fbUser.uid;
     if(spProfile?.uid===uid && document.getElementById('spApp').classList.contains('on')) return;
     if((fbUser.email||'').toLowerCase()===ADMIN_EMAIL){
-      spProfile={uid,name:'Admin',email:fbUser.email,isAdmin:true};
+      spProfile={uid,name:'Admin',displayName:'Admin',email:fbUser.email,isAdmin:true,personalStatements:[]};
       spShowApp();
       return;
     }
@@ -800,7 +840,7 @@ function spSetupAuth(){
         spShowLogin('❌ Your support access has been deactivated. Contact your administrator.');
         return;
       }
-      spProfile={uid,name:data.name||fbUser.email,email:data.email||fbUser.email,isAdmin:false};
+      spProfile={uid,name:data.name||fbUser.email,displayName:data.displayName||data.name||fbUser.email,email:data.email||fbUser.email,isAdmin:false,personalStatements:data.personalStatements||[]};
       spShowApp();
     }catch(e){
       console.error('[Support] profile check failed:',e);
@@ -918,7 +958,7 @@ async function maybeClaimNextChat(){
       const greetId='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
       const existingFirstReply=chatSnap.data().firstReplyAt;
       txn.update(chatRef,{
-        assignedAgentUid:spProfile.uid, assignedAgentName:spProfile.name,
+        assignedAgentUid:spProfile.uid, assignedAgentName:spProfile.displayName||spProfile.name,
         firstReplyAt: existingFirstReply||now,
         messages:window._supArrUnion({id:greetId,sender:'staff',text:GREETING_TEXT,at:now,byUid:spProfile.uid,byName:spProfile.name,byRole:'support'}),
         lastMessage:GREETING_TEXT, lastMessageAt:now, lastSender:'staff', updatedAt:now
@@ -1036,23 +1076,51 @@ async function selfHealOpenChatCount(){
   }catch(e){ console.warn('[Support] self-heal openChatCount failed:',e.code,e.message); }
 }
 
-function setSpFilter(f){
-  _spFilter=f;
-  document.querySelectorAll('.sp-filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===f));
+// A chat is "inactive" purely by customer silence — the moment the
+// customer sends again, lastMessageAt/unreadByAdmin update and it's back
+// on Active automatically (spCheckNewChats already chimes on that, since
+// it's just "new customer message on an assigned chat" — no separate
+// notification logic needed here). One constant controls the threshold.
+const INACTIVE_THRESHOLD_MS = 5*60*1000;
+function lastCustomerMessageAt(c){
+  const msgs=(c.messages||[]).filter(m=>m.sender==='customer');
+  if(!msgs.length) return c.createdAt||null;
+  return msgs.reduce((latest,m)=> spToMillis(m.at)>spToMillis(latest) ? m.at : latest, msgs[0].at);
+}
+function isSpChatInactive(c){
+  return (Date.now()-spToMillis(lastCustomerMessageAt(c))) > INACTIVE_THRESHOLD_MS;
+}
+
+function setSpListTab(tab){
+  _spListTab=tab;
+  document.getElementById('spListTabActive').classList.toggle('active',tab==='active');
+  document.getElementById('spListTabInactive').classList.toggle('active',tab==='inactive');
   renderSpList();
 }
 
-function spMatchesFilter(c){
-  if(!isVisibleToMe(c)) return false;
-  if(_spFilter==='unread') return !!c.unreadByAdmin;
-  if(_spFilter==='mine') return c.assignedAgentUid===spProfile?.uid;
-  return true; // all
+function spConvoBadge(c){
+  const mine=c.assignedAgentUid===spProfile?.uid;
+  if(!c.assignedAgentUid) return '<span class="sp-item-status new">queued</span>';
+  return mine?'<span class="sp-item-status mine">yours</span>'
+    :`<span class="sp-item-status other">${spEsc(c.assignedAgentName||'agent')}</span>`;
+}
+function spEndedBadge(c){
+  if(!c.endChatLockBy) return '';
+  const label=c.customerEndRequested?'ended by customer':(c.endChatLockBy===spProfile?.uid?'ended by you':'ended');
+  return ` <span class="sp-item-status ended">${label}</span>`;
 }
 
 function renderSpList(){
   const el=document.getElementById('spList');
   const q=(document.getElementById('spSearch')?.value||'').trim().toLowerCase();
-  let list=_spConvos.filter(c=>(c.messages||[]).length>0).filter(spMatchesFilter);
+  let visible=_spConvos.filter(c=>(c.messages||[]).length>0).filter(isVisibleToMe);
+  const activeList=visible.filter(c=>!isSpChatInactive(c));
+  const inactiveList=visible.filter(isSpChatInactive);
+  const activeCountEl=document.getElementById('spActiveCount'), inactiveCountEl=document.getElementById('spInactiveCount');
+  if(activeCountEl) activeCountEl.textContent=activeList.length;
+  if(inactiveCountEl) inactiveCountEl.textContent=inactiveList.length;
+
+  let list=_spListTab==='inactive'?inactiveList:activeList;
   if(q){
     list=list.filter(c=>
       (c.customerName||'').toLowerCase().includes(q) ||
@@ -1067,12 +1135,6 @@ function renderSpList(){
   el.innerHTML=list.map(c=>{
     const unread=!!c.unreadByAdmin;
     const active=c.id===_spActiveId;
-    const mine=c.assignedAgentUid===spProfile?.uid;
-    const endedByCustomer=!!c.customerEndRequested && !!c.assignedAgentUid && !c.endChatLockBy;
-    const badge=!c.assignedAgentUid?'<span class="sp-item-status new">queued</span>'
-      :mine?'<span class="sp-item-status mine">yours</span>'
-      :`<span class="sp-item-status other">${spEsc(c.assignedAgentName||'agent')}</span>`;
-    const endedBadge=endedByCustomer?' <span class="sp-item-status ended">ended by customer</span>':'';
     const prefix=c.lastSender==='customer'?'':'You: ';
     return `<div class="sp-item${active?' active':''}" onclick="openSpConversation('${c.id}')">
       <div class="sp-item-top">
@@ -1081,13 +1143,14 @@ function renderSpList(){
       </div>
       <div class="sp-item-meta">
         <span class="sp-item-order">${c.orderId?('#'+spEsc(c.orderId)):'General'}</span>
-        ${badge}${endedBadge}
+        ${spConvoBadge(c)}${spEndedBadge(c)}
       </div>
       <div class="sp-item-last">${spEsc(prefix+(c.lastMessage||''))}</div>
       <div class="sp-item-time">${spTime(c.lastMessageAt||c.updatedAt)}</div>
     </div>`;
   }).join('');
 }
+setInterval(renderSpList, 15000); // ages chats from Active to Inactive without needing a new Firestore event
 
 // ── THREAD ────────────────────────────────────────────
 function openSpConversation(id){
@@ -1102,7 +1165,6 @@ function openSpConversation(id){
   spSwitchTab('messages');
   renderSpThread(c);
   renderSpList();
-  loadSpCustomerOrders(id);
   watchTyping(id);
   if(c.unreadByAdmin){
     window._supUpdate(window._supDoc(window._supDb,'supportChats',id),{unreadByAdmin:false}).catch(e=>console.warn('[Support] mark-read failed:',e));
@@ -1133,14 +1195,32 @@ function renderSpThread(c){
   document.getElementById('spCtxToggleBtn').style.display=window.innerWidth<1000?'inline-block':'none';
 
   // The customer can close their own side instantly (see endChatByCustomer
-  // in index.html) without any agent being connected — if that happened
-  // while this chat was assigned, surface it here so the owning agent still
-  // records a real disposition instead of it silently vanishing.
-  const endedByCustomer=!!c.customerEndRequested && !!c.assignedAgentUid && !c.endChatLockBy;
+  // in index.html) without any agent being connected, and the agent can
+  // lock a chat the moment they click End Chat (see openEndChatFlow) before
+  // the disposition form is even filled in. Either way, once endChatLockBy
+  // is set the conversation is over — show why, and disable the reply box
+  // for real so nothing can be sent into a closed chat from this side.
+  const locked=!!c.endChatLockBy;
   const endedBanner=document.getElementById('spEndedBanner');
-  if(endedBanner) endedBanner.style.display=endedByCustomer?'flex':'none';
+  const endedBannerText=document.getElementById('spEndedBannerText');
+  if(endedBanner){
+    endedBanner.style.display=locked?'flex':'none';
+    if(endedBannerText){
+      endedBannerText.textContent = c.customerEndRequested
+        ? 'Chat session ended by customer — please complete the disposition below.'
+        : (c.endChatLockBy===spProfile?.uid
+            ? 'Chat session ended by you — please complete the disposition below.'
+            : 'Chat session ended — a disposition is being completed.');
+    }
+  }
   const endBtnLabel=document.getElementById('spEndChatBtnLabel');
-  if(endBtnLabel) endBtnLabel.textContent=endedByCustomer?'Complete Ticket':'End Chat';
+  if(endBtnLabel) endBtnLabel.textContent=locked?'Complete Ticket':'End Chat';
+  const replyInput=document.getElementById('spReplyInput');
+  const sendBtn=document.getElementById('spSendBtn');
+  const attachBtn=document.getElementById('spAttachBtn');
+  if(replyInput){ replyInput.disabled=locked; replyInput.placeholder=locked?'This chat has ended.':'Type a reply…'; }
+  if(sendBtn) sendBtn.disabled=locked;
+  if(attachBtn) attachBtn.disabled=locked;
 
   const msgs=(c.messages||[]).slice().sort((a,b)=>spToMillis(a.at)-spToMillis(b.at));
   const el=document.getElementById('spThreadMessages');
@@ -1190,6 +1270,7 @@ async function sendSpReply(){
   const txt=inp.value.trim();
   if(!txt) return;
   const c=_spConvos.find(x=>x.id===_spActiveId);
+  if(c && c.endChatLockBy){ spToast('This chat has ended.','#ef4444'); return; }
   // Split-brain guard: with automatic round-robin assignment, a non-admin
   // agent should only ever be replying to their own chat. If it moved (a
   // heartbeat false-positive reassigning a merely-backgrounded tab, etc.),
@@ -1244,7 +1325,7 @@ function watchTyping(chatId){
 function handleReplyTyping(){
   if(!_spActiveId) return;
   window._supSetDoc(window._supDoc(window._supDb,'typingIndicators',_spActiveId),
-    {agentTyping:true, agentTypingAt:new Date(), agentName:spProfile?.name||'Agent'}, {merge:true}).catch(()=>{});
+    {agentTyping:true, agentTypingAt:new Date(), agentName:spProfile?.displayName||spProfile?.name||'Agent'}, {merge:true}).catch(()=>{});
   clearTimeout(_myTypingTimeout);
   _myTypingTimeout=setTimeout(clearMyTyping,3000);
 }
@@ -1540,16 +1621,50 @@ function flashNewChatBadge(){
 }
 
 // ── END CHAT + DISPOSITION ────────────────────────────
-let _ecState=null;
-function openEndChatFlow(){
+let _ecState=null, _ecLockingInFlight=false;
+// Acquiring the lock happens the moment the agent clicks End Chat, not when
+// they submit the form — from this click on, the chat is visibly "closed"
+// (banner + disabled reply box, see renderSpThread) and the disposition
+// form is the only thing left to do. Never hangs: a 10s ceiling re-enables
+// the button with an error if the lock write stalls.
+async function openEndChatFlow(){
   const c=_spConvos.find(x=>x.id===_spActiveId);
-  if(!c) return;
+  if(!c || _ecLockingInFlight) return;
+  if(c.endChatLockBy && c.endChatLockBy!==spProfile.uid){
+    spToast('⚠️ This chat is already being closed.','#f59e0b');
+    return;
+  }
+  if(!c.endChatLockBy){
+    _ecLockingInFlight=true;
+    const btn=document.getElementById('spEndChatBtn');
+    if(btn) btn.disabled=true;
+    let timedOut=false;
+    const timeoutId=setTimeout(()=>{
+      timedOut=true; _ecLockingInFlight=false;
+      if(btn) btn.disabled=false;
+      spToast('⚠️ Could not start closing this chat — check connection and try again.','#f59e0b');
+    },10000);
+    let locked=false;
+    try{ locked=await acquireEndChatLock(c.id); }catch(e){}
+    if(timedOut) return;
+    clearTimeout(timeoutId);
+    _ecLockingInFlight=false;
+    if(btn) btn.disabled=false;
+    if(!locked){ spToast('⚠️ Could not start closing this chat — check connection and try again.','#ef4444'); return; }
+  }
   _ecState={step:'confirm'};
-  renderEndChatFlow(c);
+  renderEndChatFlow(_spConvos.find(x=>x.id===_spActiveId)||c);
 }
 function cancelEndChatFlow(){
+  const c=_spConvos.find(x=>x.id===_spActiveId);
   _ecState=null;
   const el=document.getElementById('spEndChatFlow'); if(el) el.innerHTML='';
+  // Only release a lock we took ourselves for a manual, agent-initiated end
+  // — a customer-initiated one can't be "cancelled" (the customer's already
+  // left and rated), so the lock stays and the form stays reachable.
+  if(c && c.endChatLockBy===spProfile?.uid && !c.customerEndRequested){
+    window._supUpdate(window._supDoc(window._supDb,'supportChats',c.id),{endChatLockBy:null,endChatLockAt:null}).catch(()=>{});
+  }
 }
 function ecPickResolved(val){
   _ecState={step:'form', resolved:val};
@@ -1597,7 +1712,10 @@ async function acquireEndChatLock(chatId){
       const data=snap.data();
       if(data.endChatLockBy) return false; // already being processed
       if(!(data.messages||[]).length) return false; // already ended
-      txn.update(ref,{endChatLockBy:spProfile.uid, endChatLockAt:new Date(), customerEndRequested:false});
+      // customerEndRequested is deliberately left untouched here (not
+      // cleared to false) — it's the only record of *who* started the end,
+      // needed by the thread banner right up until finishEndChat's reset.
+      txn.update(ref,{endChatLockBy:spProfile.uid, endChatLockAt:new Date()});
       return true;
     });
   }catch(e){ console.error('[Support] end-chat lock failed:',e.code,e.message); return false; }
@@ -1657,14 +1775,18 @@ async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}
     return null;
   }
 }
-// Never a dead end: a 15s ceiling flips the button back to usable with a
-// clear error if the lock/ticket writes hang (e.g. offline), rather than
-// leaving "Ending…" stuck forever. If the underlying calls do eventually
-// resolve after the timeout fired, the lock they hold prevents any
-// double-submit from a manual retry.
+// The lock is already held (acquired back in openEndChatFlow, the moment
+// the agent first clicked End Chat) — this just fills in and submits the
+// disposition. Never a dead end: a 15s ceiling flips the button back to
+// usable with a clear error if the ticket-creation writes hang (e.g.
+// offline), rather than leaving "Ending…" stuck forever.
 async function submitEndChat(){
   const c=_spConvos.find(x=>x.id===_spActiveId);
   if(!c||!_ecState) return;
+  if(c.endChatLockBy!==spProfile.uid){
+    spToast('⚠️ This chat is not locked by you — reopen End Chat to retry.','#ef4444');
+    return;
+  }
   const orderId=document.getElementById('ecOrderId').value.trim();
   const issue=document.getElementById('ecIssue').value.trim();
   const actionTaken=document.getElementById('ecAction').value.trim();
@@ -1680,13 +1802,6 @@ async function submitEndChat(){
     resetBtn('⚠️ Taking longer than expected — check your connection and try again.','#f59e0b');
   },15000);
   try{
-    const locked=await acquireEndChatLock(c.id);
-    if(timedOut) return; // already told the agent; let a manual retry go through the lock check
-    if(!locked){
-      clearTimeout(timeoutId);
-      resetBtn('⚠️ This chat is already being closed.','#f59e0b');
-      return;
-    }
     const ticketId=await finishEndChat(c.id,{resolved:_ecState.resolved, issue, actionTaken, orderIdOverride:orderId||null});
     if(timedOut) return;
     clearTimeout(timeoutId);
@@ -1840,27 +1955,108 @@ async function spmRenderStats(){
   }
 }
 
-// ── CUSTOMER CONTEXT (last 3 orders) ─────────────────
-async function loadSpCustomerOrders(walletToken){
-  const el=document.getElementById('spCtxOrders');
-  el.innerHTML='<div class="sp-ctx-empty">Loading…</div>';
+// ── CANNED STATEMENTS ─────────────────────────────────
+// Global set comes from supportContent/statements (admin-managed), falling
+// back to STATEMENTS_DEFAULTS (support-config.js) until that doc exists or
+// loads. Personal statements live on the agent's own supportAgents doc
+// (already read at login) — self-write, so add/edit/delete just overwrite
+// that whole array via updateDoc.
+let _globalStatements={...STATEMENTS_DEFAULTS}, _statementsUnsub=null;
+function startStatementsListener(){
+  if(_statementsUnsub){_statementsUnsub();_statementsUnsub=null;}
+  if(!window._supDb) return;
+  _statementsUnsub=window._supSnap(window._supDoc(window._supDb,'supportContent','statements'), snap=>{
+    _globalStatements = (snap.exists() && snap.data().categories && snap.data().statements)
+      ? snap.data() : {...STATEMENTS_DEFAULTS};
+    populateStatementCategorySelect();
+    renderStatements();
+  }, ()=>{ _globalStatements={...STATEMENTS_DEFAULTS}; renderStatements(); });
+}
+function populateStatementCategorySelect(){
+  const sel=document.getElementById('spStmtAddCategory');
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML=_globalStatements.categories.map(c=>`<option value="${c.id}">${spEsc(c.name)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+function renderStatements(){
+  const el=document.getElementById('spStmtList');
+  if(!el) return;
+  const q=(document.getElementById('spStmtSearch')?.value||'').trim().toLowerCase();
+  const personal=(spProfile?.personalStatements||[]).map(s=>({...s,mine:true}));
+  const html=_globalStatements.categories.map(cat=>{
+    const items=[
+      ..._globalStatements.statements.filter(s=>s.categoryId===cat.id),
+      ...personal.filter(s=>s.category===cat.id)
+    ].filter(s=>!q || s.text.toLowerCase().includes(q));
+    if(!items.length) return '';
+    return `<div class="sp-stmt-cat">
+      <div class="sp-stmt-cat-h">${spEsc(cat.name)}</div>
+      ${items.map(s=>`<div class="sp-stmt-item">
+        <button class="sp-stmt-btn" onclick="insertStatementById('${s.id}',${s.mine?'true':'false'})">${s.mine?'<span class="sp-stmt-mine-tag">Yours</span><br>':''}${spEsc(s.text)}</button>
+        ${s.mine?`<div class="sp-stmt-item-acts">
+          <button class="sp-stmt-icon-btn" title="Edit" onclick="editPersonalStatement('${s.id}')"><svg><use href="#ic-edit"></use></svg></button>
+          <button class="sp-stmt-icon-btn" title="Delete" onclick="deletePersonalStatement('${s.id}')"><svg><use href="#ic-trash"></use></svg></button>
+        </div>`:''}
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+  el.innerHTML = html || '<div class="sp-stmt-empty">No statements match.</div>';
+}
+function insertStatementById(id,mine){
+  const s=mine ? (spProfile.personalStatements||[]).find(x=>x.id===id) : _globalStatements.statements.find(x=>x.id===id);
+  if(s) insertStatement(s.text);
+}
+function insertStatement(text){
+  const inp=document.getElementById('spReplyInput');
+  if(!inp) return;
+  const c=_spConvos.find(x=>x.id===_spActiveId);
+  const resolved=fillStatementPlaceholders(text, c);
+  const start=inp.selectionStart??inp.value.length, end=inp.selectionEnd??inp.value.length;
+  const before=inp.value.slice(0,start), after=inp.value.slice(end);
+  const sep=before && !/\s$/.test(before) ? ' ' : '';
+  inp.value = before + sep + resolved + after;
+  inp.focus();
+  const pos=(before+sep+resolved).length;
+  inp.setSelectionRange(pos,pos);
+  if(window.innerWidth<1000) toggleSpCtxDrawer(); // close the mobile drawer so the agent can see/edit the reply
+}
+async function addPersonalStatement(){
+  const category=document.getElementById('spStmtAddCategory')?.value;
+  const textEl=document.getElementById('spStmtAddText');
+  const text=textEl?.value.trim();
+  if(!category||!text){ spToast('⚠️ Pick a category and enter the statement text.','#f59e0b'); return; }
+  const list=[...(spProfile.personalStatements||[]), {id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), category, text}];
   try{
-    const q=window._supQuery(window._supCol(window._supDb,'orders'), window._supWhere('walletToken','==',walletToken));
-    const snap=await window._supGetDocs(q);
-    const orders=snap.docs.map(d=>({id:d.id,...d.data()}))
-      .sort((a,b)=>spToMillis(b.createdAt)-spToMillis(a.createdAt))
-      .slice(0,3);
-    if(_spActiveId!==walletToken) return; // agent switched conversations while this was loading
-    if(!orders.length){ el.innerHTML='<div class="sp-ctx-empty">No previous orders.</div>'; return; }
-    el.innerHTML=orders.map(o=>`<div class="sp-ctx-order">
-      <div class="sp-ctx-order-top"><span>#${spEsc(o.orderId||o.id)}</span><span>₹${o.amount??'—'}</span></div>
-      <div class="sp-ctx-order-items">${spEsc((o.items||[]).join(', ')||'—')}</div>
-      <div class="sp-ctx-order-bottom"><span style="color:var(--muted);">${spTime(o.createdAt)}</span><span style="color:var(--muted);text-transform:capitalize;">${spEsc(o.status||'')}</span></div>
-    </div>`).join('');
-  }catch(e){
-    console.error('[Support] orders context failed:',e.code,e.message);
-    el.innerHTML=`<div class="sp-ctx-empty">⚠️ Could not load orders (${spEsc(e.code||'error')}).</div>`;
-  }
+    await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{personalStatements:list});
+    spProfile.personalStatements=list;
+    if(textEl) textEl.value='';
+    renderStatements();
+    spToast('✅ Statement added.','#22c55e');
+  }catch(e){ spToast('⚠️ Could not save — check connection and try again.','#ef4444'); }
+}
+async function editPersonalStatement(id){
+  const s=(spProfile.personalStatements||[]).find(x=>x.id===id);
+  if(!s) return;
+  const next=prompt('Edit statement:',s.text);
+  if(next===null) return;
+  const trimmed=next.trim();
+  if(!trimmed) return;
+  const list=(spProfile.personalStatements||[]).map(x=>x.id===id?{...x,text:trimmed}:x);
+  try{
+    await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{personalStatements:list});
+    spProfile.personalStatements=list;
+    renderStatements();
+  }catch(e){ spToast('⚠️ Could not save — check connection and try again.','#ef4444'); }
+}
+async function deletePersonalStatement(id){
+  if(!confirm('Delete this statement?')) return;
+  const list=(spProfile.personalStatements||[]).filter(x=>x.id!==id);
+  try{
+    await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{personalStatements:list});
+    spProfile.personalStatements=list;
+    renderStatements();
+  }catch(e){ spToast('⚠️ Could not delete — check connection and try again.','#ef4444'); }
 }
 
 function toggleSpCtxDrawer(){

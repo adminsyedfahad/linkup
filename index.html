@@ -1886,6 +1886,7 @@ button,a,[onclick]{
   transition:border-color 0.2s;
 }
 .chat-input:focus{border-color:var(--orange);}
+.chat-input:disabled{opacity:.55;cursor:not-allowed;}
 .chat-send-btn{
   width:38px;height:38px;border-radius:50%;
   background:var(--orange);border:none;color:#000;
@@ -1893,6 +1894,7 @@ button,a,[onclick]{
   flex-shrink:0;transition:transform 0.15s;
 }
 .chat-send-btn:active{transform:scale(0.92);}
+.chat-send-btn:disabled{opacity:.45;cursor:not-allowed;}
 /* Inline address form in chat */
 .chat-addr-form{background:var(--card);border:1px solid rgba(255,140,0,0.25);border-radius:14px;padding:14px;margin-top:6px;}
 .chat-addr-form .form-group{margin-bottom:10px;}
@@ -7156,7 +7158,7 @@ function closeIOSSheet() {
 // hours only ever need to change in one place.
 
 let _chatOrderId = null;
-let _chatSession = 0; // bumped on every openSupportChat(); lets a pending end-chat retry recognize a stale session
+let _chatClosedLocally = false; // true the instant the customer taps End Chat — authoritative, never revisited by a snapshot
 let _chatConvRef = null;
 let _chatUnsub = null;
 let _chatConfirmed = [];  // messages currently confirmed in Firestore
@@ -7166,7 +7168,7 @@ let _chatTriageView = null; // null = triage menu showing; a TRIAGE_ANSWERS key 
 
 function openSupportChat(orderId) {
   _chatOrderId = orderId || null;
-  _chatSession++;
+  _chatClosedLocally = false;
   _chatTriageView = null;
   document.getElementById('chatOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -7241,7 +7243,7 @@ function refreshChatHeader(){
   const banner = document.getElementById('chatOfflineBanner');
   const state = supportStatusState();
   if(state === 'assigned'){
-    if(nameEl) nameEl.textContent = _chatLastData.assignedAgentName.split(' ')[0];
+    if(nameEl) nameEl.textContent = _chatLastData.assignedAgentName;
     if(dot) dot.style.background = '#22c55e';
     if(text) text.textContent = 'Active now';
     if(banner) banner.style.display = 'none';
@@ -7522,26 +7524,40 @@ function renderChatMessages(){
   }
 
   // Live conversation in progress (at least one real message sent)
-  if(inputRow) inputRow.style.display = 'flex';
+  // Agent-initiated end: locked but the customer hasn't closed their own
+  // side yet — nothing left for them to do here either, so disable input
+  // and say so plainly instead of leaving a stale live view up.
+  const agentLocked = !!(_chatLastData && _chatLastData.endChatLockBy);
+  if(inputRow){
+    inputRow.style.display = 'flex';
+    const inp = document.getElementById('chatInput');
+    const sendBtn = document.querySelector('#chatInputRow .chat-send-btn');
+    if(inp){ inp.disabled = agentLocked; inp.placeholder = agentLocked ? 'This chat has ended.' : 'Type a message...'; }
+    if(sendBtn) sendBtn.disabled = agentLocked;
+  }
   if(endBtn){
-    const ending = !!(_chatLastData && _chatLastData.customerEndRequested);
-    endBtn.style.display = 'inline-block';
-    endBtn.disabled = ending;
-    endBtn.textContent = ending ? 'Ending…' : 'End Chat';
+    endBtn.style.display = agentLocked ? 'none' : 'inline-block';
+    endBtn.disabled = false;
+    endBtn.textContent = 'End Chat';
   }
   if(qBanner){
-    const state = supportStatusState();
-    if(state === 'assigned'){
-      qBanner.style.display = 'none';
-    } else {
-      const pos = _chatLastData && _chatLastData.queuePosition;
+    if(agentLocked){
       qBanner.style.display = 'block';
-      if(state === 'offline'){
-        qBanner.textContent = "We're outside support hours right now — we'll pick this up as soon as we're back.";
-      } else if(state === 'busy'){
-        qBanner.textContent = "All our agents are busy right now. You'll be connected the moment one is free.";
+      qBanner.textContent = 'Your conversation is being wrapped up…';
+    } else {
+      const state = supportStatusState();
+      if(state === 'assigned'){
+        qBanner.style.display = 'none';
       } else {
-        qBanner.textContent = pos ? `You're #${pos} in the queue — an agent will be with you shortly.` : `You're in the queue — an agent will be with you shortly.`;
+        const pos = _chatLastData && _chatLastData.queuePosition;
+        qBanner.style.display = 'block';
+        if(state === 'offline'){
+          qBanner.textContent = "We're outside support hours right now — we'll pick this up as soon as we're back.";
+        } else if(state === 'busy'){
+          qBanner.textContent = "All our agents are busy right now. You'll be connected the moment one is free.";
+        } else {
+          qBanner.textContent = pos ? `You're #${pos} in the queue — an agent will be with you shortly.` : `You're in the queue — an agent will be with you shortly.`;
+        }
       }
     }
   }
@@ -7551,7 +7567,7 @@ function renderChatMessages(){
     ..._chatPending.map(m=>({...m,_pending:true}))
   ].sort((a,b) => (a._pending?a._localAt:_chatToMillis(a.at)) - (b._pending?b._localAt:_chatToMillis(b.at)));
 
-  const staffFirstName = (_chatLastData && _chatLastData.assignedAgentName) ? _chatLastData.assignedAgentName.split(' ')[0] : 'LinkUp Support';
+  const staffFirstName = (_chatLastData && _chatLastData.assignedAgentName) ? _chatLastData.assignedAgentName : 'LinkUp Support';
   msgsEl.innerHTML = all.map(m => {
     const isCustomer = m.sender === 'customer';
     return `<div class="chat-msg ${isCustomer?'user':'bot'}">
@@ -7586,6 +7602,7 @@ function renderChatStatusFooter(all){
 }
 
 async function sendChatMessage() {
+  if(_chatClosedLocally || (_chatLastData && _chatLastData.endChatLockBy)) return;
   const inp = document.getElementById('chatInput');
   const txt = inp.value.trim();
   if(!txt) return;
@@ -7652,7 +7669,7 @@ function watchAgentTyping(){
     if(!row) return;
     const isTyping = d.agentTyping && (Date.now() - _chatToMillis(d.agentTypingAt)) < 5000;
     row.classList.toggle('on', !!isTyping);
-    if(label) label.textContent = (d.agentName ? d.agentName.split(' ')[0] : 'Agent') + ' is typing…';
+    if(label) label.textContent = (d.agentName || 'Agent') + ' is typing…';
   }, ()=>{});
 }
 function handleChatInputTyping(){
@@ -7732,64 +7749,47 @@ async function uploadAndSendChatAttachment(file){
 }
 
 // ── CUSTOMER-INITIATED END CHAT ─────────────────────────
-// Closing must never depend on an agent or admin being connected — the
-// customer closes their own side of the conversation immediately, whether
-// or not anyone is currently online. Staff (whenever next online) turns it
-// into a ticket afterward: the assigned agent completes the disposition
-// form if one was assigned, or it's auto-filed as "no agent" if it was
-// still queued — but the customer's own screen never waits on that.
-let _chatEndingLocal = false;
-async function endChatByCustomer(){
-  if(!_chatConvRef || _chatEndingLocal) return;
-  _chatEndingLocal = true;
-  const mySession = _chatSession;
-  const btn = document.getElementById('chatEndBtn');
-  if(btn){ btn.disabled = true; btn.textContent = 'Ending…'; }
-  clearMyChatTyping();
+// Closing must never depend on an agent or admin being connected, or on any
+// network round-trip — the moment the customer taps this, we stop listening
+// entirely (so no stale/queued snapshot can ever re-show the live chat or
+// let another message land) and render the closing/survey UI synchronously,
+// right here, off local state. The Firestore write is fire-and-forget from
+// the UI's perspective — it just informs staff, whenever any come online.
+function endChatByCustomer(){
+  if(!_chatConvRef || _chatClosedLocally) return;
+  _chatClosedLocally = true;
+
+  // Kill every listener on this conversation right now — this is what
+  // actually closes the race that let a stale snapshot undo the close.
+  if(_chatUnsub){ _chatUnsub(); _chatUnsub = null; }
+  if(_presenceUnsub){ _presenceUnsub(); _presenceUnsub = null; }
   if(_chatTypingUnsub){ _chatTypingUnsub(); _chatTypingUnsub = null; }
+  clearMyChatTyping();
 
   const surveyToken = (_chatLastData && _chatLastData.pendingSurvey && _chatLastData.pendingSurvey.surveyToken)
     || genToken(24);
   const now = new Date();
   const pendingSurvey = { surveyToken, endedAt: now, ticketId: null };
 
-  let settled = false;
-  const closeLocally = () => {
-    if(settled) return;
-    settled = true;
-    _chatEndingLocal = false;
-    if(mySession !== _chatSession) return; // the customer closed and reopened the chat since we started
-    // Drive the exact same closing/survey UI the staff-ended path already
-    // uses — don't wait for the write to round-trip through onSnapshot.
-    handlePendingSurvey(pendingSurvey);
-  };
-  // Never a dead end: if the write hasn't confirmed within 5s, stop showing
-  // "Ending…", tell the customer it's closed, and keep retrying quietly.
-  const timeoutId = setTimeout(() => {
-    const wasSettled = settled;
-    closeLocally();
-    if(!wasSettled) showToast("Chat closed. Still syncing — we'll finish in the background.");
-  }, 5000);
+  // Instant — no setTimeout, no await, no network check. This token is
+  // either brand new or was never rated (the End Chat button can't be
+  // showing otherwise), so there's nothing to check before rendering.
+  renderSurveyCard(surveyToken);
 
-  const write = async (attempt) => {
+  const write = (attempt) => {
     if(!window._fbReady || !window._db){
       if(attempt < 6) setTimeout(() => write(attempt+1), 4000);
       return;
     }
-    try{
-      await window._fbSetDoc(_chatConvRef, {
-        customerEndRequested: true,
-        customerClosedAt: now,
-        pendingSurvey,
-        updatedAt: now
-      }, { merge: true });
-      clearTimeout(timeoutId);
-      closeLocally();
-    }catch(e){
+    window._fbSetDoc(_chatConvRef, {
+      customerEndRequested: true,
+      customerClosedAt: now,
+      pendingSurvey,
+      updatedAt: now
+    }, { merge: true }).catch(e => {
       console.warn('[Chat] end-chat write failed (attempt '+attempt+'):', e);
-      if(attempt === 0){ clearTimeout(timeoutId); closeLocally(); } // don't leave the button stuck on a fast, definite failure
       if(attempt < 6) setTimeout(() => write(attempt+1), 4000);
-    }
+    });
   };
   write(0);
 }
@@ -7800,6 +7800,29 @@ async function endChatByCustomer(){
 // no chatId/agentUid/agentName, so the customer never learns the agent's identity from this doc either)
 // to see if it's already been answered, so reopening the chat later doesn't re-prompt.
 let _chatSurveyToken = null, _chatSurveyRating = 0;
+// The actual (synchronous, no network) render of the survey card — split
+// out so the customer's own instant-close path can call it directly
+// without waiting on the "already rated?" network check below, which only
+// matters for the *reopen* case (a stale pendingSurvey from a past visit).
+function renderSurveyCard(surveyToken){
+  const wrap = document.getElementById('chatSurveyWrap');
+  const inputRow = document.getElementById('chatInputRow');
+  if(!wrap) return;
+  _chatSurveyToken = surveyToken;
+  _chatSurveyRating = 0;
+  if(inputRow) inputRow.style.display = 'none';
+  wrap.innerHTML = `<div class="chat-survey-card" id="chatSurveyCard">
+    <div class="chat-survey-title">Thanks for chatting with LinkUp.<br>We hope we sorted it out for you. How did we do?</div>
+    <div class="chat-survey-stars" id="chatSurveyStars">
+      ${[1,2,3,4,5].map(n=>`<svg class="chat-survey-star" data-n="${n}" onclick="pickSurveyStar(${n})"><use href="#ic-star"></use></svg>`).join('')}
+    </div>
+    <textarea class="chat-survey-comment" id="chatSurveyComment" placeholder="Anything you'd like to add? (optional)" maxlength="500"></textarea>
+    <button class="chat-survey-submit" id="chatSurveySubmitBtn" onclick="submitChatSurvey()">Submit</button>
+  </div>`;
+  renderChatMessages(); // re-evaluate the empty-state prompt now that the survey card exists
+  const msgsEl = document.getElementById('chatMessages');
+  if(msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+}
 async function handlePendingSurvey(pendingSurvey){
   const wrap = document.getElementById('chatSurveyWrap');
   const inputRow = document.getElementById('chatInputRow');
@@ -7825,20 +7848,7 @@ async function handlePendingSurvey(pendingSurvey){
   }
   // If we can't reach Firestore to check (offline, etc.), show the survey
   // rather than leaving the customer stuck with no closing screen at all.
-  _chatSurveyToken = pendingSurvey.surveyToken;
-  _chatSurveyRating = 0;
-  if(inputRow) inputRow.style.display = 'none';
-  wrap.innerHTML = `<div class="chat-survey-card" id="chatSurveyCard">
-    <div class="chat-survey-title">Thanks for chatting with LinkUp.<br>We hope we sorted it out for you. How did we do?</div>
-    <div class="chat-survey-stars" id="chatSurveyStars">
-      ${[1,2,3,4,5].map(n=>`<svg class="chat-survey-star" data-n="${n}" onclick="pickSurveyStar(${n})"><use href="#ic-star"></use></svg>`).join('')}
-    </div>
-    <textarea class="chat-survey-comment" id="chatSurveyComment" placeholder="Anything you'd like to add? (optional)" maxlength="500"></textarea>
-    <button class="chat-survey-submit" id="chatSurveySubmitBtn" onclick="submitChatSurvey()">Submit</button>
-  </div>`;
-  renderChatMessages(); // re-evaluate the empty-state prompt now that the survey card exists
-  const msgsEl = document.getElementById('chatMessages');
-  if(msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+  renderSurveyCard(pendingSurvey.surveyToken);
 }
 function pickSurveyStar(n){
   _chatSurveyRating = n;
