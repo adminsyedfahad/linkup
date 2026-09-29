@@ -206,8 +206,12 @@ html.light-theme{
 .sp-msg.staff .sp-bubble{background:var(--orange);color:#000;font-weight:600;border-bottom-right-radius:4px;}
 .sp-msg-time{font-size:10px;color:var(--muted);margin-top:3px;}
 .sp-msg.staff .sp-msg-time{display:flex;align-items:center;gap:3px;justify-content:flex-end;}
-.sp-tick{width:14px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-.sp-tick.seen{stroke:#22c55e;}
+.sp-tick-wrap{display:inline-flex;align-items:center;}
+.sp-tick{width:12px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.sp-tick.seen{width:20px;height:12px;stroke:#22c55e;stroke-width:2.6;}
+html.light-theme .sp-tick.seen{stroke:#15803d;}
+.sp-sys-line{align-self:center;max-width:90%;text-align:center;font-size:11.5px;font-weight:600;color:var(--muted);
+  background:var(--card);border:1px dashed var(--border);border-radius:999px;padding:5px 12px;margin:6px auto 2px;overflow-wrap:anywhere;}
 .sp-thread-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);}
 .sp-thread-input-row textarea{flex:1;resize:none;padding:10px 13px;background:var(--bg);border:1px solid var(--border);
   border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;max-height:90px;min-height:42px;}
@@ -791,7 +795,9 @@ window.addEventListener('pagehide', ()=>{
   }
   if(spProfile && !spProfile.isAdmin){
     try{
-      _spConvos.filter(c=>c.assignedAgentUid===spProfile.uid && !c.endChatLockBy).forEach(c=>{
+      // Ended-but-not-yet-dispositioned chats stay assigned (a refresh must not
+      // hand them to the auto-close sweep) — see isSessionEnded.
+      _spConvos.filter(c=>c.assignedAgentUid===spProfile.uid && !c.endChatLockBy && !isSessionEnded(c)).forEach(c=>{
         window._supUpdate(window._supDoc(window._supDb,'supportChats',c.id),{assignedAgentUid:null,assignedAgentName:null});
       });
     }catch(e){}
@@ -886,7 +892,9 @@ else window.addEventListener('supReady',spSetupAuth);
 function startSpListener(){
   if(_spUnsub){_spUnsub();_spUnsub=null;}
   _spUnsub=window._supSnap(window._supCol(window._supDb,'supportChats'), snap=>{
-    _spConvos=snap.docs.map(d=>({id:d.id,...d.data()}))
+    // 'estimate' so our own pending serverTimestamp writes (staffLastSeenAt,
+    // inactivityStageAt) read as "now" instead of null until the server acks.
+    _spConvos=snap.docs.map(d=>({id:d.id,...d.data({serverTimestamps:'estimate'})}))
       .sort((a,b)=>spToMillis(b.lastMessageAt||b.updatedAt)-spToMillis(a.lastMessageAt||a.updatedAt));
     spUpdateTitleAndWaiting();
     renderSpList();
@@ -900,7 +908,7 @@ function startSpListener(){
           const at=spToMillis(active.lastMessageAt);
           if(at && at!==_spLastSeenBumpAt){
             _spLastSeenBumpAt=at;
-            window._supUpdate(window._supDoc(window._supDb,'supportChats',active.id),{staffLastSeenAt:new Date()}).catch(()=>{});
+            window._supUpdate(window._supDoc(window._supDb,'supportChats',active.id),{staffLastSeenAt:window._supServerTs()}).catch(()=>{});
           }
         }
       }
@@ -1049,9 +1057,12 @@ async function updateQueuePositions(){
 // same as End Chat.
 async function releaseMyChats(){
   if(!spProfile || spProfile.isAdmin) return;
-  const mine=_spConvos.filter(c=>c.assignedAgentUid===spProfile.uid && !c.endChatLockBy);
+  const assigned=_spConvos.filter(c=>c.assignedAgentUid===spProfile.uid && !c.endChatLockBy);
+  // Ended chats awaiting my disposition stay with me — only live ones go back to the queue.
+  const mine=assigned.filter(c=>!isSessionEnded(c));
+  const kept=assigned.length-mine.length;
   if(!mine.length){
-    try{ await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{openChatCount:0}); }catch(e){}
+    try{ await window._supUpdate(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{openChatCount:kept}); }catch(e){}
     return;
   }
   try{
@@ -1059,7 +1070,7 @@ async function releaseMyChats(){
     mine.forEach(c=>{
       batch.update(window._supDoc(window._supDb,'supportChats',c.id),{assignedAgentUid:null,assignedAgentName:null,updatedAt:new Date()});
     });
-    batch.update(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{openChatCount:0});
+    batch.update(window._supDoc(window._supDb,'supportAgents',spProfile.uid),{openChatCount:kept});
     await batch.commit();
   }catch(e){ console.warn('[Support] release chats failed:',e); }
 }
@@ -1150,9 +1161,16 @@ function spConvoBadge(c){
   return mine?'<span class="sp-item-status mine">yours</span>'
     :`<span class="sp-item-status other">${spEsc(c.assignedAgentName||'agent')}</span>`;
 }
+// A session is over from the customer's side once they end it themselves or
+// the inactivity flow auto-ends it (which also sets customerEndRequested, so
+// every existing "customer ended" path — unclaimed filter, queued sweep —
+// applies). It stays in the assigned agent's list until they disposition it.
+function isSessionEnded(c){ return !!c.customerEndRequested; }
 function spEndedBadge(c){
-  if(!c.endChatLockBy) return '';
-  const label=c.customerEndRequested?'ended by customer':(c.endChatLockBy===spProfile?.uid?'ended by you':'ended');
+  if(!c.endChatLockBy && !isSessionEnded(c)) return '';
+  const label=c.sessionEndReason==='inactive'?'no response'
+    :c.customerEndRequested?'ended by customer'
+    :(c.endChatLockBy===spProfile?.uid?'ended by you':'ended');
   return ` <span class="sp-item-status ended">${label}</span>`;
 }
 
@@ -1216,7 +1234,7 @@ function openSpConversation(id){
   watchTyping(id);
   const patch={};
   if(c.unreadByAdmin) patch.unreadByAdmin=false;
-  patch.staffLastSeenAt=new Date();
+  patch.staffLastSeenAt=window._supServerTs();
   window._supUpdate(window._supDoc(window._supDb,'supportChats',id),patch).catch(e=>console.warn('[Support] mark-read failed:',e));
 }
 function closeSpThread(){
@@ -1240,20 +1258,35 @@ function spSwitchTab(tab){
 
 // ── READ RECEIPTS ──────────────────────────────────────
 // Derived from timestamps, never stored per-message, so it's correct after
-// a reload. "Delivered" honestly means "confirmed synced" — there's no
-// device-level delivery ack in this architecture; "seen" is the real
-// signal, once the customer's own read cursor (customerLastSeenAt) passes
-// this message's time.
+// a reload. One grey tick = delivered (synced). Two bold green ticks = seen,
+// which means the customer has the chat open and visible RIGHT NOW: their
+// page heartbeats customerLastSeenAt every ~10s while it is, so a cursor
+// older than CUSTOMER_AWAY_MS means they've left and ticks drop back to one.
+const CUSTOMER_AWAY_MS=30000;
+function customerPresent(c){
+  const seen=spToMillis(c.customerLastSeenAt);
+  return seen>0 && (Date.now()-seen)<CUSTOMER_AWAY_MS;
+}
 function staffMsgTickState(m,c){
-  const seenAt=spToMillis(c.customerLastSeenAt);
-  const msgAt=spToMillis(m.at);
-  if(seenAt && seenAt>=msgAt) return 'seen';
+  if(customerPresent(c) && spToMillis(c.customerLastSeenAt)>=spToMillis(m.at)) return 'seen';
   return 'delivered';
 }
-function spTickHtml(state){
-  const cls=state==='seen'?'seen':'';
-  if(state==='sent') return `<svg class="sp-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/></svg>`;
-  return `<svg class="sp-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/><path d="M5 5l4 4 6-8" transform="translate(-1,0)"/></svg>`;
+function spTickSvg(state){
+  if(state==='seen') return `<svg class="sp-tick seen" viewBox="0 0 20 12"><path d="M1 6.5l3.5 3.5L12 2"/><path d="M7 6.5l3.5 3.5L18 2"/></svg>`;
+  return `<svg class="sp-tick" viewBox="0 0 12 9"><path d="M1 4.5l3.5 3.5L11 1"/></svg>`;
+}
+function spTickHtml(state,m){
+  return `<span class="sp-tick-wrap" data-at="${spToMillis(m.at)}" data-state="${state}">${spTickSvg(state)}</span>`;
+}
+// Presence changes with time, not just on Firestore events — update the
+// ticks in place (no re-render, so the agent's scroll position is kept).
+function refreshSpTicks(){
+  const c=_spActiveId && _spConvos.find(x=>x.id===_spActiveId);
+  if(!c) return;
+  document.querySelectorAll('#spThreadMessages .sp-tick-wrap').forEach(w=>{
+    const state=staffMsgTickState({at:Number(w.dataset.at)},c);
+    if(w.dataset.state!==state){ w.dataset.state=state; w.innerHTML=spTickSvg(state); }
+  });
 }
 function renderSpThread(c){
   document.getElementById('spThreadName').textContent=c.customerName||'Guest';
@@ -1267,13 +1300,16 @@ function renderSpThread(c){
   // is set the conversation is over — show why, and disable the reply box
   // for real so nothing can be sent into a closed chat from this side.
   const locked=!!c.endChatLockBy;
+  const sessionEnded=isSessionEnded(c);
+  const closed=locked||sessionEnded;
+  const inactive=c.sessionEndReason==='inactive';
   const endedBanner=document.getElementById('spEndedBanner');
   const endedBannerText=document.getElementById('spEndedBannerText');
   if(endedBanner){
-    endedBanner.style.display=locked?'flex':'none';
+    endedBanner.style.display=closed?'flex':'none';
     if(endedBannerText){
-      endedBannerText.textContent = c.customerEndRequested
-        ? 'Chat session ended by customer'
+      endedBannerText.textContent = inactive ? 'This session was ended — no response from the customer'
+        : sessionEnded ? 'This session has been ended by the customer'
         : `Chat session ended by ${c.endChatLockByName||'agent'}`;
     }
   }
@@ -1282,9 +1318,9 @@ function renderSpThread(c){
   const replyInput=document.getElementById('spReplyInput');
   const sendBtn=document.getElementById('spSendBtn');
   const attachBtn=document.getElementById('spAttachBtn');
-  if(replyInput){ replyInput.disabled=locked; replyInput.placeholder=locked?'This chat has ended.':'Type a reply…'; }
-  if(sendBtn) sendBtn.disabled=locked;
-  if(attachBtn) attachBtn.disabled=locked;
+  if(replyInput){ replyInput.disabled=closed; replyInput.placeholder=closed?'This chat has ended.':'Type a reply…'; }
+  if(sendBtn) sendBtn.disabled=closed;
+  if(attachBtn) attachBtn.disabled=closed;
 
   const msgs=(c.messages||[]).slice().sort((a,b)=>spToMillis(a.at)-spToMillis(b.at));
   const el=document.getElementById('spThreadMessages');
@@ -1295,9 +1331,12 @@ function renderSpThread(c){
       ${isStaff?`<div class="sp-msg-by">${spEsc(byLabel)}</div>`:''}
       ${m.text?`<div class="sp-bubble">${spEsc(m.text)}</div>`:''}
       ${m.attachment?renderAttachmentHtml(m.attachment):''}
-      <div class="sp-msg-time">${spTime(m.at)}${isStaff?spTickHtml(staffMsgTickState(m,c)):''}</div>
+      <div class="sp-msg-time">${spTime(m.at)}${isStaff?spTickHtml(staffMsgTickState(m,c),m):''}</div>
     </div>`;
   }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
+  if(sessionEnded){
+    el.innerHTML+=`<div class="sp-sys-line">${inactive?'Customer has left the chat (no response)':spEsc((c.customerName||'Guest')+' closed this chat')}</div>`;
+  }
   el.scrollTop=el.scrollHeight;
 
   renderSpNotes(c);
@@ -1334,7 +1373,7 @@ async function sendSpReply(){
   const txt=inp.value.trim();
   if(!txt) return;
   const c=_spConvos.find(x=>x.id===_spActiveId);
-  if(c && c.endChatLockBy){ spToast('This chat has ended.','#ef4444'); return; }
+  if(c && (c.endChatLockBy || isSessionEnded(c))){ spToast('This chat has ended.','#ef4444'); return; }
   // Split-brain guard: with automatic round-robin assignment, a non-admin
   // agent should only ever be replying to their own chat. If it moved (a
   // heartbeat false-positive reassigning a merely-backgrounded tab, etc.),
@@ -1405,7 +1444,7 @@ async function handleAttachmentPicked(input){
   input.value='';
   if(!ATTACHMENTS_ENABLED||!file||!_spActiveId) return;
   const active=_spConvos.find(x=>x.id===_spActiveId);
-  if(active?.endChatLockBy){ spToast('This chat has ended.','#ef4444'); return; }
+  if(active?.endChatLockBy || (active && isSessionEnded(active))){ spToast('This chat has ended.','#ef4444'); return; }
   if(!ATTACH_TYPE_RE.test(file.type)){ spToast('⚠️ That file type isn\'t supported.','#ef4444'); return; }
   const isVideo=file.type.startsWith('video/');
   const max=isVideo?ATTACH_MAX_VIDEO:ATTACH_MAX_IMAGE;
@@ -1804,6 +1843,8 @@ async function finishEndChat(chatId,{resolved,comment}){
       lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
       endChatLockBy:null, endChatLockAt:null, endChatLockByName:null, customerEndRequested:false, customerClosedAt:null, triageSource:null,
       customerLastSeenAt:null, staffLastSeenAt:null,
+      sessionEndReason:null, sessionEndedAt:null, inactivityStage:0, inactivityStageAt:null,
+      lastEndedAt:now, // lets the customer's page show "How was your last chat?" once on return
       // Survey removed for now — clear any stale pendingSurvey left by older code.
       pendingSurvey:null, updatedAt:now
     });
@@ -1875,6 +1916,89 @@ async function watchCustomerEndRequests(list){
     }
   }
 }
+
+// ── CUSTOMER INACTIVITY FLOW ──────────────────────────
+// Runs only in the ASSIGNED agent's panel. "Away" = the customer's page has
+// stopped heartbeating customerLastSeenAt (chat closed, app switched, tab
+// hidden) for CUSTOMER_AWAY_MS. Away 2.5 min → check-in message; +1 min →
+// warning; +30s → auto-end (customerEndRequested + sessionEndReason
+// 'inactive'), after which the agent dispositions it as usual. The stage
+// lives on the chat doc and every advance is a transaction that re-checks
+// it, so each message goes out exactly once — across refreshes and tabs.
+// If the customer comes back (a heartbeat or message newer than the last
+// stage) before the end, the stage resets to 0.
+const INACT_NUDGE1_MS=150000, INACT_NUDGE2_MS=60000, INACT_END_MS=30000;
+const INACT_MSG1="Just checking in, are we still connected? Please take your time, we're here to help.";
+const INACT_MSG2="Since we haven't heard back from you, we'll need to end this session shortly. Feel free to start a new chat anytime.";
+function customerLastActiveMs(c){
+  return Math.max(spToMillis(c.customerLastSeenAt), spToMillis(lastCustomerMessageAt(c)));
+}
+let _inactInFlight=new Set();
+async function runInactivityChecks(){
+  if(!spProfile || spProfile.isAdmin) return;
+  const now=Date.now();
+  for(const c of _spConvos){
+    if(c.assignedAgentUid!==spProfile.uid || c.endChatLockBy || isSessionEnded(c) || !(c.messages||[]).length) continue;
+    if(_inactInFlight.has(c.id)) continue;
+    const last=customerLastActiveMs(c);
+    const stage=c.inactivityStage||0, stageAt=spToMillis(c.inactivityStageAt);
+    let action=null;
+    if(stage>0 && stageAt && last>stageAt) action='reset';
+    else if(last && now-last>=CUSTOMER_AWAY_MS){
+      if(stage===0 && now-last>=INACT_NUDGE1_MS) action=1;
+      else if(stage===1 && stageAt && now-stageAt>=INACT_NUDGE2_MS) action=2;
+      else if(stage===2 && stageAt && now-stageAt>=INACT_END_MS) action=3;
+    }
+    if(action===null) continue;
+    _inactInFlight.add(c.id);
+    advanceInactivity(c.id,stage,action).finally(()=>_inactInFlight.delete(c.id));
+  }
+}
+async function advanceInactivity(chatId,fromStage,action){
+  try{
+    await window._supTxn(window._supDb, async(txn)=>{
+      const ref=window._supDoc(window._supDb,'supportChats',chatId);
+      const snap=await txn.get(ref);
+      if(!snap.exists()) return;
+      const d=snap.data();
+      // Re-check everything against the server copy — another tab/agent may have acted.
+      if(d.assignedAgentUid!==spProfile.uid || d.endChatLockBy || d.customerEndRequested || !(d.messages||[]).length) return;
+      if((d.inactivityStage||0)!==fromStage) return;
+      const last=customerLastActiveMs(d), stageAt=spToMillis(d.inactivityStageAt);
+      if(action==='reset'){
+        if(stageAt && last>stageAt) txn.update(ref,{inactivityStage:0, inactivityStageAt:null});
+        return;
+      }
+      if(!last || Date.now()-last<CUSTOMER_AWAY_MS) return; // customer is back
+      const now=new Date();
+      if(action===3){
+        txn.update(ref,{customerEndRequested:true, sessionEndReason:'inactive', sessionEndedAt:window._supServerTs(),
+          inactivityStage:3, inactivityStageAt:window._supServerTs(), updatedAt:now});
+        return;
+      }
+      const text=action===1?INACT_MSG1:INACT_MSG2;
+      const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+      txn.update(ref,{
+        messages:window._supArrUnion({id,sender:'staff',text,at:now,byUid:spProfile.uid,byName:spProfile.name,byRole:'support',auto:true}),
+        lastMessage:text, lastMessageAt:now, lastSender:'staff', updatedAt:now,
+        inactivityStage:action, inactivityStageAt:window._supServerTs()
+      });
+    });
+  }catch(e){ console.error('[Support] inactivity step failed:',e.code,e.message); }
+}
+// While the agent has a live thread open and visible, keep staffLastSeenAt
+// fresh so the customer's own ticks show "seen" (mirror of the customer side).
+let _staffSeenWriteAt=0;
+function staffPresenceBeat(){
+  if(!spProfile || !_spActiveId || document.visibilityState!=='visible') return;
+  const c=_spConvos.find(x=>x.id===_spActiveId);
+  if(!c || c.endChatLockBy || isSessionEnded(c) || !(c.messages||[]).length) return;
+  if(Date.now()-_staffSeenWriteAt<9000) return;
+  _staffSeenWriteAt=Date.now();
+  window._supUpdate(window._supDoc(window._supDb,'supportChats',c.id),{staffLastSeenAt:window._supServerTs()}).catch(()=>{});
+}
+setInterval(()=>{ runInactivityChecks(); staffPresenceBeat(); refreshSpTicks(); },5000);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ _staffSeenWriteAt=0; staffPresenceBeat(); } });
 
 // ── MY STATS / SETTINGS ───────────────────────────────
 let _spmRange='week';
@@ -2100,17 +2224,19 @@ function spFmtDate(ts){
   const d=(ts&&ts.toDate)?ts.toDate():(ts instanceof Date?ts:(ts?new Date(ts):null));
   return d?d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
 }
-// walletToken IS the chat id — same "path is the secret" model used
-// throughout this app, so it doubles as the customer's order/wallet key.
+// The customer's wallet token is the chat id for their first chat; later
+// chats (started while an earlier one awaited disposition) get their own
+// doc id and carry the real token in customerToken.
 async function loadCustomerInfo(chatId){
   const el=document.getElementById('spCustomerInfo');
   if(!el) return;
   el.innerHTML='<div class="sp-ctx-empty">Loading…</div>';
   const c=_spConvos.find(x=>x.id===chatId);
+  const token=(c&&c.customerToken)||chatId;
   try{
     const [walletSnap,ordersSnap]=await Promise.all([
-      window._supGetDoc(window._supDoc(window._supDb,'wallets',chatId)).catch(()=>null),
-      window._supGetDocs(window._supQuery(window._supCol(window._supDb,'orders'), window._supWhere('walletToken','==',chatId)))
+      window._supGetDoc(window._supDoc(window._supDb,'wallets',token)).catch(()=>null),
+      window._supGetDocs(window._supQuery(window._supCol(window._supDb,'orders'), window._supWhere('walletToken','==',token)))
         .catch(e=>{ console.warn('[Support] customer orders failed:',e.code,e.message); return null; })
     ]);
     if(_spActiveId!==chatId) return; // switched conversations while this was loading

@@ -517,8 +517,12 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
 .sup-msg.admin .sup-bubble{background:var(--orange);color:#000;font-weight:600;border-bottom-right-radius:4px;}
 .sup-msg-time{font-size:10px;color:var(--muted);margin-top:3px;}
 .sup-msg.admin .sup-msg-time{display:flex;align-items:center;gap:3px;justify-content:flex-end;}
-.sup-tick{width:14px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-.sup-tick.seen{stroke:#22c55e;}
+.sup-tick-wrap{display:inline-flex;align-items:center;}
+.sup-tick{width:12px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.sup-tick.seen{width:20px;height:12px;stroke:#22c55e;stroke-width:2.6;}
+html.light-theme .sup-tick.seen{stroke:#15803d;}
+.sup-sys-line{align-self:center;max-width:90%;text-align:center;font-size:11.5px;font-weight:600;color:var(--muted);
+  background:var(--bg);border:1px dashed var(--border);border-radius:999px;padding:5px 12px;margin:6px auto 2px;overflow-wrap:anywhere;}
 .sup-ended-banner{display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(239,68,68,.08);border-bottom:1px solid rgba(239,68,68,.2);color:#ef4444;font-size:12px;font-weight:700;flex-shrink:0;}
 .sup-thread-input-row{display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--border);flex-shrink:0;}
 .sup-thread-input-row textarea{flex:1;resize:none;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;max-height:90px;min-height:40px;}
@@ -2486,7 +2490,7 @@ function startSupportListener(){
   if(!window._db) return;
   if(_supportUnsub){_supportUnsub();_supportUnsub=null;}
   _supportUnsub=window._fbSnap(window._fbCol(window._db,'supportChats'),snap=>{
-    _supportConvos=snap.docs.map(d=>({id:d.id,...d.data()}))
+    _supportConvos=snap.docs.map(d=>({id:d.id,...d.data({serverTimestamps:'estimate'})}))
       .sort((a,b)=>(td(b.lastMessageAt||b.updatedAt)||0)-(td(a.lastMessageAt||a.updatedAt)||0));
     _supBadgeUpdate();
     renderSupportStats();
@@ -2500,7 +2504,7 @@ function startSupportListener(){
           const at=td(active.lastMessageAt)?.getTime();
           if(at && at!==_admLastSeenBumpAt){
             _admLastSeenBumpAt=at;
-            window._fbUpdate(window._fbDoc(window._db,'supportChats',active.id),{staffLastSeenAt:new Date()}).catch(()=>{});
+            window._fbUpdate(window._fbDoc(window._db,'supportChats',active.id),{staffLastSeenAt:window._fbServerTs()}).catch(()=>{});
           }
         }
       }
@@ -2720,7 +2724,7 @@ function openSupportConversation(id){
   renderSupportThread(c);
   renderSupportList();
   _admLastSeenBumpAt=null;
-  const patch={staffLastSeenAt:new Date()};
+  const patch={staffLastSeenAt:window._fbServerTs()};
   if(c.unreadByAdmin) patch.unreadByAdmin=false;
   window._fbUpdate(window._fbDoc(window._db,'supportChats',id),patch).catch(e=>console.warn('[Support] mark-read failed:',e));
 }
@@ -2747,16 +2751,45 @@ function renderAdminAttachmentHtml(att){
   if(type.startsWith('video/')) return `<video src="${att.url}" controls class="adm-att-video"></video>`;
   return `<a href="${att.url}" target="_blank" rel="noopener" class="adm-att-file"><svg class="ic" style="width:14px;height:14px;"><use href="#ic-file"></use></svg>${escAdmin(att.name||'file')}</a>`;
 }
+// Same rules as support.html: one grey tick = delivered; two bold green =
+// the customer has the chat open right now (customerLastSeenAt heartbeat
+// fresher than 30s and past this message).
+function admTsMs(ts){ const d=td(ts); return d?d.getTime():0; }
+function admCustomerPresent(c){
+  const seen=admTsMs(c.customerLastSeenAt);
+  return seen>0 && (Date.now()-seen)<30000;
+}
 function admStaffMsgTickState(m,c){
-  const seenAt=td(c.customerLastSeenAt);
-  const msgAt=td(m.at);
-  if(seenAt && msgAt && seenAt>=msgAt) return 'seen';
+  if(admCustomerPresent(c) && admTsMs(c.customerLastSeenAt)>=admTsMs(m.at)) return 'seen';
   return 'delivered';
 }
-function admTickHtml(state){
-  const cls=state==='seen'?'seen':'';
-  return `<svg class="sup-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/><path d="M5 5l4 4 6-8" transform="translate(-1,0)"/></svg>`;
+function admTickSvg(state){
+  if(state==='seen') return `<svg class="sup-tick seen" viewBox="0 0 20 12"><path d="M1 6.5l3.5 3.5L12 2"/><path d="M7 6.5l3.5 3.5L18 2"/></svg>`;
+  return `<svg class="sup-tick" viewBox="0 0 12 9"><path d="M1 4.5l3.5 3.5L11 1"/></svg>`;
 }
+function admTickHtml(state,m){
+  return `<span class="sup-tick-wrap" data-at="${admTsMs(m.at)}" data-state="${state}">${admTickSvg(state)}</span>`;
+}
+function refreshAdmTicks(){
+  const c=_supportActiveId && _supportConvos.find(x=>x.id===_supportActiveId);
+  if(!c) return;
+  document.querySelectorAll('#supThreadMessages .sup-tick-wrap').forEach(w=>{
+    const state=admStaffMsgTickState({at:new Date(Number(w.dataset.at))},c);
+    if(w.dataset.state!==state){ w.dataset.state=state; w.innerHTML=admTickSvg(state); }
+  });
+}
+// Admin viewing a live thread keeps staffLastSeenAt fresh too, so the
+// customer's own ticks turn green while someone is actually reading.
+let _admSeenWriteAt=0;
+function admStaffPresenceBeat(){
+  if(!_supportActiveId || document.visibilityState!=='visible') return;
+  const c=_supportConvos.find(x=>x.id===_supportActiveId);
+  if(!c || c.endChatLockBy || c.customerEndRequested || !(c.messages||[]).length) return;
+  if(Date.now()-_admSeenWriteAt<9000) return;
+  _admSeenWriteAt=Date.now();
+  window._fbUpdate(window._fbDoc(window._db,'supportChats',c.id),{staffLastSeenAt:window._fbServerTs()}).catch(()=>{});
+}
+setInterval(()=>{ refreshAdmTicks(); admStaffPresenceBeat(); },5000);
 function renderSupportThread(c){
   document.getElementById('supThreadName').textContent=c.customerName||'Guest';
   document.getElementById('supThreadOrder').textContent=c.orderId?('Order #'+c.orderId):'General enquiry';
@@ -2767,20 +2800,23 @@ function renderSupportThread(c){
   // Mirrors support.html's lock-driven closed-chat handling exactly — this
   // is the Support Monitor screen, the path that previously had none of it.
   const locked=!!c.endChatLockBy;
+  const sessionEnded=!!c.customerEndRequested; // customer ended, or inactivity auto-end
+  const closed=locked||sessionEnded;
+  const inactive=c.sessionEndReason==='inactive';
   const endedBanner=document.getElementById('supEndedBanner');
   const endedBannerText=document.getElementById('supEndedBannerText');
   if(endedBanner){
-    endedBanner.style.display=locked?'flex':'none';
+    endedBanner.style.display=closed?'flex':'none';
     if(endedBannerText){
-      endedBannerText.textContent = c.customerEndRequested
-        ? 'Chat session ended by customer'
+      endedBannerText.textContent = inactive ? 'This session was ended — no response from the customer'
+        : sessionEnded ? 'This session has been ended by the customer'
         : `Chat session ended by ${c.endChatLockByName||'agent'}`;
     }
   }
   const replyInput=document.getElementById('supReplyInput');
   const sendBtn=document.getElementById('supSendBtn');
-  if(replyInput){ replyInput.disabled=locked; replyInput.placeholder=locked?'This chat has ended.':'Reply as admin…'; }
-  if(sendBtn) sendBtn.disabled=locked;
+  if(replyInput){ replyInput.disabled=closed; replyInput.placeholder=closed?'This chat has ended.':'Reply as admin…'; }
+  if(sendBtn) sendBtn.disabled=closed;
   const endChatBtn=document.getElementById('supEndChatBtn');
   if(endChatBtn) endChatBtn.style.display=locked?'none':'';
 
@@ -2794,9 +2830,12 @@ function renderSupportThread(c){
       ${staff?`<div style="font-size:10px;color:var(--muted);margin-bottom:2px;text-align:right;">${escAdmin(byLabel)}</div>`:''}
       ${m.text?`<div class="sup-bubble">${escAdmin(m.text)}</div>`:''}
       ${m.attachment?renderAdminAttachmentHtml(m.attachment):''}
-      <div class="sup-msg-time">${fdt(m.at)}${staff?admTickHtml(admStaffMsgTickState(m,c)):''}</div>
+      <div class="sup-msg-time">${fdt(m.at)}${staff?admTickHtml(admStaffMsgTickState(m,c),m):''}</div>
     </div>`;
   }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
+  if(sessionEnded){
+    el.innerHTML+=`<div class="sup-sys-line">${inactive?'Customer has left the chat (no response)':escAdmin((c.customerName||'Guest')+' closed this chat')}</div>`;
+  }
   el.scrollTop=el.scrollHeight;
 
   renderSupportNotes(c);
@@ -2960,6 +2999,8 @@ async function submitAdminEndChat(){
       lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
       endChatLockBy:null, endChatLockAt:null, endChatLockByName:null, customerEndRequested:false, customerClosedAt:null, triageSource:null,
       customerLastSeenAt:null, staffLastSeenAt:null,
+      sessionEndReason:null, sessionEndedAt:null, inactivityStage:0, inactivityStageAt:null,
+      lastEndedAt:now,
       // Survey removed for now — clear any stale pendingSurvey left by older code.
       pendingSurvey:null, updatedAt:now
     });
@@ -2981,7 +3022,7 @@ async function submitAdminEndChat(){
 async function sendSupportReply(){
   if(!_supportActiveId||_supSending) return;
   const c=_supportConvos.find(x=>x.id===_supportActiveId);
-  if(c?.endChatLockBy){ toast('This chat has ended.','#ef4444'); return; }
+  if(c?.endChatLockBy || c?.customerEndRequested){ toast('This chat has ended.','#ef4444'); return; }
   const inp=document.getElementById('supReplyInput');
   const txt=inp.value.trim();
   if(!txt) return;

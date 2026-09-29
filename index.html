@@ -40,7 +40,7 @@
   import {
     getFirestore, collection, addDoc, getDocs,
     updateDoc, doc, onSnapshot, query, orderBy, where,
-    setDoc, runTransaction, arrayUnion, getDoc, increment
+    setDoc, runTransaction, arrayUnion, getDoc, increment, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
   import {
     getAuth, signInWithEmailAndPassword, signOut,
@@ -92,6 +92,7 @@
   window._fbEmailCred = EmailAuthProvider.credential;
 
   window._fbIncrement = increment;
+  window._fbServerTs  = serverTimestamp;
   window._fbStorage   = storage;
   window._fbStorageRef = storageRef;
   window._fbUploadBytesResumable = uploadBytesResumable;
@@ -1859,8 +1860,10 @@ button,a,[onclick]{
 .chat-msg-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#ff3c3c);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 .chat-msg-time{font-size:10px;color:var(--muted);margin-top:4px;text-align:right;}
 .chat-msg.user .chat-msg-time{display:flex;align-items:center;justify-content:flex-end;gap:3px;}
-.chat-tick{width:14px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-.chat-tick.seen{stroke:#22c55e;}
+.chat-tick-wrap{display:inline-flex;align-items:center;}
+.chat-tick{width:12px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.chat-tick.seen{width:20px;height:12px;stroke:#22c55e;stroke-width:2.6;}
+html.light-theme .chat-tick.seen{stroke:#15803d;}
 .chat-opts{display:flex;flex-direction:column;gap:7px;margin-top:4px;}
 .chat-opt-btn{
   padding:10px 14px;background:var(--card);
@@ -1905,7 +1908,6 @@ button,a,[onclick]{
 .chat-closed-btn{margin-top:16px;width:100%;padding:11px;border-radius:10px;border:none;background:var(--orange);color:#000;
   font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;cursor:pointer;}
 .chat-closed-btn:active{transform:scale(0.98);}
-.chat-closed-wait{margin-top:14px;font-size:11.5px;color:var(--muted);font-style:italic;}
 .chat-addr-form input:focus{border-color:var(--orange);}
 .chat-confirm-btn{width:100%;padding:11px;background:var(--orange);color:#000;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;margin-top:4px;}
 
@@ -7153,6 +7155,47 @@ let _chatLastData = null; // latest raw supportChats doc, for header/queue/agent
 let _chatTriageView = null; // null = triage menu showing; a TRIAGE_ANSWERS key = that answer view
 let _chatShowClosing = false; // closing message is up until the customer taps "Start a new chat"
 
+// ── CHAT SESSIONS ──────────────────────────────────────
+// The first chat lives at supportChats/{walletToken}. When the customer
+// ends a chat, that doc keeps the conversation until an agent files the
+// disposition — so "Start a new chat" moves them to a fresh session doc
+// ({walletToken}_{random}) right away instead of waiting. The rules key a
+// chat doc by its walletToken field, so a session doc's walletToken is its
+// own id and the real wallet token rides along as customerToken.
+const CHAT_SESSION_KEY = 'lu_support_chat_id';
+function chatSessionId(){
+  let id = null;
+  try{ id = localStorage.getItem(CHAT_SESSION_KEY); }catch(e){}
+  return (id && id.startsWith(walletToken + '_')) ? id : walletToken;
+}
+function startNewChatSession(){
+  const id = walletToken + '_' + genToken(12);
+  try{ localStorage.setItem(CHAT_SESSION_KEY, id); }catch(e){}
+  return id;
+}
+function chatConvRef(){
+  if(!_chatConvRef || _chatConvRef.id !== chatSessionId()) _chatConvRef = window._fbDoc(window._db, 'supportChats', chatSessionId());
+  return _chatConvRef;
+}
+// Fields every customer write carries so the create/update rules match.
+function chatIdentityFields(){
+  const id = chatSessionId();
+  const f = { walletToken: id };
+  if(id !== walletToken) f.customerToken = walletToken;
+  return f;
+}
+// "How was your last chat?" is shown once per ended session.
+function chatEndAckMs(){ try{ return Number(localStorage.getItem('lu_chat_end_ack_' + chatSessionId())) || 0; }catch(e){ return 0; } }
+function ackChatEnd(){
+  const ms = _chatLastData && _chatToMillis(_chatLastData.lastEndedAt);
+  if(ms){ try{ localStorage.setItem('lu_chat_end_ack_' + chatSessionId(), String(ms)); }catch(e){} }
+}
+// The conversation on this doc is over from the customer's side (they ended
+// it, or the inactivity flow did) but it's still holding its messages.
+function chatDocEnded(){
+  return _chatConfirmed.length > 0 && (_chatClosedLocally || !!(_chatLastData && _chatLastData.customerEndRequested));
+}
+
 function openSupportChat(orderId) {
   _chatOrderId = orderId || null;
   _chatClosedLocally = false;
@@ -7186,7 +7229,22 @@ function openSupportChat(orderId) {
     subscribeChatConversation();
     watchSupportPresence();
   });
+  startCustomerPresence();
 }
+// While the chat box is open AND the page is visible, heartbeat the read
+// cursor so the agent sees "seen" ticks and the inactivity timers stay idle.
+// Closing the box, hiding the tab or switching apps stops it — that's "away".
+let _custPresenceInterval = null;
+function startCustomerPresence(){
+  stopCustomerPresence();
+  _custPresenceInterval = setInterval(() => { bumpCustomerLastSeen(); refreshChatTicks(); }, 10000);
+}
+function stopCustomerPresence(){
+  if(_custPresenceInterval){ clearInterval(_custPresenceInterval); _custPresenceInterval = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible'){ _custLastSeenWriteAt = 0; bumpCustomerLastSeen(); }
+});
 let _chatOpenSeq = 0;
 function onFirebaseReady(fn){
   if(window._fbReady && window._db){ fn(); return; }
@@ -7206,6 +7264,7 @@ function closeSupportChat() {
   document.body.style.overflow = '';
   if(_chatUnsub){ _chatUnsub(); _chatUnsub = null; }
   if(_presenceUnsub){ _presenceUnsub(); _presenceUnsub = null; }
+  stopCustomerPresence();
   clearMyChatTyping();
 }
 function handleChatOverlayClick(e) {
@@ -7245,7 +7304,7 @@ function anyAgentAvailable(){
 // everything; otherwise hours + live presence decide Online / All agents
 // busy / Offline. Never says "shortly" or "Online" when nobody's actually there.
 function supportStatusState(){
-  if(_chatLastData && _chatLastData.assignedAgentUid && _chatLastData.assignedAgentName) return 'assigned';
+  if(_chatLastData && _chatLastData.assignedAgentUid && _chatLastData.assignedAgentName && !chatDocEnded()) return 'assigned';
   if(!isWithinSupportHours()) return 'offline';
   if(!_supportPresenceLoaded) return 'connecting';
   return anyAgentAvailable() ? 'online' : 'busy';
@@ -7294,8 +7353,10 @@ function subscribeChatConversation(){
     renderChatMessages();
     return;
   }
-  _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
-  _chatUnsub = window._fbSnap(_chatConvRef, snap => {
+  _chatConvRef = null;
+  const ref = chatConvRef();
+  _chatUnsub = window._fbSnap(ref, snap => {
+    if(ref !== _chatConvRef) return; // a newer session took over
     const data = snap.exists() ? snap.data() : null;
     // Captured before _chatConfirmed is overwritten below. Staff closing a
     // chat wipes its messages, so live -> empty means an agent just ended it:
@@ -7486,14 +7547,14 @@ async function escalateToLiveAgent(sourceLabel){
   }
   if(!_chatUnsub) subscribeChatConversation();
   if(!_presenceUnsub) watchSupportPresence();
-  if(!_chatConvRef) _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
+  const ref = chatConvRef();
   const now = new Date();
   const customerName = orderHistory[0]?.customerName || localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Guest';
   const id = genToken(16);
   const text = `I need help with: ${sourceLabel}`;
   const wasNewConversation = _chatConfirmed.length === 0;
   const payload = {
-    walletToken,
+    ...chatIdentityFields(),
     customerName,
     customerPhone: localStorage.getItem('lu_phone') || '',
     triageSource: sourceLabel,
@@ -7507,7 +7568,7 @@ async function escalateToLiveAgent(sourceLabel){
   if(_chatOrderId || wasNewConversation) payload.orderId = _chatOrderId || null;
   if(wasNewConversation) payload.createdAt = now;
   try{
-    await window._fbSetDoc(_chatConvRef, payload, { merge: true });
+    await window._fbSetDoc(ref, payload, { merge: true });
     // onSnapshot picks up the new message; messages.length>0 switches renderChatMessages out of triage mode
   }catch(e){
     console.error('[Chat] escalate failed:', e.code, e.message, e);
@@ -7541,17 +7602,18 @@ function renderChatMessages(){
   const endBtn = document.getElementById('chatEndBtn');
   const qBanner = document.getElementById('chatQueueBanner');
   const noMessagesYet = _chatConfirmed.length === 0 && _chatPending.length === 0;
-  // Customer ended it but staff haven't wrapped it up yet (messages not yet
-  // cleared) — the old conversation must not reappear as if still live.
-  const awaitingWrapUp = _chatConfirmed.length > 0
-    && (_chatClosedLocally || !!(_chatLastData && _chatLastData.customerEndRequested));
+  // Ended chat still waiting for the agent's disposition (the customer ended
+  // it, or it timed out while they were away) — or one that was fully closed
+  // since their last visit. Either way: a friendly card + "Start a new chat",
+  // never the old conversation and never a wait.
+  const unackedEnd = noMessagesYet && _chatLastData && _chatToMillis(_chatLastData.lastEndedAt) > chatEndAckMs();
 
-  if(_chatShowClosing || awaitingWrapUp){
+  if(_chatShowClosing || chatDocEnded() || unackedEnd){
     if(inputRow) inputRow.style.display = 'none';
     if(endBtn) endBtn.style.display = 'none';
     if(qBanner) qBanner.style.display = 'none';
     document.getElementById('chatStatusFooter').innerHTML = '';
-    msgsEl.innerHTML = renderChatClosedCard(_chatShowClosing);
+    msgsEl.innerHTML = renderChatClosedCard(_chatShowClosing ? 'thanks' : 'return');
     return;
   }
 
@@ -7618,7 +7680,7 @@ function renderChatMessages(){
         ${!isCustomer?`<div class="chat-sender-name">${escChat(staffFirstName)}</div>`:''}
         ${m.text?`<div class="chat-bubble">${escChat(m.text)}</div>`:''}
         ${m.attachment?renderChatAttachmentHtml(m.attachment):''}
-        <div class="chat-msg-time">${m._pending ? '' : _chatMsgTime(m.at)}${(isCustomer&&!m._pending)?chatTickHtml(chatMsgTickState(m)):''}</div>
+        <div class="chat-msg-time">${m._pending ? '' : _chatMsgTime(m.at)}${(isCustomer&&!m._pending)?chatTickHtml(chatMsgTickState(m),m):''}</div>
       </div>
     </div>`;
   }).join('');
@@ -7627,37 +7689,46 @@ function renderChatMessages(){
   msgsEl.scrollTop = msgsEl.scrollHeight;
   bumpCustomerLastSeen();
 }
-// Read-receipt tick state for the customer's OWN messages (WhatsApp-style:
-// you only see ticks on what you sent). Derived from staffLastSeenAt on the
-// chat doc rather than stored per message, so it's correct after a reload.
+// Read-receipt ticks on the customer's OWN messages (WhatsApp-style). One
+// grey tick = delivered; two bold green = an agent has this chat open right
+// now (staffLastSeenAt heartbeat fresher than 30s and past this message).
 function chatMsgTickState(m){
-  const seenAt = _chatLastData && _chatToMillis(_chatLastData.staffLastSeenAt);
-  const msgAt = _chatToMillis(m.at);
-  if(seenAt && msgAt && seenAt>=msgAt) return 'seen';
-  if(_chatLastData && _chatLastData.assignedAgentUid) return 'delivered';
-  return 'sent';
+  const seenAt = _chatLastData ? _chatToMillis(_chatLastData.staffLastSeenAt) : 0;
+  if(seenAt && (Date.now()-seenAt) < 30000 && seenAt >= _chatToMillis(m.at)) return 'seen';
+  return 'delivered';
 }
-function chatTickHtml(state){
-  const cls = state==='seen' ? 'seen' : '';
-  if(state==='sent') return `<svg class="chat-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/></svg>`;
-  return `<svg class="chat-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/><path d="M5 5l4 4 6-8" transform="translate(-1,0)"/></svg>`;
+function chatTickSvg(state){
+  if(state==='seen') return `<svg class="chat-tick seen" viewBox="0 0 20 12"><path d="M1 6.5l3.5 3.5L12 2"/><path d="M7 6.5l3.5 3.5L18 2"/></svg>`;
+  return `<svg class="chat-tick" viewBox="0 0 12 9"><path d="M1 4.5l3.5 3.5L11 1"/></svg>`;
 }
-// The customer's read cursor — throttled so an open chat window doesn't
-// hammer Firestore with a write on every re-render.
-// A throttled call schedules one trailing write, so a message that arrives
-// inside the window still gets marked seen.
+function chatTickHtml(state, m){
+  return `<span class="chat-tick-wrap" data-at="${_chatToMillis(m.at)}" data-state="${state}">${chatTickSvg(state)}</span>`;
+}
+// Presence changes with time, not just on snapshots — update ticks in place.
+function refreshChatTicks(){
+  document.querySelectorAll('#chatMessages .chat-tick-wrap').forEach(w => {
+    const state = chatMsgTickState({ at: Number(w.dataset.at) });
+    if(w.dataset.state !== state){ w.dataset.state = state; w.innerHTML = chatTickSvg(state); }
+  });
+}
+// The customer's read cursor + presence heartbeat. Only while the chat box
+// is open and the page visible — that's what "seen" means to the agent, and
+// what keeps the inactivity timers in support.html from firing. Throttled;
+// a throttled call schedules one trailing write so nothing is missed.
 let _custLastSeenWriteAt = 0, _custLastSeenTimer = null;
 function bumpCustomerLastSeen(){
-  // Nothing to mark read on an empty/just-ended chat — and skipping it means
-  // this never creates a bare supportChats doc or undoes finishEndChat's reset.
-  if(!window._fbReady || !window._db || !_chatConvRef || _chatClosedLocally || !_chatConfirmed.length) return;
+  // Nothing to mark read on an empty/ended chat — and skipping it means this
+  // never creates a bare supportChats doc or undoes finishEndChat's reset.
+  if(!window._fbReady || !window._db || !_chatConvRef || !_chatConfirmed.length || chatDocEnded()) return;
+  if(document.visibilityState !== 'visible' || !document.getElementById('chatOverlay')?.classList.contains('open')) return;
   const wait = 4000 - (Date.now() - _custLastSeenWriteAt);
   if(wait > 0){
     if(!_custLastSeenTimer) _custLastSeenTimer = setTimeout(()=>{ _custLastSeenTimer = null; bumpCustomerLastSeen(); }, wait);
     return;
   }
   _custLastSeenWriteAt = Date.now();
-  window._fbSetDoc(_chatConvRef, { customerLastSeenAt: new Date() }, { merge: true }).catch(()=>{});
+  window._fbSetDoc(_chatConvRef, { customerLastSeenAt: window._fbServerTs() }, { merge: true })
+    .catch(e => console.error('[Chat] presence write failed:', e.code, e.message));
 }
 
 function renderChatStatusFooter(all){
@@ -7677,7 +7748,7 @@ function renderChatStatusFooter(all){
 }
 
 async function sendChatMessage() {
-  if(_chatClosedLocally || (_chatLastData && _chatLastData.endChatLockBy)) return;
+  if(chatDocEnded() || (_chatLastData && _chatLastData.endChatLockBy)) return;
   const inp = document.getElementById('chatInput');
   const txt = inp.value.trim();
   if(!txt) return;
@@ -7698,7 +7769,7 @@ async function sendChatMessage() {
   const now = new Date();
   const customerName = orderHistory[0]?.customerName || localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Guest';
   const payload = {
-    walletToken,
+    ...chatIdentityFields(),
     customerName,
     customerPhone: localStorage.getItem('lu_phone') || '',
     messages: window._fbArrUnion({ id, sender:'customer', text: txt, at: now }),
@@ -7739,15 +7810,17 @@ function retryChatMessage(id){
 let _myChatTypingTimeout = null;
 function handleChatInputTyping(){
   if(!window._fbReady || !window._db) return;
-  window._fbSetDoc(window._fbDoc(window._db, 'typingIndicators', walletToken),
+  window._fbSetDoc(window._fbDoc(window._db, 'typingIndicators', chatSessionId()),
     { customerTyping: true, customerTypingAt: new Date() }, { merge: true }).catch(()=>{});
   clearTimeout(_myChatTypingTimeout);
   _myChatTypingTimeout = setTimeout(clearMyChatTyping, 3000);
 }
 function clearMyChatTyping(){
   clearTimeout(_myChatTypingTimeout);
-  if(!window._fbReady || !window._db) return;
-  window._fbSetDoc(window._fbDoc(window._db, 'typingIndicators', walletToken),
+  // The rules only allow typingIndicators/{id} once supportChats/{id} exists —
+  // with no conversation yet there's nothing to clear (and the write is denied).
+  if(!window._fbReady || !window._db || !_chatConfirmed.length) return;
+  window._fbSetDoc(window._fbDoc(window._db, 'typingIndicators', chatSessionId()),
     { customerTyping: false, customerTypingAt: new Date() }, { merge: true }).catch(()=>{});
 }
 
@@ -7771,9 +7844,9 @@ async function handleChatAttachmentPicked(input){
 }
 async function uploadAndSendChatAttachment(file){
   if(!ATTACHMENTS_ENABLED) return;
-  if(_chatClosedLocally || (_chatLastData && _chatLastData.endChatLockBy)){ showToast('This chat has ended.'); return; }
+  if(chatDocEnded() || (_chatLastData && _chatLastData.endChatLockBy)){ showToast('This chat has ended.'); return; }
   if(!window._fbReady || !window._db){ showToast('⚠️ Could not upload right now.'); return; }
-  if(!_chatConvRef) _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
+  chatConvRef();
   const msgId = genToken(16);
   const path = `supportChatAttachments/${walletToken}/${msgId}_${file.name}`;
   const progEl = document.getElementById('chatUploadProgress');
@@ -7793,7 +7866,7 @@ async function uploadAndSendChatAttachment(file){
     const customerName = orderHistory[0]?.customerName || localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Guest';
     const wasNewConversation = _chatConfirmed.length === 0 && _chatPending.length === 0;
     const payload = {
-      walletToken,
+      ...chatIdentityFields(),
       customerName,
       customerPhone: localStorage.getItem('lu_phone') || '',
       messages: window._fbArrUnion({ id: msgId, sender:'customer', text:'', at: now, attachment:{url, type:file.type, name:file.name, size:file.size} }),
@@ -7824,6 +7897,7 @@ async function uploadAndSendChatAttachment(file){
 function endChatByCustomer(){
   if(!_chatConvRef || _chatClosedLocally) return;
   _chatClosedLocally = true;
+  const ref = _chatConvRef; // "Start a new chat" may switch sessions before this write lands
 
   // Kill every listener on this conversation right now — this is what
   // actually closes the race that let a stale snapshot undo the close.
@@ -7841,11 +7915,11 @@ function endChatByCustomer(){
       if(attempt < 6) setTimeout(() => write(attempt+1), 4000);
       return;
     }
-    window._fbSetDoc(_chatConvRef, {
+    window._fbSetDoc(ref, {
       customerEndRequested: true,
       updatedAt: now
     }, { merge: true }).catch(e => {
-      console.warn('[Chat] end-chat write failed (attempt '+attempt+'):', e);
+      console.error('[Chat] end-chat write failed (attempt '+attempt+'):', e.code, e.message);
       if(attempt < 6) setTimeout(() => write(attempt+1), 4000);
     });
   };
@@ -7853,24 +7927,41 @@ function endChatByCustomer(){
 }
 
 // ── POST-CHAT CLOSING MESSAGE ─────────────────────────
-// Shown the instant a chat ends — by the customer (endChatByCustomer) or by
-// staff (live -> empty snapshot in subscribeChatConversation). No survey.
-// While the customer's own end is still being wrapped up by staff, the
-// button is swapped for a short note; the live snapshot then flips the view
-// to the triage menu on its own.
-function renderChatClosedCard(canStartNew){
+// 'thanks': shown the instant a chat ends while the customer is here — by
+// them (endChatByCustomer) or by staff (live -> empty snapshot).
+// 'return': shown when they come back to a chat that ended while they were
+// away (inactivity auto-end, their own earlier end, or a staff close).
+// Both offer "Start a new chat" immediately — never a wait.
+function renderChatClosedCard(kind){
+  const title = kind === 'return' ? 'How was your last chat with us?' : 'Thanks for chatting with LinkUp!';
+  const sub = kind === 'return'
+    ? "We hope we could help. Anytime you need us, we're just a tap away."
+    : "We hope we sorted everything out for you. We're always here if you need anything else.";
   return `<div class="chat-closed-card">
     <svg class="ic"><use href="#ic-heart-filled"></use></svg>
-    <div class="chat-closed-title">Thanks for chatting with LinkUp!</div>
-    <div class="chat-closed-sub">We hope we sorted everything out for you. We're always here if you need anything else.</div>
-    ${canStartNew
-      ? '<button class="chat-closed-btn" onclick="startFreshChat()">Start a new chat</button>'
-      : '<div class="chat-closed-wait">Wrapping up your previous chat — you can start a new one in a moment.</div>'}
+    <div class="chat-closed-title">${title}</div>
+    <div class="chat-closed-sub">${sub}</div>
+    <button class="chat-closed-btn" onclick="startFreshChat()">Start a new chat</button>
   </div>`;
 }
 function startFreshChat(){
+  ackChatEnd();
+  // The old doc still holds a conversation (awaiting the agent's
+  // disposition) — move to a brand-new session doc so the customer can
+  // start over right now. A fully closed (empty) doc is simply reused.
+  const needNewSession = _chatConfirmed.length > 0;
   _chatShowClosing = false;
   _chatTriageView = null;
+  _chatClosedLocally = false;
+  _chatPending = [];
+  if(needNewSession){
+    if(_chatUnsub){ _chatUnsub(); _chatUnsub = null; }
+    startNewChatSession();
+    _chatConvRef = null;
+    _chatConfirmed = [];
+    _chatLastData = null;
+    refreshChatHeader();
+  }
   onFirebaseReady(() => {
     if(!_chatUnsub) subscribeChatConversation();
     if(!_presenceUnsub) watchSupportPresence();
