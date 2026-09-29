@@ -7175,8 +7175,30 @@ function openSupportChat(orderId) {
   const attachBtn = document.getElementById('chatAttachBtn');
   if(attachBtn) attachBtn.style.display = ATTACHMENTS_ENABLED ? 'flex' : 'none';
   clearMyChatTyping();
-  subscribeChatConversation();
-  watchSupportPresence();
+  _supportPresenceLoaded = false;
+  refreshChatHeader();
+  // Firebase loads as a deferred module from gstatic — on a slow phone
+  // connection Support can be opened before it's ready. Subscribe the moment
+  // it is, instead of bailing out and leaving the header stuck on "busy".
+  const openSeq = ++_chatOpenSeq;
+  onFirebaseReady(() => {
+    if(openSeq !== _chatOpenSeq || !document.getElementById('chatOverlay').classList.contains('open')) return;
+    subscribeChatConversation();
+    watchSupportPresence();
+  });
+}
+let _chatOpenSeq = 0;
+function onFirebaseReady(fn){
+  if(window._fbReady && window._db){ fn(); return; }
+  window.addEventListener('firebaseReady', () => fn(), { once: true });
+}
+// Resolves true once Firebase is ready, or false after timeoutMs.
+function waitForFirebase(timeoutMs){
+  return new Promise(resolve => {
+    if(window._fbReady && window._db){ resolve(true); return; }
+    const t = setTimeout(() => resolve(false), timeoutMs);
+    window.addEventListener('firebaseReady', () => { clearTimeout(t); resolve(true); }, { once: true });
+  });
 }
 
 function closeSupportChat() {
@@ -7196,15 +7218,21 @@ function handleChatOverlayClick(e) {
 // doc (no staff client has updated it in a while) is treated as "nobody
 // online" rather than trusted at face value — see presenceIsFresh().
 let _supportPresence = { availableCount: 0, updatedAt: null };
+let _supportPresenceLoaded = false; // false until the first presence snapshot — header says "Connecting…", not "busy"
 let _presenceUnsub = null;
 function watchSupportPresence(){
   if(_presenceUnsub){ _presenceUnsub(); _presenceUnsub = null; }
   if(!window._fbReady || !window._db) return;
   _presenceUnsub = window._fbSnap(window._fbDoc(window._db,'supportPresence','live'), snap => {
     _supportPresence = snap.exists() ? snap.data() : { availableCount: 0, updatedAt: null };
+    _supportPresenceLoaded = true;
     refreshChatHeader();
     renderChatMessages(); // queue banner wording also depends on presence
-  }, () => {});
+  }, err => {
+    console.error('[Chat] presence listen failed:', err.code, err.message);
+    _supportPresenceLoaded = true;
+    refreshChatHeader();
+  });
 }
 function presenceIsFresh(){
   const ms = _chatToMillis(_supportPresence.updatedAt);
@@ -7219,6 +7247,7 @@ function anyAgentAvailable(){
 function supportStatusState(){
   if(_chatLastData && _chatLastData.assignedAgentUid && _chatLastData.assignedAgentName) return 'assigned';
   if(!isWithinSupportHours()) return 'offline';
+  if(!_supportPresenceLoaded) return 'connecting';
   return anyAgentAvailable() ? 'online' : 'busy';
 }
 function refreshChatHeader(){
@@ -7243,6 +7272,10 @@ function refreshChatHeader(){
       banner.className = 'chat-offline-banner';
       banner.textContent = `We're online ${formatSupportHoursLabel()}. Leave your message and we'll reply when we're back.`;
     }
+  } else if(state === 'connecting'){
+    if(dot) dot.style.background = '#6b7280';
+    if(text) text.textContent = 'Connecting…';
+    if(banner) banner.style.display = 'none';
   } else if(state === 'busy'){
     if(dot) dot.style.background = '#f59e0b';
     if(text) text.textContent = 'All agents busy';
@@ -7280,7 +7313,7 @@ function subscribeChatConversation(){
     refreshChatHeader();
     renderChatMessages();
   }, err => {
-    console.warn('[Chat] listen failed:', err);
+    console.error('[Chat] listen failed:', err.code, err.message);
     renderChatMessages();
   });
 }
@@ -7432,13 +7465,27 @@ function renderTriageAnswerView(key){
 }
 // Only tapping "Chat with a live agent" (via a No / Something else / triage
 // timeout) creates or updates the real supportChats doc and enters the queue.
+let _lastEscalateLabel = '';
+function chatConnectErrorHtml(text){
+  return `<div class="chat-system-note">${text}</div>
+    <div class="chat-opts" style="margin-top:10px;">
+      <button class="chat-opt-btn" onclick="escalateToLiveAgent(_lastEscalateLabel)">Try again</button>
+      <button class="chat-opt-btn" onclick="backToTriageMenu()">‹ Back to menu</button>
+    </div>`;
+}
 async function escalateToLiveAgent(sourceLabel){
+  _lastEscalateLabel = sourceLabel;
   const msgsEl = document.getElementById('chatMessages');
   if(msgsEl) msgsEl.innerHTML = '<div class="chat-loading">Connecting you to our team…</div>';
-  if(!window._fbReady || !window._db){
-    if(msgsEl) msgsEl.innerHTML = '<div class="chat-system-note">Could not connect right now. Please check your connection and try again.</div>';
+  // Firebase may still be loading on a slow connection — wait for it rather
+  // than failing instantly.
+  if(!(await waitForFirebase(15000))){
+    console.error('[Chat] escalate: Firebase SDK not ready after 15s (module failed to load or network blocked) — _fbReady:', window._fbReady, '_db:', !!window._db);
+    if(msgsEl) msgsEl.innerHTML = chatConnectErrorHtml('Could not connect right now. Please check your connection and try again.');
     return;
   }
+  if(!_chatUnsub) subscribeChatConversation();
+  if(!_presenceUnsub) watchSupportPresence();
   if(!_chatConvRef) _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
   const now = new Date();
   const customerName = orderHistory[0]?.customerName || localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Guest';
@@ -7463,8 +7510,8 @@ async function escalateToLiveAgent(sourceLabel){
     await window._fbSetDoc(_chatConvRef, payload, { merge: true });
     // onSnapshot picks up the new message; messages.length>0 switches renderChatMessages out of triage mode
   }catch(e){
-    console.warn('[Chat] escalate failed:', e);
-    if(msgsEl) msgsEl.innerHTML = '<div class="chat-system-note">Something went wrong connecting you to our team. Please try again.</div>';
+    console.error('[Chat] escalate failed:', e.code, e.message, e);
+    if(msgsEl) msgsEl.innerHTML = chatConnectErrorHtml('Something went wrong connecting you to our team. Please try again.');
   }
 }
 
@@ -7824,8 +7871,10 @@ function renderChatClosedCard(canStartNew){
 function startFreshChat(){
   _chatShowClosing = false;
   _chatTriageView = null;
-  if(!_chatUnsub) subscribeChatConversation();
-  if(!_presenceUnsub) watchSupportPresence();
+  onFirebaseReady(() => {
+    if(!_chatUnsub) subscribeChatConversation();
+    if(!_presenceUnsub) watchSupportPresence();
+  });
   renderChatMessages();
 }
 

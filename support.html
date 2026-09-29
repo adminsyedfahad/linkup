@@ -919,7 +919,11 @@ function startSpListener(){
 function startAgentsListener(){
   if(_agentsUnsub){_agentsUnsub();_agentsUnsub=null;}
   _agentsUnsub=window._supSnap(window._supCol(window._supDb,'supportAgents'), snap=>{
-    _allAgents=snap.docs.map(d=>({uid:d.id,...d.data()}));
+    // 'estimate': our own heartbeat's lastSeenAt is a pending serverTimestamp,
+    // which reads as null by default — that made isAgentOnline() count this
+    // agent offline for a moment every beat and publish availableCount 0 to
+    // supportPresence, so customers saw "All agents busy" flicker.
+    _allAgents=snap.docs.map(d=>({uid:d.id,...d.data({serverTimestamps:'estimate'})}));
     maybeClaimNextChat();
     checkStaleAgents();
     updateSupportPresence();
