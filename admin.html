@@ -428,6 +428,9 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
   font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;}
 .sp-ec-yn button.yes:hover{border-color:#22c55e;color:#22c55e;}
 .sp-ec-yn button.no:hover{border-color:#ef4444;color:#ef4444;}
+.sp-ec-yn button.yes.picked{border-color:#22c55e;background:rgba(34,197,94,.12);color:#22c55e;}
+.sp-ec-yn button.no.picked{border-color:#ef4444;background:rgba(239,68,68,.12);color:#ef4444;}
+.sp-ec-submit:disabled{opacity:.4;cursor:not-allowed;}
 .sp-ec-field{margin-bottom:10px;}
 .sp-ec-field label{display:block;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
 .sp-ec-field input,.sp-ec-field textarea{width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--border);
@@ -515,6 +518,10 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
 .sup-msg.customer .sup-bubble{background:var(--bg);border:1px solid var(--border);border-bottom-left-radius:4px;}
 .sup-msg.admin .sup-bubble{background:var(--orange);color:#000;font-weight:600;border-bottom-right-radius:4px;}
 .sup-msg-time{font-size:10px;color:var(--muted);margin-top:3px;}
+.sup-msg.admin .sup-msg-time{display:flex;align-items:center;gap:3px;justify-content:flex-end;}
+.sup-tick{width:14px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.sup-tick.seen{stroke:#22c55e;}
+.sup-ended-banner{display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(239,68,68,.08);border-bottom:1px solid rgba(239,68,68,.2);color:#ef4444;font-size:12px;font-weight:700;flex-shrink:0;}
 .sup-thread-input-row{display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--border);flex-shrink:0;}
 .sup-thread-input-row textarea{flex:1;resize:none;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;max-height:90px;min-height:40px;}
 .sup-thread-input-row textarea:focus{border-color:var(--orange);}
@@ -961,6 +968,10 @@ html.light-theme .sw-sl{background:rgba(0,0,0,.13);}
                 <button class="bs bv" id="supNotesToggleBtn" onclick="toggleSupportNotes()"><svg class="ic"><use href="#ic-lock"></use></svg> Notes<span id="supNotesCountTxt"></span></button>
                 <button class="bs br" id="supEndChatBtn" onclick="openAdminEndChatFlow()"><svg class="ic"><use href="#ic-headset"></use></svg> End Chat</button>
               </div>
+            </div>
+            <div class="sup-ended-banner" id="supEndedBanner" style="display:none;">
+              <svg class="ic"><use href="#ic-close"></use></svg>
+              <span id="supEndedBannerText">Chat session ended.</span>
             </div>
             <div id="supNotesPanel" style="display:none;background:rgba(245,158,11,.07);border-bottom:1px solid rgba(245,158,11,.25);padding:12px 16px;max-height:160px;overflow-y:auto;">
               <div style="font-size:11px;color:#f59e0b;display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:700;"><svg class="ic"><use href="#ic-lock"></use></svg> Internal only — the customer never sees this</div>
@@ -2520,7 +2531,7 @@ function showSec(name){
 // secret token (same "path is the secret" model as wallets/orderTracking).
 // Listing every conversation here requires isAdmin() (or isSupportAgent(),
 // for support.html) in firestore.rules.
-let _supportUnsub=null, _supportConvos=[], _supportActiveId=null, _supSending=false;
+let _supportUnsub=null, _supportConvos=[], _supportActiveId=null, _supSending=false, _admLastSeenBumpAt=null;
 let _supportAgentsUnsub=null, _supportAgents=[];
 let _ticketsUnsub=null, _tickets=[];
 let _surveysUnsub=null, _surveys=[];
@@ -2552,7 +2563,16 @@ function startSupportListener(){
     renderSupportList();
     if(_supportActiveId){
       const active=_supportConvos.find(c=>c.id===_supportActiveId);
-      if(active) renderSupportThread(active);
+      if(active){
+        renderSupportThread(active);
+        if(active.lastSender==='customer'){
+          const at=td(active.lastMessageAt)?.getTime();
+          if(at && at!==_admLastSeenBumpAt){
+            _admLastSeenBumpAt=at;
+            window._fbUpdate(window._fbDoc(window._db,'supportChats',active.id),{staffLastSeenAt:new Date()}).catch(()=>{});
+          }
+        }
+      }
     }
   },err=>{
     console.error('[Support] listen failed:',err.code,err.message);
@@ -2758,7 +2778,7 @@ function renderSupportList(){
     const badgeColor=c.assignedAgentName ? '#22c55e' : '#ef4444';
     return `<div class="sup-item${active?' active':''}" onclick="openSupportConversation('${c.id}')">
       <div class="sup-item-top">
-        <span class="sup-item-name">${escAdmin(c.customerName||'Customer')}</span>
+        <span class="sup-item-name">${escAdmin(c.customerName||'Guest')}</span>
         ${unread?'<span class="sup-unread-dot"></span>':''}
       </div>
       <div class="sup-item-order">${c.orderId?('Order #'+escAdmin(c.orderId)):'General enquiry'} · <span style="color:${badgeColor};text-transform:uppercase;font-size:9.5px;font-weight:700;">${badge}</span></div>
@@ -2780,9 +2800,10 @@ function openSupportConversation(id){
   document.getElementById('supNotesPanel').style.display='none';
   renderSupportThread(c);
   renderSupportList();
-  if(c.unreadByAdmin){
-    window._fbUpdate(window._fbDoc(window._db,'supportChats',id),{unreadByAdmin:false}).catch(e=>console.warn('[Support] mark-read failed:',e));
-  }
+  _admLastSeenBumpAt=null;
+  const patch={staffLastSeenAt:new Date()};
+  if(c.unreadByAdmin) patch.unreadByAdmin=false;
+  window._fbUpdate(window._fbDoc(window._db,'supportChats',id),patch).catch(e=>console.warn('[Support] mark-read failed:',e));
 }
 
 function closeSupportThread(){
@@ -2807,12 +2828,42 @@ function renderAdminAttachmentHtml(att){
   if(type.startsWith('video/')) return `<video src="${att.url}" controls class="adm-att-video"></video>`;
   return `<a href="${att.url}" target="_blank" rel="noopener" class="adm-att-file"><svg class="ic" style="width:14px;height:14px;"><use href="#ic-file"></use></svg>${escAdmin(att.name||'file')}</a>`;
 }
+function admStaffMsgTickState(m,c){
+  const seenAt=td(c.customerLastSeenAt);
+  const msgAt=td(m.at);
+  if(seenAt && msgAt && seenAt>=msgAt) return 'seen';
+  return 'delivered';
+}
+function admTickHtml(state){
+  const cls=state==='seen'?'seen':'';
+  return `<svg class="sup-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/><path d="M5 5l4 4 6-8" transform="translate(-1,0)"/></svg>`;
+}
 function renderSupportThread(c){
-  document.getElementById('supThreadName').textContent=c.customerName||'Customer';
+  document.getElementById('supThreadName').textContent=c.customerName||'Guest';
   document.getElementById('supThreadOrder').textContent=c.orderId?('Order #'+c.orderId):'General enquiry';
   const notesCount=(c.internalNotes||[]).length;
   const cnt=document.getElementById('supNotesCountTxt');
   if(cnt) cnt.textContent=notesCount?` (${notesCount})`:'';
+
+  // Mirrors support.html's lock-driven closed-chat handling exactly — this
+  // is the Support Monitor screen, the path that previously had none of it.
+  const locked=!!c.endChatLockBy;
+  const endedBanner=document.getElementById('supEndedBanner');
+  const endedBannerText=document.getElementById('supEndedBannerText');
+  if(endedBanner){
+    endedBanner.style.display=locked?'flex':'none';
+    if(endedBannerText){
+      endedBannerText.textContent = c.customerEndRequested
+        ? 'Chat session ended by customer'
+        : `Chat session ended by ${c.endChatLockByName||'agent'}`;
+    }
+  }
+  const replyInput=document.getElementById('supReplyInput');
+  const sendBtn=document.getElementById('supSendBtn');
+  if(replyInput){ replyInput.disabled=locked; replyInput.placeholder=locked?'This chat has ended.':'Reply as admin…'; }
+  if(sendBtn) sendBtn.disabled=locked;
+  const endChatBtn=document.getElementById('supEndChatBtn');
+  if(endChatBtn) endChatBtn.style.display=locked?'none':'';
 
   const msgs=(c.messages||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
   const el=document.getElementById('supThreadMessages');
@@ -2824,7 +2875,7 @@ function renderSupportThread(c){
       ${staff?`<div style="font-size:10px;color:var(--muted);margin-bottom:2px;text-align:right;">${escAdmin(byLabel)}</div>`:''}
       ${m.text?`<div class="sup-bubble">${escAdmin(m.text)}</div>`:''}
       ${m.attachment?renderAdminAttachmentHtml(m.attachment):''}
-      <div class="sup-msg-time">${fdt(m.at)}</div>
+      <div class="sup-msg-time">${fdt(m.at)}${staff?admTickHtml(admStaffMsgTickState(m,c)):''}</div>
     </div>`;
   }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
   el.scrollTop=el.scrollHeight;
@@ -2863,61 +2914,108 @@ async function addSupportNote(){
 }
 
 // ── END CHAT + DISPOSITION (admin can also formally close a chat) ──
-let _admEcState=null;
-function openAdminEndChatFlow(){
+// Mirrors support.html's fixed pipeline exactly: the lock is taken the
+// moment "End Chat" is clicked (not on submit) so the chat is visibly
+// closed — banner + disabled input, see renderSupportThread — before any
+// disposition is even filled in. A customer-initiated lock is never
+// released by Cancel (the customer's already gone and possibly rated);
+// only a lock admin took themselves can be cancelled.
+let _admEcState=null, _admEcLockingInFlight=false;
+async function acquireAdminEndChatLock(chatId){
+  const adminUid=window._auth?.currentUser?.uid||'admin';
+  try{
+    return await window._fbTxn(window._db, async(txn)=>{
+      const ref=window._fbDoc(window._db,'supportChats',chatId);
+      const snap=await txn.get(ref);
+      if(!snap.exists()) return false;
+      const data=snap.data();
+      if(data.endChatLockBy) return false;
+      if(!(data.messages||[]).length) return false;
+      txn.update(ref,{endChatLockBy:adminUid, endChatLockAt:new Date(), endChatLockByName:'Admin'});
+      return true;
+    });
+  }catch(e){ console.error('[Support] admin end-chat lock failed:',e.code,e.message); return false; }
+}
+async function openAdminEndChatFlow(){
   const c=_supportConvos.find(x=>x.id===_supportActiveId);
-  if(!c) return;
-  _admEcState={step:'confirm'};
-  renderAdminEndChatFlow(c);
+  if(!c || _admEcLockingInFlight) return;
+  const adminUid=window._auth?.currentUser?.uid||'admin';
+  if(c.endChatLockBy && c.endChatLockBy!==adminUid){
+    toast('⚠️ This chat is already being closed.','#f59e0b');
+    return;
+  }
+  if(!c.endChatLockBy){
+    _admEcLockingInFlight=true;
+    const btn=document.getElementById('supEndChatBtn');
+    if(btn) btn.disabled=true;
+    let timedOut=false;
+    const timeoutId=setTimeout(()=>{
+      timedOut=true; _admEcLockingInFlight=false;
+      if(btn) btn.disabled=false;
+      toast('⚠️ Could not start closing this chat — check connection and try again.','#f59e0b');
+    },10000);
+    let locked=false;
+    try{ locked=await acquireAdminEndChatLock(c.id); }catch(e){}
+    if(timedOut) return;
+    clearTimeout(timeoutId);
+    _admEcLockingInFlight=false;
+    if(btn) btn.disabled=false;
+    if(!locked){ toast('⚠️ Could not start closing this chat — check connection and try again.','#ef4444'); return; }
+  }
+  _admEcState={resolved:undefined};
+  renderAdminEndChatFlow(_supportConvos.find(x=>x.id===_supportActiveId)||c);
 }
 function cancelAdminEndChatFlow(){
+  const c=_supportConvos.find(x=>x.id===_supportActiveId);
+  const adminUid=window._auth?.currentUser?.uid||'admin';
   _admEcState=null;
   const el=document.getElementById('supEndChatFlow'); if(el) el.innerHTML='';
+  if(c && c.endChatLockBy===adminUid && !c.customerEndRequested){
+    window._fbUpdate(window._fbDoc(window._db,'supportChats',c.id),{endChatLockBy:null,endChatLockAt:null,endChatLockByName:null}).catch(()=>{});
+  }
 }
 function admEcPickResolved(val){
-  _admEcState={step:'form', resolved:val};
-  const c=_supportConvos.find(x=>x.id===_supportActiveId);
-  renderAdminEndChatFlow(c);
+  if(!_admEcState) return;
+  _admEcState.resolved=val;
+  renderAdminEndChatFlow(_supportConvos.find(x=>x.id===_supportActiveId));
 }
+// One screen: Yes/No (required) + an optional comment. Order ID is never
+// asked — it's auto-filled from the conversation in submitAdminEndChat.
 function renderAdminEndChatFlow(c){
   const el=document.getElementById('supEndChatFlow');
   if(!el) return;
   if(!_admEcState){ el.innerHTML=''; return; }
-  if(_admEcState.step==='confirm'){
-    el.innerHTML=`<div class="sp-ec-card">
-      <div class="sp-ec-title">Was the customer's issue resolved?</div>
-      <div class="sp-ec-yn">
-        <button class="yes" onclick="admEcPickResolved(true)">Yes</button>
-        <button class="no" onclick="admEcPickResolved(false)">No</button>
-      </div>
-      <div class="sp-ec-actions" style="margin-top:10px;"><button class="sp-ec-cancel" onclick="cancelAdminEndChatFlow()">Cancel</button></div>
-    </div>`;
-    return;
-  }
+  const r=_admEcState.resolved;
   el.innerHTML=`<div class="sp-ec-card">
-    <div class="sp-ec-title">End Chat — Disposition</div>
-    <span class="sp-ec-resolved-pill ${_admEcState.resolved?'yes':'no'}"><svg class="ic"><use href="#${_admEcState.resolved?'ic-check':'ic-close'}"></use></svg>${_admEcState.resolved?'Resolved':'Not resolved'}</span>
-    <div class="sp-ec-field"><label>Order ID</label><input id="admEcOrderId" value="${escAdmin(c.orderId||'')}" placeholder="e.g. LU-1042"></div>
-    <div class="sp-ec-field"><label>Issue *</label><textarea id="admEcIssue" rows="2" placeholder="What was the customer's issue?"></textarea></div>
-    <div class="sp-ec-field"><label>Action Taken *</label><textarea id="admEcAction" rows="2" placeholder="What did you do to resolve/handle it?"></textarea></div>
-    <div class="sp-ec-err" id="admEcErr">Issue and Action taken are required.</div>
+    <div class="sp-ec-title">Was the customer's issue resolved?</div>
+    <div class="sp-ec-yn">
+      <button class="yes${r===true?' picked':''}" onclick="admEcPickResolved(true)">Yes</button>
+      <button class="no${r===false?' picked':''}" onclick="admEcPickResolved(false)">No</button>
+    </div>
+    <div class="sp-ec-field"><label>Comments (optional)</label><textarea id="admEcComment" rows="2" placeholder="Anything you'd like to add?"></textarea></div>
     <div class="sp-ec-actions">
       <button class="sp-ec-cancel" onclick="cancelAdminEndChatFlow()">Cancel</button>
-      <button class="sp-ec-submit" id="admEcSubmitBtn" onclick="submitAdminEndChat()">Submit &amp; End Chat</button>
+      <button class="sp-ec-submit" id="admEcSubmitBtn" onclick="submitAdminEndChat()" ${r===undefined?'disabled':''}>Submit &amp; End Chat</button>
     </div>
   </div>`;
 }
 async function submitAdminEndChat(){
   const c=_supportConvos.find(x=>x.id===_supportActiveId);
-  if(!c||!_admEcState) return;
-  const orderId=document.getElementById('admEcOrderId').value.trim();
-  const issue=document.getElementById('admEcIssue').value.trim();
-  const actionTaken=document.getElementById('admEcAction').value.trim();
-  const err=document.getElementById('admEcErr');
-  if(!issue||!actionTaken){ err.classList.add('on'); return; }
-  err.classList.remove('on');
+  const adminUid=window._auth?.currentUser?.uid||'admin';
+  if(!c||!_admEcState||_admEcState.resolved===undefined) return;
+  if(c.endChatLockBy!==adminUid){
+    toast('⚠️ This chat is not locked by you — reopen End Chat to retry.','#ef4444');
+    return;
+  }
+  const comment=document.getElementById('admEcComment')?.value.trim()||'';
   const btn=document.getElementById('admEcSubmitBtn');
   btn.disabled=true; btn.textContent='Ending…';
+  let timedOut=false;
+  const resetBtn=(msg,color)=>{ toast(msg,color); if(btn){btn.disabled=false; btn.textContent='Submit & End Chat';} };
+  const timeoutId=setTimeout(()=>{
+    timedOut=true;
+    resetBtn('⚠️ Taking longer than expected — check your connection and try again.','#f59e0b');
+  },15000);
   try{
     const counterRef=window._fbDoc(window._db,'counters','tickets');
     const ticketNum=await window._fbTxn(window._db, async(txn)=>{
@@ -2928,36 +3026,51 @@ async function submitAdminEndChat(){
       return next;
     });
     const ticketId=`TK-${ticketNum}`;
-    const surveyToken=genToken(24);
+    // Reuse the customer's own pre-seeded survey token if they already
+    // closed their side themselves — never orphan an in-progress rating.
+    const existingSurveyToken=c.pendingSurvey&&c.pendingSurvey.surveyToken;
+    const surveyToken=existingSurveyToken||genToken(24);
     const now=new Date();
     const startAt=c.createdAt||now;
-    const adminUid=window._auth?.currentUser?.uid||'admin';
+    const orderId=c.orderId||null; // auto-filled — never asked
     const batch=window._fbBatch(window._db);
     batch.set(window._fbDoc(window._db,'tickets',ticketId),{
-      ticketId, chatId:c.id, customerName:c.customerName||'Customer', customerPhone:c.customerPhone||'',
-      agentUid:adminUid, agentName:'Admin', orderId:orderId||null, issue, resolved:!!_admEcState.resolved, actionTaken,
+      ticketId, chatId:c.id, customerName:c.customerName||'Guest', customerPhone:c.customerPhone||'',
+      agentUid:adminUid, agentName:'Admin', orderId, resolved:!!_admEcState.resolved, comment:comment||null,
       startAt, firstReplyAt:c.firstReplyAt||null, endAt:now, durationMs: now.getTime()-((td(startAt)||now).getTime()),
       transcript:c.messages||[], internalNotes:c.internalNotes||[], createdAt:now
     });
-    batch.set(window._fbDoc(window._db,'ticketSurveys',surveyToken),{ticketId, rating:null, ratedAt:null, createdAt:now});
+    if(existingSurveyToken){
+      batch.set(window._fbDoc(window._db,'ticketSurveys',surveyToken),{ticketId},{merge:true});
+    }else{
+      batch.set(window._fbDoc(window._db,'ticketSurveys',surveyToken),{ticketId, rating:null, comment:null, ratedAt:null, createdAt:now});
+    }
     batch.update(window._fbDoc(window._db,'supportChats',c.id),{
       messages:[], internalNotes:[], assignedAgentUid:null, assignedAgentName:null, firstReplyAt:null,
       lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
+      endChatLockBy:null, endChatLockAt:null, endChatLockByName:null, customerEndRequested:false, customerClosedAt:null, triageSource:null,
+      customerLastSeenAt:null, staffLastSeenAt:null,
       pendingSurvey:{ticketId, surveyToken, endedAt:now}, updatedAt:now
     });
     await batch.commit();
+    if(timedOut) return;
+    clearTimeout(timeoutId);
     _admEcState=null;
     toast(`✅ Chat ended — ${ticketId} created.`,'#22c55e');
     closeSupportThread();
   }catch(e){
-    console.error('[Support] end chat failed:',e.code,e.message);
-    toast('⚠️ Could not end chat — check connection and try again.','#ef4444');
-    btn.disabled=false; btn.textContent='Submit & End Chat';
+    clearTimeout(timeoutId);
+    if(!timedOut){
+      console.error('[Support] end chat failed:',e.code,e.message);
+      resetBtn('⚠️ Could not end chat — check connection and try again.','#ef4444');
+    }
   }
 }
 
 async function sendSupportReply(){
   if(!_supportActiveId||_supSending) return;
+  const c=_supportConvos.find(x=>x.id===_supportActiveId);
+  if(c?.endChatLockBy){ toast('This chat has ended.','#ef4444'); return; }
   const inp=document.getElementById('supReplyInput');
   const txt=inp.value.trim();
   if(!txt) return;
@@ -2965,7 +3078,6 @@ async function sendSupportReply(){
   _supSending=true; btn.disabled=true;
   const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   const now=new Date();
-  const c=_supportConvos.find(x=>x.id===_supportActiveId);
   const adminUid=window._auth?.currentUser?.uid||'admin';
   const payload={
     messages:window._fbArrUnion({id,sender:'staff',text:txt,at:now,byUid:adminUid,byName:'Admin',byRole:'admin'}),
@@ -3136,6 +3248,12 @@ function commentForTicket(ticketId){
   const s=_surveys.find(x=>x.ticketId===ticketId && x.rating!=null);
   return s&&s.comment?s.comment:null;
 }
+// Tickets created after the Yes/No+comment simplification store t.comment;
+// older tickets (pre-simplification) still have issue/actionTaken — this
+// reads either shape so history keeps displaying correctly.
+function dispositionText(t){
+  return t.comment || [t.issue,t.actionTaken].filter(Boolean).join(' — ') || '—';
+}
 function getFilteredTickets(){
   const agentF=document.getElementById('tixFilterAgent')?.value||'all';
   const dateF=document.getElementById('tixFilterDate')?.value||'all';
@@ -3176,10 +3294,10 @@ function renderTicketsList(){
   }
   tbody.innerHTML=list.map(t=>`<tr class="tix-row" onclick="openTicketDetail('${t.id}')">
     <td>${escAdmin(t.ticketId)}</td>
-    <td>${escAdmin(t.customerName||'Customer')}</td>
+    <td>${escAdmin(t.customerName||'Guest')}</td>
     <td>${escAdmin(t.agentName||'—')}</td>
     <td>${t.orderId?escAdmin(t.orderId):'—'}</td>
-    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escAdmin(t.issue||'')}</td>
+    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escAdmin(dispositionText(t))}</td>
     <td>${t.resolved?'<span style="color:#22c55e;font-weight:700;">Yes</span>':'<span style="color:#ef4444;font-weight:700;">No</span>'}</td>
     <td>${fmtDuration(t.durationMs)}</td>
     <td>${starsHtml(ratingForTicket(t.ticketId))}</td>
@@ -3273,7 +3391,7 @@ function renderReviewsSection(){
     <td style="font-size:11px;color:var(--muted);">${escAdmin(t.chatId||'—')}</td>
     <td>${escAdmin(t.agentName||'—')}</td>
     <td>${fdt(t.endAt)}</td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escAdmin(t.issue||'—')}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escAdmin(dispositionText(t))}</td>
   </tr>`;
   }).join('');
 }
@@ -3392,17 +3510,15 @@ function openTicketDetail(id){
   const notes=(t.internalNotes||[]).slice().sort((a,b)=>(td(a.at)||0)-(td(b.at)||0));
   document.getElementById('tixDetailBody').innerHTML=`
     <div class="spm-grid">
-      <div class="spm-tile"><div class="spm-tile-lbl">Customer</div><div class="spm-tile-val" style="font-size:13px;">${escAdmin(t.customerName||'—')}</div></div>
+      <div class="spm-tile"><div class="spm-tile-lbl">Customer</div><div class="spm-tile-val" style="font-size:13px;">${escAdmin(t.customerName||'Guest')}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Agent</div><div class="spm-tile-val" style="font-size:13px;">${escAdmin(t.agentName||'—')}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Order</div><div class="spm-tile-val" style="font-size:13px;">${t.orderId?escAdmin(t.orderId):'—'}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Duration</div><div class="spm-tile-val" style="font-size:13px;">${fmtDuration(t.durationMs)}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Resolved</div><div class="spm-tile-val" style="font-size:13px;">${t.resolved?'Yes':'No'}</div></div>
       <div class="spm-tile"><div class="spm-tile-lbl">Rating</div><div class="spm-tile-val" style="font-size:13px;">${starsHtml(rating)}</div>${comment?`<div class="tix-survey-comment">“${escAdmin(comment)}”</div>`:''}</div>
     </div>
-    <div class="spm-sec-h">Issue</div>
-    <div style="font-size:12.5px;line-height:1.6;margin-bottom:12px;">${escAdmin(t.issue||'—')}</div>
-    <div class="spm-sec-h">Action Taken</div>
-    <div style="font-size:12.5px;line-height:1.6;margin-bottom:12px;">${escAdmin(t.actionTaken||'—')}</div>
+    <div class="spm-sec-h">${t.comment!==undefined?'Comments':'Issue / Action Taken'}</div>
+    <div style="font-size:12.5px;line-height:1.6;margin-bottom:12px;">${escAdmin(dispositionText(t))}</div>
     <div class="spm-sec-h">Transcript</div>
     <div class="tix-transcript">${msgs.length?msgs.map(m=>{
       const staff=m.sender!=='customer';

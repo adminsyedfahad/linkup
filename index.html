@@ -1848,16 +1848,19 @@ button,a,[onclick]{
 .chat-msg{display:flex;align-items:flex-end;gap:8px;}
 .chat-msg.bot{justify-content:flex-start;}
 .chat-msg.user{justify-content:flex-end;}
+.chat-msg-body{max-width:78%;min-width:0;}
 .chat-bubble{
-  max-width:78%;padding:10px 14px;border-radius:18px;
+  max-width:100%;padding:10px 14px;border-radius:18px;
   font-size:13px;line-height:1.55;position:relative;
+  overflow-wrap:break-word;word-break:normal;white-space:normal;
 }
 .chat-msg.bot .chat-bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;}
 .chat-msg.user .chat-bubble{background:var(--orange);color:#000;font-weight:600;border-bottom-right-radius:4px;}
 .chat-msg-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#ff3c3c);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 .chat-msg-time{font-size:10px;color:var(--muted);margin-top:4px;text-align:right;}
-.chat-tick{font-size:11px;color:rgba(0,0,0,0.5);margin-left:4px;}
-.chat-tick.seen{color:#3b82f6;}
+.chat-msg.user .chat-msg-time{display:flex;align-items:center;justify-content:flex-end;gap:3px;}
+.chat-tick{width:14px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.chat-tick.seen{stroke:#22c55e;}
 .chat-opts{display:flex;flex-direction:column;gap:7px;margin-top:4px;}
 .chat-opt-btn{
   padding:10px 14px;background:var(--card);
@@ -1868,11 +1871,6 @@ button,a,[onclick]{
 }
 .chat-opt-btn:hover{background:rgba(255,140,0,0.1);transform:translateX(2px);}
 .chat-opt-btn:active{transform:scale(0.98);}
-.chat-typing{display:flex;align-items:center;gap:4px;padding:10px 14px;background:var(--card);border-radius:18px;border:1px solid var(--border);width:fit-content;}
-.chat-typing span{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:typingDot 1.2s infinite;}
-.chat-typing span:nth-child(2){animation-delay:0.2s;}
-.chat-typing span:nth-child(3){animation-delay:0.4s;}
-@keyframes typingDot{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
 .chat-input-row{
   display:flex;align-items:center;gap:8px;
   padding:12px 14px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
@@ -1931,10 +1929,6 @@ button,a,[onclick]{
 /* Queue / connection state */
 .chat-queue-banner{background:rgba(255,140,0,0.08);border:1px solid rgba(255,140,0,0.25);border-radius:12px;padding:10px 14px;margin:0 14px 10px;font-size:12px;color:var(--text);line-height:1.5;text-align:center;}
 .chat-end-btn{background:none;border:none;color:rgba(255,255,255,0.75);font-size:11.5px;font-weight:700;cursor:pointer;padding:4px 8px;flex-shrink:0;}
-/* Typing indicator (customer-side view of agent typing) */
-.chat-typing-row{padding:0 14px 6px;display:none;align-items:center;gap:6px;}
-.chat-typing-row.on{display:flex;}
-.chat-typing-label{font-size:10.5px;color:var(--muted);font-style:italic;}
 /* Attachments */
 .chat-attach-btn{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--border);color:var(--orange);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
 .chat-attach-btn svg{width:17px;height:17px;}
@@ -1954,7 +1948,7 @@ button,a,[onclick]{
 .chat-window{position:relative;}
 .chat-window-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;border-radius:24px 24px 0 0;}
 .chat-window-bg .lu-fi{position:absolute;}
-.chat-header,.chat-offline-banner,.chat-messages,#chatSurveyWrap,#chatStatusFooter,.chat-input-row,.chat-queue-banner,.chat-typing-row{position:relative;z-index:1;}
+.chat-header,.chat-offline-banner,.chat-messages,#chatSurveyWrap,#chatStatusFooter,.chat-input-row,.chat-queue-banner{position:relative;z-index:1;}
 
 </style>
 </head>
@@ -7199,7 +7193,6 @@ function closeSupportChat() {
   if(_chatUnsub){ _chatUnsub(); _chatUnsub = null; }
   if(_presenceUnsub){ _presenceUnsub(); _presenceUnsub = null; }
   clearMyChatTyping();
-  if(_chatTypingUnsub){ _chatTypingUnsub(); _chatTypingUnsub = null; }
 }
 function handleChatOverlayClick(e) {
   if(e.target===document.getElementById('chatOverlay')) closeSupportChat();
@@ -7279,17 +7272,21 @@ function subscribeChatConversation(){
   _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
   _chatUnsub = window._fbSnap(_chatConvRef, snap => {
     const data = snap.exists() ? snap.data() : null;
+    // Captured before _chatConfirmed is overwritten below: if this chat was
+    // already live, it cannot possibly have a stored rating yet, so an
+    // agent-initiated close can skip the "already rated?" network check and
+    // close just as instantly as the customer-initiated path already does.
+    const hadLiveMessages = _chatConfirmed.length > 0;
     _chatLastData = data;
     _chatConfirmed = (data && Array.isArray(data.messages)) ? data.messages : [];
     _chatPending = _chatPending.filter(p => p.status==='failed' || !_chatConfirmed.some(m=>m.id===p.id));
     refreshChatHeader();
     renderChatMessages();
-    handlePendingSurvey(data && data.pendingSurvey);
+    handlePendingSurvey(data && data.pendingSurvey, hadLiveMessages);
   }, err => {
     console.warn('[Chat] listen failed:', err);
     renderChatMessages();
   });
-  watchAgentTyping();
 }
 
 // ── TRIAGE MENU — self-service answers sourced from real app state ────
@@ -7448,7 +7445,7 @@ async function escalateToLiveAgent(sourceLabel){
   }
   if(!_chatConvRef) _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
   const now = new Date();
-  const customerName = localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Customer';
+  const customerName = orderHistory[0]?.customerName || localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Guest';
   const id = genToken(16);
   const text = `I need help with: ${sourceLabel}`;
   const wasNewConversation = _chatConfirmed.length === 0;
@@ -7572,17 +7569,50 @@ function renderChatMessages(){
     const isCustomer = m.sender === 'customer';
     return `<div class="chat-msg ${isCustomer?'user':'bot'}">
       ${!isCustomer?`<div class="chat-msg-avatar"><svg class="ic" style="width:14px;height:14px;color:#fff;"><use href="#ic-headset"></use></svg></div>`:''}
-      <div>
+      <div class="chat-msg-body">
         ${!isCustomer?`<div class="chat-sender-name">${escChat(staffFirstName)}</div>`:''}
         ${m.text?`<div class="chat-bubble">${escChat(m.text)}</div>`:''}
         ${m.attachment?renderChatAttachmentHtml(m.attachment):''}
-        <div class="chat-msg-time">${m._pending ? '' : _chatMsgTime(m.at)}</div>
+        <div class="chat-msg-time">${m._pending ? '' : _chatMsgTime(m.at)}${(isCustomer&&!m._pending)?chatTickHtml(chatMsgTickState(m)):''}</div>
       </div>
     </div>`;
   }).join('');
 
   renderChatStatusFooter(all);
   msgsEl.scrollTop = msgsEl.scrollHeight;
+  bumpCustomerLastSeen();
+}
+// Read-receipt tick state for the customer's OWN messages (WhatsApp-style:
+// you only see ticks on what you sent). Derived from staffLastSeenAt on the
+// chat doc rather than stored per message, so it's correct after a reload.
+function chatMsgTickState(m){
+  const seenAt = _chatLastData && _chatToMillis(_chatLastData.staffLastSeenAt);
+  const msgAt = _chatToMillis(m.at);
+  if(seenAt && msgAt && seenAt>=msgAt) return 'seen';
+  if(_chatLastData && _chatLastData.assignedAgentUid) return 'delivered';
+  return 'sent';
+}
+function chatTickHtml(state){
+  const cls = state==='seen' ? 'seen' : '';
+  if(state==='sent') return `<svg class="chat-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/></svg>`;
+  return `<svg class="chat-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/><path d="M5 5l4 4 6-8" transform="translate(-1,0)"/></svg>`;
+}
+// The customer's read cursor — throttled so an open chat window doesn't
+// hammer Firestore with a write on every re-render.
+// A throttled call schedules one trailing write, so a message that arrives
+// inside the window still gets marked seen.
+let _custLastSeenWriteAt = 0, _custLastSeenTimer = null;
+function bumpCustomerLastSeen(){
+  // Nothing to mark read on an empty/just-ended chat — and skipping it means
+  // this never creates a bare supportChats doc or undoes finishEndChat's reset.
+  if(!window._fbReady || !window._db || !_chatConvRef || _chatClosedLocally || !_chatConfirmed.length) return;
+  const wait = 4000 - (Date.now() - _custLastSeenWriteAt);
+  if(wait > 0){
+    if(!_custLastSeenTimer) _custLastSeenTimer = setTimeout(()=>{ _custLastSeenTimer = null; bumpCustomerLastSeen(); }, wait);
+    return;
+  }
+  _custLastSeenWriteAt = Date.now();
+  window._fbSetDoc(_chatConvRef, { customerLastSeenAt: new Date() }, { merge: true }).catch(()=>{});
 }
 
 function renderChatStatusFooter(all){
@@ -7621,7 +7651,7 @@ async function sendChatMessage() {
   }
 
   const now = new Date();
-  const customerName = localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Customer';
+  const customerName = orderHistory[0]?.customerName || localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Guest';
   const payload = {
     walletToken,
     customerName,
@@ -7658,20 +7688,10 @@ function retryChatMessage(id){
 }
 
 // ── TYPING INDICATORS ──────────────────────────────────
-let _chatTypingUnsub = null, _myChatTypingTimeout = null;
-function watchAgentTyping(){
-  if(_chatTypingUnsub){ _chatTypingUnsub(); _chatTypingUnsub = null; }
-  if(!window._fbReady || !window._db) return;
-  _chatTypingUnsub = window._fbSnap(window._fbDoc(window._db, 'typingIndicators', walletToken), snap => {
-    const d = snap.exists() ? snap.data() : {};
-    const row = document.getElementById('chatTypingRow');
-    const label = document.getElementById('chatTypingLabel');
-    if(!row) return;
-    const isTyping = d.agentTyping && (Date.now() - _chatToMillis(d.agentTypingAt)) < 5000;
-    row.classList.toggle('on', !!isTyping);
-    if(label) label.textContent = (d.agentName || 'Agent') + ' is typing…';
-  }, ()=>{});
-}
+// One-directional by design: the agent sees "Customer is typing…" (in
+// support.html/admin.html) but the customer must never see the reverse, so
+// there is deliberately no read side here — only the write below.
+let _myChatTypingTimeout = null;
 function handleChatInputTyping(){
   if(!window._fbReady || !window._db) return;
   window._fbSetDoc(window._fbDoc(window._db, 'typingIndicators', walletToken),
@@ -7706,6 +7726,7 @@ async function handleChatAttachmentPicked(input){
 }
 async function uploadAndSendChatAttachment(file){
   if(!ATTACHMENTS_ENABLED) return;
+  if(_chatClosedLocally || (_chatLastData && _chatLastData.endChatLockBy)){ showToast('This chat has ended.'); return; }
   if(!window._fbReady || !window._db){ showToast('⚠️ Could not upload right now.'); return; }
   if(!_chatConvRef) _chatConvRef = window._fbDoc(window._db, 'supportChats', walletToken);
   const msgId = genToken(16);
@@ -7724,7 +7745,7 @@ async function uploadAndSendChatAttachment(file){
     });
     const url = await window._fbGetDownloadURL(storRef);
     const now = new Date();
-    const customerName = localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Customer';
+    const customerName = orderHistory[0]?.customerName || localStorage.getItem('lu_name') || localStorage.getItem('lu_phone') || 'Guest';
     const wasNewConversation = _chatConfirmed.length === 0 && _chatPending.length === 0;
     const payload = {
       walletToken,
@@ -7763,7 +7784,6 @@ function endChatByCustomer(){
   // actually closes the race that let a stale snapshot undo the close.
   if(_chatUnsub){ _chatUnsub(); _chatUnsub = null; }
   if(_presenceUnsub){ _presenceUnsub(); _presenceUnsub = null; }
-  if(_chatTypingUnsub){ _chatTypingUnsub(); _chatTypingUnsub = null; }
   clearMyChatTyping();
 
   const surveyToken = (_chatLastData && _chatLastData.pendingSurvey && _chatLastData.pendingSurvey.surveyToken)
@@ -7823,7 +7843,7 @@ function renderSurveyCard(surveyToken){
   const msgsEl = document.getElementById('chatMessages');
   if(msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
 }
-async function handlePendingSurvey(pendingSurvey){
+async function handlePendingSurvey(pendingSurvey, hadLiveMessages){
   const wrap = document.getElementById('chatSurveyWrap');
   const inputRow = document.getElementById('chatInputRow');
   if(!wrap) return;
@@ -7835,6 +7855,12 @@ async function handlePendingSurvey(pendingSurvey){
     return;
   }
   if(_chatSurveyToken === pendingSurvey.surveyToken && wrap.innerHTML) return; // already rendered, don't lose tap state
+  if(hadLiveMessages){
+    // A chat that was live a moment ago cannot already have a stored
+    // rating — render instantly, same as the customer's own end-chat path.
+    renderSurveyCard(pendingSurvey.surveyToken);
+    return;
+  }
   if(window._fbReady && window._db){
     try{
       const snap = await window._fbGetDoc(window._fbDoc(window._db, 'ticketSurveys', pendingSurvey.surveyToken));
@@ -8387,7 +8413,6 @@ function reverseGeocode(lat, lng) {
     <div class="chat-queue-banner" id="chatQueueBanner" style="display:none;"></div>
     <!-- Messages -->
     <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-typing-row" id="chatTypingRow"><div class="chat-typing"><span></span><span></span><span></span></div><span class="chat-typing-label" id="chatTypingLabel"></span></div>
     <div id="chatSurveyWrap"></div>
     <div id="chatStatusFooter"></div>
     <div class="chat-upload-progress" id="chatUploadProgress"><div class="chat-upload-spin"></div><span>Uploading… <span id="chatUploadPct">0%</span></span></div>

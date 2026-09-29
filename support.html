@@ -179,6 +179,9 @@ html.light-theme{
   font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .15s;}
 .sp-ec-yn button.yes:hover{border-color:#22c55e;color:#22c55e;}
 .sp-ec-yn button.no:hover{border-color:#ef4444;color:#ef4444;}
+.sp-ec-yn button.yes.picked{border-color:#22c55e;background:rgba(34,197,94,.12);color:#22c55e;}
+.sp-ec-yn button.no.picked{border-color:#ef4444;background:rgba(239,68,68,.12);color:#ef4444;}
+.sp-ec-submit:disabled{opacity:.5;cursor:not-allowed;}
 .sp-ec-field{margin-bottom:10px;}
 .sp-ec-field label{display:block;font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
 .sp-ec-field input,.sp-ec-field textarea{width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--border);
@@ -202,6 +205,9 @@ html.light-theme{
 .sp-msg.customer .sp-bubble{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px;}
 .sp-msg.staff .sp-bubble{background:var(--orange);color:#000;font-weight:600;border-bottom-right-radius:4px;}
 .sp-msg-time{font-size:10px;color:var(--muted);margin-top:3px;}
+.sp-msg.staff .sp-msg-time{display:flex;align-items:center;gap:3px;justify-content:flex-end;}
+.sp-tick{width:14px;height:9px;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.sp-tick.seen{stroke:#22c55e;}
 .sp-thread-input-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);}
 .sp-thread-input-row textarea{flex:1;resize:none;padding:10px 13px;background:var(--bg);border:1px solid var(--border);
   border-radius:10px;color:var(--text);font-family:'Poppins',sans-serif;font-size:13px;outline:none;max-height:90px;min-height:42px;}
@@ -254,6 +260,28 @@ html.light-theme{
 .sp-ctx-order-bottom{display:flex;justify-content:space-between;font-size:11px;}
 .sp-ctx-empty{font-size:11.5px;color:var(--muted);}
 .sp-ctx-toggle{display:none;}
+.sp-ctx-tabs{display:flex;gap:4px;margin:-16px -16px 14px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--card);}
+.sp-ctx-tabs .sp-tab{padding:10px 10px;}
+/* Customer Info tab */
+.sp-cinfo-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.sp-cinfo-stat{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 11px;}
+.sp-cinfo-stat-lbl{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700;margin-bottom:3px;}
+.sp-cinfo-stat-val{font-size:14px;font-weight:800;}
+.sp-cinfo-row{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.sp-cinfo-row span:first-child{color:var(--muted);flex-shrink:0;}
+.sp-cinfo-row span:last-child{min-width:0;text-align:right;overflow-wrap:anywhere;}
+.sp-cinfo-note{font-size:10.5px;color:var(--muted);font-style:italic;margin-top:2px;}
+.sp-order-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+.sp-order-head{padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.sp-order-head>div:first-child{min-width:0;}
+.sp-order-head-l{font-size:11.5px;font-weight:700;overflow-wrap:anywhere;}
+.sp-order-head-sub{font-size:10px;color:var(--muted);margin-top:2px;font-weight:400;}
+.sp-order-head-r{text-align:right;font-size:11.5px;font-weight:700;flex-shrink:0;}
+.sp-order-head-status{font-size:9.5px;color:var(--muted);text-transform:capitalize;font-weight:600;}
+.sp-order-body{display:none;padding:0 12px 12px;border-top:1px solid var(--border);}
+.sp-order-body.on{display:block;}
+.sp-order-item-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;}
+.sp-order-divider{border-top:1px dashed var(--border);margin:8px 0;}
 /* Canned statements library */
 .sp-stmt-search{width:100%;padding:8px 11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;
   color:var(--text);font-family:'Poppins',sans-serif;font-size:12px;outline:none;margin-bottom:12px;}
@@ -562,17 +590,25 @@ html.light-theme{
       </div>
     </div>
 
-    <!-- CANNED STATEMENTS -->
+    <!-- CUSTOMER CONTEXT: STATEMENTS + CUSTOMER INFO -->
     <div class="sp-ctx-drawer-bg" id="spCtxBg" onclick="toggleSpCtxDrawer()"></div>
     <div class="sp-ctx-col" id="spCtxCol">
-      <div class="sp-ctx-h">Statements</div>
-      <input class="sp-stmt-search" id="spStmtSearch" placeholder="Search statements…" oninput="renderStatements()">
-      <div id="spStmtList"></div>
-      <div class="sp-stmt-add">
-        <div class="sp-ctx-h" style="margin-top:4px;">Add your own</div>
-        <select class="sp-stmt-add-sel" id="spStmtAddCategory"></select>
-        <textarea class="sp-stmt-add-text" id="spStmtAddText" rows="2" placeholder="Use {customer_name} or {order_id} if needed…"></textarea>
-        <button class="sp-stmt-add-btn" onclick="addPersonalStatement()">Add statement</button>
+      <div class="sp-ctx-tabs">
+        <div class="sp-tab active" id="spCtxTabStmt" onclick="setSpCtxTab('statements')">Statements</div>
+        <div class="sp-tab" id="spCtxTabInfo" onclick="setSpCtxTab('info')">Customer Info</div>
+      </div>
+      <div id="spCtxPaneStatements">
+        <input class="sp-stmt-search" id="spStmtSearch" placeholder="Search statements…" oninput="renderStatements()">
+        <div id="spStmtList"></div>
+        <div class="sp-stmt-add">
+          <div class="sp-ctx-h" style="margin-top:4px;">Add your own</div>
+          <select class="sp-stmt-add-sel" id="spStmtAddCategory"></select>
+          <textarea class="sp-stmt-add-text" id="spStmtAddText" rows="2" placeholder="Use {customer_name} or {order_id} if needed…"></textarea>
+          <button class="sp-stmt-add-btn" onclick="addPersonalStatement()">Add statement</button>
+        </div>
+      </div>
+      <div id="spCtxPaneInfo" style="display:none;">
+        <div id="spCustomerInfo"><div class="sp-ctx-empty">Select a conversation.</div></div>
       </div>
     </div>
   </div>
@@ -640,7 +676,7 @@ const ADMIN_EMAIL='adminlinkup@gmail.com';
 // from support-config.js — shared with index.html and admin.html.
 
 let spProfile=null; // {uid, name, email, isAdmin:bool}
-let _spConvos=[], _spUnsub=null, _spActiveId=null, _spListTab='active', _spTab='messages', _spSending=false;
+let _spConvos=[], _spUnsub=null, _spActiveId=null, _spListTab='active', _spTab='messages', _spSending=false, _spLastSeenBumpAt=null;
 let _allAgents=[], _agentsUnsub=null, _claimInFlight=false;
 let _heartbeatInterval=null, _selfHealInterval=null, _staleCheckInFlight=false;
 
@@ -861,7 +897,18 @@ function startSpListener(){
     renderSpList();
     if(_spActiveId){
       const active=_spConvos.find(c=>c.id===_spActiveId);
-      if(active) renderSpThread(active);
+      if(active){
+        renderSpThread(active);
+        // Keep the read-receipt cursor moving while the thread is already
+        // open and a new customer message just arrived on screen.
+        if(active.lastSender==='customer'){
+          const at=spToMillis(active.lastMessageAt);
+          if(at && at!==_spLastSeenBumpAt){
+            _spLastSeenBumpAt=at;
+            window._supUpdate(window._supDoc(window._supDb,'supportChats',active.id),{staffLastSeenAt:new Date()}).catch(()=>{});
+          }
+        }
+      }
     }
   }, err=>{
     console.error('[Support] listen failed:',err.code,err.message);
@@ -1138,7 +1185,7 @@ function renderSpList(){
     const prefix=c.lastSender==='customer'?'':'You: ';
     return `<div class="sp-item${active?' active':''}" onclick="openSpConversation('${c.id}')">
       <div class="sp-item-top">
-        <span class="sp-item-name">${spEsc(c.customerName||'Customer')}</span>
+        <span class="sp-item-name">${spEsc(c.customerName||'Guest')}</span>
         ${unread?'<span class="sp-unread-dot"></span>':''}
       </div>
       <div class="sp-item-meta">
@@ -1155,6 +1202,7 @@ setInterval(renderSpList, 15000); // ages chats from Active to Inactive without 
 // ── THREAD ────────────────────────────────────────────
 function openSpConversation(id){
   _spActiveId=id;
+  _spLastSeenBumpAt=null;
   _ecState=null;
   const ecEl=document.getElementById('spEndChatFlow'); if(ecEl) ecEl.innerHTML='';
   document.getElementById('spBody').classList.add('thread-open');
@@ -1165,10 +1213,12 @@ function openSpConversation(id){
   spSwitchTab('messages');
   renderSpThread(c);
   renderSpList();
+  loadCustomerInfo(id);
   watchTyping(id);
-  if(c.unreadByAdmin){
-    window._supUpdate(window._supDoc(window._supDb,'supportChats',id),{unreadByAdmin:false}).catch(e=>console.warn('[Support] mark-read failed:',e));
-  }
+  const patch={};
+  if(c.unreadByAdmin) patch.unreadByAdmin=false;
+  patch.staffLastSeenAt=new Date();
+  window._supUpdate(window._supDoc(window._supDb,'supportChats',id),patch).catch(e=>console.warn('[Support] mark-read failed:',e));
 }
 function closeSpThread(){
   clearMyTyping();
@@ -1189,8 +1239,25 @@ function spSwitchTab(tab){
   document.getElementById('spPaneNotes').style.display=tab==='notes'?'flex':'none';
 }
 
+// ── READ RECEIPTS ──────────────────────────────────────
+// Derived from timestamps, never stored per-message, so it's correct after
+// a reload. "Delivered" honestly means "confirmed synced" — there's no
+// device-level delivery ack in this architecture; "seen" is the real
+// signal, once the customer's own read cursor (customerLastSeenAt) passes
+// this message's time.
+function staffMsgTickState(m,c){
+  const seenAt=spToMillis(c.customerLastSeenAt);
+  const msgAt=spToMillis(m.at);
+  if(seenAt && seenAt>=msgAt) return 'seen';
+  return 'delivered';
+}
+function spTickHtml(state){
+  const cls=state==='seen'?'seen':'';
+  if(state==='sent') return `<svg class="sp-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/></svg>`;
+  return `<svg class="sp-tick ${cls}" viewBox="0 0 16 10"><path d="M1 5l4 4 10-8"/><path d="M5 5l4 4 6-8" transform="translate(-1,0)"/></svg>`;
+}
 function renderSpThread(c){
-  document.getElementById('spThreadName').textContent=c.customerName||'Customer';
+  document.getElementById('spThreadName').textContent=c.customerName||'Guest';
   document.getElementById('spThreadOrder').textContent=c.orderId?('Order #'+c.orderId):'General enquiry';
   document.getElementById('spCtxToggleBtn').style.display=window.innerWidth<1000?'inline-block':'none';
 
@@ -1207,10 +1274,8 @@ function renderSpThread(c){
     endedBanner.style.display=locked?'flex':'none';
     if(endedBannerText){
       endedBannerText.textContent = c.customerEndRequested
-        ? 'Chat session ended by customer — please complete the disposition below.'
-        : (c.endChatLockBy===spProfile?.uid
-            ? 'Chat session ended by you — please complete the disposition below.'
-            : 'Chat session ended — a disposition is being completed.');
+        ? 'Chat session ended by customer'
+        : `Chat session ended by ${c.endChatLockByName||'agent'}`;
     }
   }
   const endBtnLabel=document.getElementById('spEndChatBtnLabel');
@@ -1231,7 +1296,7 @@ function renderSpThread(c){
       ${isStaff?`<div class="sp-msg-by">${spEsc(byLabel)}</div>`:''}
       ${m.text?`<div class="sp-bubble">${spEsc(m.text)}</div>`:''}
       ${m.attachment?renderAttachmentHtml(m.attachment):''}
-      <div class="sp-msg-time">${spTime(m.at)}</div>
+      <div class="sp-msg-time">${spTime(m.at)}${isStaff?spTickHtml(staffMsgTickState(m,c)):''}</div>
     </div>`;
   }).join('') : '<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No messages yet.</div>';
   el.scrollTop=el.scrollHeight;
@@ -1322,18 +1387,11 @@ function watchTyping(chatId){
     el.style.display=isTyping?'flex':'none';
   }, ()=>{});
 }
-function handleReplyTyping(){
-  if(!_spActiveId) return;
-  window._supSetDoc(window._supDoc(window._supDb,'typingIndicators',_spActiveId),
-    {agentTyping:true, agentTypingAt:new Date(), agentName:spProfile?.displayName||spProfile?.name||'Agent'}, {merge:true}).catch(()=>{});
-  clearTimeout(_myTypingTimeout);
-  _myTypingTimeout=setTimeout(clearMyTyping,3000);
-}
-function clearMyTyping(){
-  clearTimeout(_myTypingTimeout);
-  if(!_spActiveId) return;
-  window._supUpdate(window._supDoc(window._supDb,'typingIndicators',_spActiveId),{agentTyping:false}).catch(()=>{});
-}
+// The agent side deliberately never writes agentTyping — the customer must
+// never see "agent is typing" (one-directional by design). These are kept
+// as no-op stubs since other code still calls them for cleanup timing.
+function handleReplyTyping(){}
+function clearMyTyping(){ clearTimeout(_myTypingTimeout); }
 
 // ── ATTACHMENTS ────────────────────────────────────────
 // Off while on the Firebase Spark (free) plan — no Storage bucket available.
@@ -1347,6 +1405,8 @@ async function handleAttachmentPicked(input){
   const file=input.files?.[0];
   input.value='';
   if(!ATTACHMENTS_ENABLED||!file||!_spActiveId) return;
+  const active=_spConvos.find(x=>x.id===_spActiveId);
+  if(active?.endChatLockBy){ spToast('This chat has ended.','#ef4444'); return; }
   if(!ATTACH_TYPE_RE.test(file.type)){ spToast('⚠️ That file type isn\'t supported.','#ef4444'); return; }
   const isVideo=file.type.startsWith('video/');
   const max=isVideo?ATTACH_MAX_VIDEO:ATTACH_MAX_IMAGE;
@@ -1652,7 +1712,7 @@ async function openEndChatFlow(){
     if(btn) btn.disabled=false;
     if(!locked){ spToast('⚠️ Could not start closing this chat — check connection and try again.','#ef4444'); return; }
   }
-  _ecState={step:'confirm'};
+  _ecState={resolved:undefined};
   renderEndChatFlow(_spConvos.find(x=>x.id===_spActiveId)||c);
 }
 function cancelEndChatFlow(){
@@ -1667,35 +1727,27 @@ function cancelEndChatFlow(){
   }
 }
 function ecPickResolved(val){
-  _ecState={step:'form', resolved:val};
-  const c=_spConvos.find(x=>x.id===_spActiveId);
-  renderEndChatFlow(c);
+  if(!_ecState) return;
+  _ecState.resolved=val;
+  renderEndChatFlow(_spConvos.find(x=>x.id===_spActiveId));
 }
+// One screen: Yes/No (required) + an optional comment. Order ID is never
+// asked — it's auto-filled from the conversation in finishEndChat.
 function renderEndChatFlow(c){
   const el=document.getElementById('spEndChatFlow');
   if(!el) return;
   if(!_ecState){ el.innerHTML=''; return; }
-  if(_ecState.step==='confirm'){
-    el.innerHTML=`<div class="sp-ec-card">
-      <div class="sp-ec-title">Was the customer's issue resolved?</div>
-      <div class="sp-ec-yn">
-        <button class="yes" onclick="ecPickResolved(true)">Yes</button>
-        <button class="no" onclick="ecPickResolved(false)">No</button>
-      </div>
-      <div class="sp-ec-actions" style="margin-top:10px;"><button class="sp-ec-cancel" onclick="cancelEndChatFlow()">Cancel</button></div>
-    </div>`;
-    return;
-  }
+  const r=_ecState.resolved;
   el.innerHTML=`<div class="sp-ec-card">
-    <div class="sp-ec-title">End Chat — Disposition</div>
-    <span class="sp-ec-resolved-pill ${_ecState.resolved?'yes':'no'}"><svg class="ic-sm"><use href="#${_ecState.resolved?'ic-check':'ic-close'}"></use></svg>${_ecState.resolved?'Resolved':'Not resolved'}</span>
-    <div class="sp-ec-field"><label>Order ID</label><input id="ecOrderId" value="${spEsc(c.orderId||'')}" placeholder="e.g. LU-1042"></div>
-    <div class="sp-ec-field"><label>Issue *</label><textarea id="ecIssue" rows="2" placeholder="What was the customer's issue?"></textarea></div>
-    <div class="sp-ec-field"><label>Action Taken *</label><textarea id="ecAction" rows="2" placeholder="What did you do to resolve/handle it?"></textarea></div>
-    <div class="sp-ec-err" id="ecErr">Issue and Action taken are required.</div>
+    <div class="sp-ec-title">Was the customer's issue resolved?</div>
+    <div class="sp-ec-yn">
+      <button class="yes${r===true?' picked':''}" onclick="ecPickResolved(true)">Yes</button>
+      <button class="no${r===false?' picked':''}" onclick="ecPickResolved(false)">No</button>
+    </div>
+    <div class="sp-ec-field"><label>Comments (optional)</label><textarea id="ecComment" rows="2" placeholder="Anything you'd like to add?"></textarea></div>
     <div class="sp-ec-actions">
       <button class="sp-ec-cancel" onclick="cancelEndChatFlow()">Cancel</button>
-      <button class="sp-ec-submit" id="ecSubmitBtn" onclick="submitEndChat()">Submit &amp; End Chat</button>
+      <button class="sp-ec-submit" id="ecSubmitBtn" onclick="submitEndChat()" ${r===undefined?'disabled':''}>Submit &amp; End Chat</button>
     </div>
   </div>`;
 }
@@ -1715,12 +1767,15 @@ async function acquireEndChatLock(chatId){
       // customerEndRequested is deliberately left untouched here (not
       // cleared to false) — it's the only record of *who* started the end,
       // needed by the thread banner right up until finishEndChat's reset.
-      txn.update(ref,{endChatLockBy:spProfile.uid, endChatLockAt:new Date()});
+      // endChatLockByName captures the exact display name the banner must
+      // show verbatim ("Chat session ended by <name>") without needing a
+      // separate lookup at render time.
+      txn.update(ref,{endChatLockBy:spProfile.uid, endChatLockAt:new Date(), endChatLockByName:spProfile.displayName||spProfile.name});
       return true;
     });
   }catch(e){ console.error('[Support] end-chat lock failed:',e.code,e.message); return false; }
 }
-async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}){
+async function finishEndChat(chatId,{resolved,comment}){
   const c=_spConvos.find(x=>x.id===chatId);
   if(!c) return null;
   try{
@@ -1743,12 +1798,12 @@ async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}
     const now=new Date();
     const startAt=c.createdAt||now;
     const agentName=spProfile.isAdmin?'Admin':spProfile.name;
-    const orderId=orderIdOverride!==undefined?orderIdOverride:(c.orderId||null);
+    const orderId=c.orderId||null; // auto-filled — never asked
     const wasMine=c.assignedAgentUid===spProfile.uid && !spProfile.isAdmin;
     const batch=window._supBatch(window._supDb);
     batch.set(window._supDoc(window._supDb,'tickets',ticketId),{
-      ticketId, chatId:c.id, customerName:c.customerName||'Customer', customerPhone:c.customerPhone||'',
-      agentUid:spProfile.uid, agentName, orderId, issue, resolved:!!resolved, actionTaken,
+      ticketId, chatId:c.id, customerName:c.customerName||'Guest', customerPhone:c.customerPhone||'',
+      agentUid:spProfile.uid, agentName, orderId, resolved:!!resolved, comment:comment||null,
       startAt, firstReplyAt:c.firstReplyAt||null, endAt:now, durationMs: now.getTime()-spToMillis(startAt),
       transcript:c.messages||[], internalNotes:c.internalNotes||[], createdAt:now
     });
@@ -1760,7 +1815,8 @@ async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}
     batch.update(window._supDoc(window._supDb,'supportChats',c.id),{
       messages:[], internalNotes:[], assignedAgentUid:null, assignedAgentName:null, firstReplyAt:null,
       lastMessage:null, lastMessageAt:null, lastSender:null, unreadByAdmin:false,
-      endChatLockBy:null, endChatLockAt:null, customerEndRequested:false, customerClosedAt:null, triageSource:null,
+      endChatLockBy:null, endChatLockAt:null, endChatLockByName:null, customerEndRequested:false, customerClosedAt:null, triageSource:null,
+      customerLastSeenAt:null, staffLastSeenAt:null,
       pendingSurvey:{ticketId, surveyToken, endedAt:now}, updatedAt:now
     });
     await batch.commit();
@@ -1782,17 +1838,12 @@ async function finishEndChat(chatId,{resolved,issue,actionTaken,orderIdOverride}
 // offline), rather than leaving "Ending…" stuck forever.
 async function submitEndChat(){
   const c=_spConvos.find(x=>x.id===_spActiveId);
-  if(!c||!_ecState) return;
+  if(!c||!_ecState||_ecState.resolved===undefined) return;
   if(c.endChatLockBy!==spProfile.uid){
     spToast('⚠️ This chat is not locked by you — reopen End Chat to retry.','#ef4444');
     return;
   }
-  const orderId=document.getElementById('ecOrderId').value.trim();
-  const issue=document.getElementById('ecIssue').value.trim();
-  const actionTaken=document.getElementById('ecAction').value.trim();
-  const err=document.getElementById('ecErr');
-  if(!issue||!actionTaken){ err.classList.add('on'); return; }
-  err.classList.remove('on');
+  const comment=document.getElementById('ecComment')?.value.trim()||'';
   const btn=document.getElementById('ecSubmitBtn');
   btn.disabled=true; btn.textContent='Ending…';
   let timedOut=false;
@@ -1802,7 +1853,7 @@ async function submitEndChat(){
     resetBtn('⚠️ Taking longer than expected — check your connection and try again.','#f59e0b');
   },15000);
   try{
-    const ticketId=await finishEndChat(c.id,{resolved:_ecState.resolved, issue, actionTaken, orderIdOverride:orderId||null});
+    const ticketId=await finishEndChat(c.id,{resolved:_ecState.resolved, comment});
     if(timedOut) return;
     clearTimeout(timeoutId);
     if(ticketId){
@@ -1832,7 +1883,7 @@ async function watchCustomerEndRequests(list){
   for(const c of list){
     if(c.customerEndRequested && !c.endChatLockBy && !c.assignedAgentUid){
       const locked=await acquireEndChatLock(c.id);
-      if(locked) await finishEndChat(c.id,{resolved:false, issue:'(ended in queue — no agent)', actionTaken:'(customer ended the chat while still queued; no agent was ever assigned)'});
+      if(locked) await finishEndChat(c.id,{resolved:false, comment:'Ended while still queued — no agent was ever assigned.'});
     }
   }
 }
@@ -1946,7 +1997,7 @@ async function spmRenderStats(){
         <div class="spm-star-row"><span>${n}★</span><div class="spm-bar-track"><div class="spm-bar-fill" style="width:${Math.round(s.histogram[n-1]/s.ratedCount*100)}%;"></div></div><span class="spm-bar-pct">${s.histogram[n-1]}</span></div>
       `).join('') : '<div class="sp-empty">No ratings yet.</div>'}
       ${s.ratingsList.map(r=>`
-        <div class="spm-rating-item"><span>${spEsc(r.ticketId)} · ${spEsc(r.customerName||'Customer')}</span><span class="spm-rating-stars">${stars(r.rating)}</span></div>
+        <div class="spm-rating-item"><span>${spEsc(r.ticketId)} · ${spEsc(r.customerName||'Guest')}</span><span class="spm-rating-stars">${stars(r.rating)}</span></div>
       `).join('')}
     `;
   }catch(e){
@@ -2062,6 +2113,134 @@ async function deletePersonalStatement(id){
 function toggleSpCtxDrawer(){
   document.getElementById('spCtxCol').classList.toggle('on');
   document.getElementById('spCtxBg').classList.toggle('on');
+}
+
+// ── CUSTOMER INFO TAB ──────────────────────────────────
+let _spCtxTab='statements';
+function setSpCtxTab(tab){
+  _spCtxTab=tab;
+  document.getElementById('spCtxTabStmt').classList.toggle('active',tab==='statements');
+  document.getElementById('spCtxTabInfo').classList.toggle('active',tab==='info');
+  document.getElementById('spCtxPaneStatements').style.display=tab==='statements'?'block':'none';
+  document.getElementById('spCtxPaneInfo').style.display=tab==='info'?'block':'none';
+}
+function spFmtDate(ts){
+  const d=(ts&&ts.toDate)?ts.toDate():(ts instanceof Date?ts:(ts?new Date(ts):null));
+  return d?d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
+}
+// walletToken IS the chat id — same "path is the secret" model used
+// throughout this app, so it doubles as the customer's order/wallet key.
+async function loadCustomerInfo(chatId){
+  const el=document.getElementById('spCustomerInfo');
+  if(!el) return;
+  el.innerHTML='<div class="sp-ctx-empty">Loading…</div>';
+  const c=_spConvos.find(x=>x.id===chatId);
+  try{
+    const [walletSnap,ordersSnap]=await Promise.all([
+      window._supGetDoc(window._supDoc(window._supDb,'wallets',chatId)).catch(()=>null),
+      window._supGetDocs(window._supQuery(window._supCol(window._supDb,'orders'), window._supWhere('walletToken','==',chatId)))
+        .catch(e=>{ console.warn('[Support] customer orders failed:',e.code,e.message); return null; })
+    ]);
+    if(_spActiveId!==chatId) return; // switched conversations while this was loading
+    const ordersFailed=!ordersSnap;
+    const orders=(ordersSnap?ordersSnap.docs:[]).map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>spToMillis(b.createdAt)-spToMillis(a.createdAt));
+    const walletBalance=walletSnap&&walletSnap.exists()?(walletSnap.data().balance||0):0;
+    const totalSpent=orders.reduce((s,o)=>s+(o.amount||0),0);
+    const oldest=orders[orders.length-1];
+    // Resolve restaurant names for the distinct restaurantIds on these
+    // orders — cheap, since a customer typically orders from very few places.
+    const restIds=[...new Set(orders.map(o=>o.restaurantId).filter(Boolean))];
+    const restNames={};
+    await Promise.all(restIds.map(async rid=>{
+      try{
+        const rs=await window._supGetDoc(window._supDoc(window._supDb,'restaurants',rid));
+        restNames[rid]=rs.exists()?(rs.data().name||rid):rid;
+      }catch(e){ restNames[rid]=rid; }
+    }));
+    if(_spActiveId!==chatId) return;
+    el.innerHTML=`
+      <div class="sp-cinfo-row"><span>Name</span><span>${spEsc(c?.customerName||'Guest')}</span></div>
+      <div class="sp-cinfo-row"><span>Phone</span><span>${spEsc(c?.customerPhone||'—')}</span></div>
+      <div class="sp-cinfo-row"><span>Email</span><span>${spEsc(orders[0]?.email||'—')}</span></div>
+      <div class="sp-cinfo-row"><span>Customer since</span><span>${oldest?spFmtDate(oldest.createdAt):'—'}</span></div>
+      <div class="sp-cinfo-summary" style="margin-top:12px;">
+        <div class="sp-cinfo-stat"><div class="sp-cinfo-stat-lbl">Wallet Balance</div><div class="sp-cinfo-stat-val">₹${walletBalance}</div></div>
+        <div class="sp-cinfo-stat"><div class="sp-cinfo-stat-lbl">Total Orders</div><div class="sp-cinfo-stat-val">${orders.length}</div></div>
+        <div class="sp-cinfo-stat" style="grid-column:span 2;"><div class="sp-cinfo-stat-lbl">Total Spent</div><div class="sp-cinfo-stat-val">₹${totalSpent}</div></div>
+      </div>
+      <div class="sp-cinfo-note">LinkUp Points are stored on the customer's device only and aren't visible here.</div>
+      <div class="sp-ctx-h" style="margin-top:16px;">Order History</div>
+      <div id="spCustomerOrders">${ordersFailed?'<div class="sp-ctx-empty">⚠️ Could not load order history.</div>':(orders.length?orders.map(o=>spOrderCardHtml(o,restNames)).join(''):'<div class="sp-ctx-empty">No orders yet.</div>')}</div>
+    `;
+  }catch(e){
+    console.error('[Support] customer info failed:',e.code,e.message);
+    if(_spActiveId===chatId) el.innerHTML=`<div class="sp-ctx-empty">⚠️ Could not load customer info (${spEsc(e.code||'error')}).</div>`;
+  }
+}
+function spOrderCardHtml(o,restNames){
+  return `<div class="sp-order-card">
+    <div class="sp-order-head" onclick="toggleSpOrderCard('${o.id}')">
+      <div>
+        <div class="sp-order-head-l">#${spEsc(o.orderId||o.id)}</div>
+        <div class="sp-order-head-sub">${spFmtDate(o.createdAt)} · ${spEsc(restNames[o.restaurantId]||'—')}</div>
+      </div>
+      <div>
+        <div class="sp-order-head-r">₹${o.amount??'—'}</div>
+        <div class="sp-order-head-status">${spEsc(o.status||'')}</div>
+      </div>
+    </div>
+    <div class="sp-order-body" id="spOrderBody_${o.id}"></div>
+  </div>`;
+}
+let _spOrderDetailCache={};
+async function toggleSpOrderCard(orderId){
+  const body=document.getElementById('spOrderBody_'+orderId);
+  if(!body) return;
+  const alreadyOpen=body.classList.contains('on');
+  // Accordion: collapse any other open order card first.
+  document.querySelectorAll('.sp-order-body.on').forEach(b=>b.classList.remove('on'));
+  if(alreadyOpen) return;
+  body.classList.add('on');
+  if(_spOrderDetailCache[orderId]){ body.innerHTML=_spOrderDetailCache[orderId]; return; }
+  body.innerHTML='<div class="sp-ctx-empty">Loading…</div>';
+  try{
+    const orderSnap=await window._supGetDoc(window._supDoc(window._supDb,'orders',orderId));
+    if(!orderSnap.exists()){ body.innerHTML='<div class="sp-ctx-empty">Order not found.</div>'; return; }
+    const o=orderSnap.data();
+    let tracking=null;
+    if(o.trackingToken){
+      try{
+        const ts=await window._supGetDoc(window._supDoc(window._supDb,'orderTracking',o.trackingToken));
+        if(ts.exists()) tracking=ts.data();
+      }catch(e){}
+    }
+    const items=o.cartItems&&o.cartItems.length?o.cartItems:(o.itemDetails||[]);
+    const itemsHtml=items.length?items.map(it=>`<div class="sp-order-item-row"><span>${spEsc(it.name)} × ${it.qty}</span><span>₹${(it.price||0)*(it.qty||1)}</span></div>`).join('')
+      :'<div class="sp-ctx-empty">No item breakdown available.</div>';
+    const wD=o.walletDiscount||0, wkD=o.weekendDiscount||0, foD=o.firstOrderDiscount||0;
+    const history=(tracking?.statusHistory||o.statusHistory||[]).slice().sort((a,b)=>spToMillis(a.time)-spToMillis(b.time));
+    const html=`
+      <div class="sp-ctx-h" style="margin-top:10px;">Items</div>
+      ${itemsHtml}
+      <div class="sp-order-divider"></div>
+      <div class="sp-order-item-row"><span>Delivery Fee</span><span>${o.deliveryFee?('₹'+o.deliveryFee):'FREE'}</span></div>
+      ${wkD?`<div class="sp-order-item-row"><span>Weekend Discount</span><span>−₹${wkD}</span></div>`:''}
+      ${foD?`<div class="sp-order-item-row"><span>First Order Discount</span><span>−₹${foD}</span></div>`:''}
+      ${wD?`<div class="sp-order-item-row"><span>Wallet Discount</span><span>−₹${wD}</span></div>`:''}
+      <div class="sp-order-item-row" style="font-weight:800;"><span>Total</span><span>₹${o.amount}</span></div>
+      <div class="sp-order-divider"></div>
+      <div class="sp-cinfo-row"><span>Payment</span><span>${spEsc(o.paymentMethod||o.payMethod||'—')}</span></div>
+      <div class="sp-cinfo-row"><span>Address</span><span style="text-align:right;max-width:60%;">${spEsc(o.address||'—')}</span></div>
+      <div class="sp-cinfo-row"><span>Rider</span><span>${spEsc(tracking?.riderName||o.riderName||'Not assigned yet')}</span></div>
+      ${history.length?`<div class="sp-ctx-h" style="margin-top:10px;">Status Timeline</div>${history.map(h=>`<div class="sp-cinfo-row"><span style="text-transform:capitalize;">${spEsc(h.status)}</span><span>${spTime(h.time)}</span></div>`).join('')}`:''}
+    `;
+    _spOrderDetailCache[orderId]=html;
+    if(body.classList.contains('on')) body.innerHTML=html;
+  }catch(e){
+    console.error('[Support] order detail failed:',e.code,e.message);
+    body.innerHTML=`<div class="sp-ctx-empty">⚠️ Could not load order details.</div>`;
+  }
 }
 
 window.addEventListener('resize', ()=>{
